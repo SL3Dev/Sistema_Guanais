@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Sistema de Gestão Clínica Espaço Guanais">
+    <meta name="theme-color" content="#0ea5e9">
+    <title>Espaço Guanais — Sistema de Gestão Clínica</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="loginScreen" class="login-container">
+    <div class="login-card text-center">
+        <img src="logo/logo.png" alt="Logo Espaço Guanais" class="login-logo">
+        <h2 style="font-family: var(--font-serif);">Espaço Guanais</h2>
+        <p class="text-muted mb-4">Sistema de Gestão Clínica</p>
+        <form id="loginForm">
+            <div class="mb-3 text-start">
+                <label class="form-label" for="loginUser">Usuário</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-person text-muted"></i>
+                    </span>
+                    <input type="text" id="loginUser" class="form-control border-start-0 ps-0" placeholder="Digite seu usuário" autocomplete="off" required>
+                </div>
+            </div>
+            <div class="mb-4 text-start">
+                <label class="form-label" for="loginPass">Senha</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-lock text-muted"></i>
+                    </span>
+                    <input type="password" id="loginPass" class="form-control border-start-0 ps-0" placeholder="Digite sua senha" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-semibold">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Entrar no Sistema
+            </button>
+        </form>
+        <div class="text-center mt-4">
+            <small class="text-muted">Credenciais padrão: <strong>admin / 0301</strong></small>
+        </div>
+    </div>
+</div>
+
+<!-- SISTEMA PRINCIPAL -->
+<div id="appScreen" style="display: none;">
+    <!-- Header -->
+    <header class="app-header d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: var(--accent-primary-bg); border-radius: 12px;">
+                <i class="bi bi-heart-pulse" style="font-size: 1.25rem; color: var(--accent-primary);"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 fw-semibold" style="font-family: var(--font-serif);">Espaço Guanais</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">Gestão Integrada</small>
+            </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="theme-toggle" id="themeToggle" title="Alternar tema">
+                <i class="bi bi-sun-fill"></i>
+                <i class="bi bi-moon-fill"></i>
+                <span class="d-none d-sm-inline">Tema</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="sairSistema()" title="Sair">
+                <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Sair</span>
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="exportarExcel()" title="Exportar backup">
+                <i class="bi bi-download"></i> <span class="d-none d-md-inline">Backup</span>
+            </button>
+            <input type="file" id="fileImport" class="d-none" accept=".xlsx,.xls,.csv" onchange="importarExcel(event, false)">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('fileImport').click()" title="Importar dados">
+                <i class="bi bi-upload"></i> <span class="d-none d-md-inline">Importar</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <div class="container-fluid px-3 px-md-4 py-4">
+        <!-- Navegação por Abas -->
+        <ul class="nav nav-tabs border-0 gap-2 mb-4 flex-wrap" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#agenda" type="button" role="tab">
+                    <i class="bi bi-calendar-week"></i> Agenda
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pacientes" type="button" role="tab">
+                    <i class="bi bi-people"></i> Pacientes
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#financeiro" type="button" role="tab">
+                    <i class="bi bi-cash-stack"></i> Financeiro
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#despesas" type="button" role="tab">
+                    <i class="bi bi-receipt"></i> Despesas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#novoAtendimento" type="button" role="tab">
+                    <i class="bi bi-plus-circle"></i> Novo Atend.
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#relatorios" type="button" role="tab">
+                    <i class="bi bi-bar-chart"></i> Relatórios
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#configuracoes" type="button" role="tab">
+                    <i class="bi bi-gear"></i> Configurações
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ajuda" type="button" role="tab">
+                    <i class="bi bi-question-circle"></i> Ajuda
+                </button>
+            </li>
+        </ul>
+
+        <!-- Conteúdo das Abas -->
+        <div class="tab-content" id="mainTabContent">
+            
+            <!-- AGENDA -->
+            <div class="tab-pane fade show active" id="agenda" role="tabpanel">
+                <!-- Dashboard Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card-modern p-3 text-center hover-lift">
+                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-success-bg); border-radius: 12px;">
+                                <i class="bi bi-person-check fs-4" style="color: var(--accent-success);"></i>
+                            </div>
+                            <h3 id="dashAtivos">0</h3>
+                            <span class="text-muted" style="font-size: 0.8rem;">Pacientes Ativos</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-modern p-3 text-center hover-lift">
+                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-danger-bg); border-radius: 12px;">
+                                <i class="bi bi-calendar-x fs-4" style="color: var(--accent-danger);"></i>
+                            </div>
+                            <h3 id="dashFaltas" style="background: linear-gradient(135deg, var(--accent-danger) 0%, #dc2626 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</h3>
+                            <span class="text-muted" style="font-size: 0.8rem;">Faltas no Mês</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-modern p-3 text-center hover-lift">
+                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-warning-bg); border-radius: 12px;">
+                                <i class="bi bi-exclamation-triangle fs-4" style="color: var(--accent-warning);"></i>
+                            </div>
+                            <h3 id="dashExcecoes" style="background: linear-gradient(135deg, var(--accent-warning) 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</h3>
+                            <span class="text-muted" style="font-size: 0.8rem;">Exceções</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-modern p-3 text-center hover-lift">
+                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-info-bg); border-radius: 12px;">
+                                <i class="bi bi-clock-history fs-4" style="color: var(--accent-info);"></i>
+                            </div>
+                            <div id="dashProximo" class="fw-semibold" style="font-size: 1.1rem;">—</div>
+                            <span class="text-muted" style="font-size: 0.8rem;">Próximo Atend.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="card-modern p-3 mb-4">
+                    <h6 class="mb-3"><i class="bi bi-funnel me-2"></i>Filtros</h6>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="text" id="filtroNome" class="form-control" placeholder="🔍 Buscar paciente...">
+                        </div>
+                        <div class="col-md-2">
+                            <select id="filtroPacote" class="form-select">
+                                <option value="">Todos pacotes</option>
+                                <option>Quinzenal</option>
+                                <option>Mensal</option>
+                                <option>Avulso</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select id="filtroStatus" class="form-select">
+                                <option value="">Todos status</option>
+                                <option>Confirmado</option>
+                                <option>Falta</option>
+                                <option>Reagendado</option>
+                                <option>Exceção Justificada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select id="filtroUnidade" class="form-select">
+                                <option value="">Todas unidades</option>
+                                <option>ANIMO</option>
+                                <option>ESPAÇO GUANAIS</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline w-100" onclick="limparFiltrosAgenda()">
+                                <i class="bi bi-eraser"></i> Limpar filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela de Agenda -->
+                <div class="card-modern p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table-custom mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Paciente</th>
+                                    <th>Unidade</th>
+                                    <th>Data</th>
+                                    <th>Pacote</th>
+                                    <th>Início</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agendaTbody">
+                                <!-- Dados carregados via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PACIENTES -->
+            <div class="tab-pane fade" id="pacientes" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card-modern p-4">
+                            <h5 class="mb-4"><i class="bi bi-person-add me-2" style="color: var(--accent-primary);"></i>Cadastro de Paciente</h5>
+                            <form id="pacienteForm">
+                                <input type="hidden" id="pacId">
+                                <div class="mb-3">
+                                    <label class="form-label">Nome completo *</label>
+                                    <input type="text" id="pacNome" class="form-control" placeholder="Digite o nome completo" required>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-5">
+                                        <label class="form-label">CPF</label>
+                                        <input type="text" id="pacCpf" class="form-control" placeholder="000.000.000-00">
+                                    </div>
+                                    <div class="col-7">
+                                        <label class="form-label">Data de Nascimento *</label>
+                                        <input type="date" id="pacNasc" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Telefone *</label>
+                                    <input type="text" id="pacTel" class="form-control" placeholder="(00) 00000-0000" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" id="pacEmail" class="form-control" placeholder="email@exemplo.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Endereço</label>
+                                    <input type="text" id="pacEnd" class="form-control" placeholder="Rua, número, bairro">
+                                </div>
+                                
+                                <!-- Responsável (menores de 18) -->
+                                <div id="respSec" class="d-none mt-4 p-3" style="background: var(--bg-elevated); border-radius: var(--input-radius);">
+                                    <h6 class="mb-3"><i class="bi bi-person-badge me-2"></i>Responsável</h6>
+                                    <input type="text" id="respNome" class="form-control mb-2" placeholder="Nome do responsável">
+                                    <input type="text" id="respTel" class="form-control" placeholder="Telefone do responsável">
+                                </div>
+                                
+                                <!-- Emergência (maiores de 18) -->
+                                <div id="emergSec" class="mt-4 p-3" style="background: var(--bg-elevated); border-radius: var(--input-radius);">
+                                    <h6 class="mb-3"><i class="bi bi-heart-pulse me-2"></i>Contato de Emergência</h6>
+                                    <input type="text" id="emergNome" class="form-control mb-2" placeholder="Nome do contato">
+                                    <input type="text" id="emergTel" class="form-control" placeholder="Telefone do contato">
+                                </div>
+                                
+                                <div class="d-grid gap-2 mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg me-2"></i>Salvar Paciente
+                                    </button>
+                                    <button type="button" class="btn btn-outline" onclick="resetPacienteForm()">
+                                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card-modern p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-people me-2" style="color: var(--accent-primary);"></i>Lista de Pacientes</h5>
+                                <span class="badge bg-secondary" id="pacientesCount">0</span>
+                            </div>
+                            <input type="text" id="buscaPaciente" class="form-control mb-3" placeholder="🔍 Buscar paciente por nome, CPF ou telefone...">
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nome</th>
+                                            <th>Telefone</th>
+                                            <th>Idade</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pacientesTbody">
+                                        <!-- Dados carregados via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FINANCEIRO -->
+            <div class="tab-pane fade" id="financeiro" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <!-- Resumo Financeiro -->
+                        <div class="card-modern p-4 mb-4 text-center financeiro-resumo">
+                            <h5 class="mb-3">📊 Resumo do Mês</h5>
+                            <h2 id="finTotalBruto">R$ 0,00</h2>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1" style="font-size: 0.85rem;">Custos (25%)</p>
+                                    <strong id="finCusto" style="font-size: 1.1rem;">R$ 0,00</strong>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1" style="font-size: 0.85rem;">Líquido</p>
+                                    <strong id="finLiquido" style="font-size: 1.25rem;">R$ 0,00</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Formulário de Lançamento -->
+                        <div class="card-modern p-4">
+                            <h5 class="mb-4"><i class="bi bi-cash-coin me-2" style="color: var(--accent-success);"></i>Lançar Recebimento</h5>
+                            <form id="financeiroForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Paciente *</label>
+                                    <select id="finPaciente" class="form-select" required>
+                                        <option value="">Selecione um paciente</option>
+                                    </select>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">Clínica</label>
+                                        <select id="finClinica" class="form-select">
+                                            <option>ANIMO</option>
+                                            <option>ESPAÇO GUANAIS</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Pacote</label>
+                                        <select id="finTipoPacote" class="form-select">
+                                            <option value="">Selecione</option>
+                                            <option>Quinzenal</option>
+                                            <option>Mensal</option>
+                                            <option>Avulso</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">Data *</label>
+                                        <input type="date" id="finData" class="form-control" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Valor R$ *</label>
+                                        <input type="number" step="0.01" id="finValor" class="form-control" placeholder="0,00" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Forma de Pagamento</label>
+                                    <select id="finForma" class="form-select">
+                                        <option>Pix</option>
+                                        <option>Dinheiro</option>
+                                        <option>Cartão Crédito</option>
+                                        <option>Cartão Débito</option>
+                                    </select>
+                                </div>
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="finNf">
+                                    <label class="form-check-label" for="finNf">
+                                        Nota Fiscal emitida
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-check-circle me-2"></i>Registrar Recebimento
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-8">
+                        <div class="card-modern p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2" style="color: var(--accent-success);"></i>Lançamentos</h5>
+                            </div>
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                <input type="month" id="finMesFiltro" class="form-control" style="max-width: 180px;">
+                                <select id="finClinicaFiltro" class="form-select" style="max-width: 200px;">
+                                    <option value="">Todas clínicas</option>
+                                    <option>ANIMO</option>
+                                    <option>ESPAÇO GUANAIS</option>
+                                </select>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Paciente</th>
+                                            <th>Clínica</th>
+                                            <th>Valor</th>
+                                            <th>Líquido</th>
+                                            <th>Forma</th>
+                                            <th>NF</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="finTbody">
+                                        <!-- Dados carregados via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESPESAS -->
+            <div class="tab-pane fade" id="despesas" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card-modern p-4">
+                            <h5 class="mb-4"><i class="bi bi-receipt-cutoff me-2" style="color: var(--accent-danger);"></i>Cadastrar Despesa</h5>
+                            <form id="despesaForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Descrição *</label>
+                                    <input type="text" id="despDesc" class="form-control" placeholder="Ex: Aluguel, Luz, Internet..." required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Categoria</label>
+                                    <select id="despCat" class="form-select">
+                                        <option>Fixa</option>
+                                        <option>Extra/Investimento</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Valor Total R$ *</label>
+                                    <input type="number" step="0.01" id="despValor" class="form-control" placeholder="0,00" required>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">Parcelas</label>
+                                        <input type="number" id="despParcelas" class="form-control" placeholder="1" value="1" min="1">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Pagas</label>
+                                        <input type="number" id="despPagas" class="form-control" placeholder="0" value="0" min="0">
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-4">
+                                    <div class="col-6">
+                                        <label class="form-label">Dia Vencimento</label>
+                                        <input type="number" id="despDiaVenc" class="form-control" placeholder="Dia" min="1" max="31">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Início</label>
+                                        <input type="date" id="despDataInicio" class="form-control">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-check-lg me-2"></i>Salvar Despesa
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card-modern p-4">
+                            <h5 class="mb-4"><i class="bi bi-list-check me-2" style="color: var(--accent-danger);"></i>Despesas Cadastradas</h5>
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Descrição</th>
+                                            <th>Categoria</th>
+                                            <th>Valor</th>
+                                            <th>Parcelas</th>
+                                            <th>Status</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="despesasTbody">
+                                        <!-- Dados carregados via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RELATÓRIOS -->
+            <div class="tab-pane fade" id="relatorios" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Filtros de Relatório -->
+                    <div class="col-12">
+                        <div class="card-modern p-4">
+                            <h5 class="mb-4"><i class="bi bi-funnel me-2"></i>Filtros de Relatórios</h5>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Período (Mês)</label>
+                                    <input type="month" id="relatorioMes" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Paciente</label>
+                                    <select id="relatorioPaciente" class="form-select">
+                                        <option value="">Todos os pacientes</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Clínica</label>
+                                    <select id="relatorioClinica" class="form-select">
+                                        <option value="">Todas as clínicas</option>
+                                        <option>ANIMO</option>
+                                        <option>ESPAÇO GUANAIS</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end gap-2">
+                                    <button class="btn btn-primary flex-fill" onclick="gerarRelatorios()">
+                                        <i class="bi bi-search me-2"></i>Gerar Relatórios
+                                    </button>
+                                    <button class="btn btn-outline" onclick="exportarRelatorioCSV()">
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumo Financeiro -->
+                    <div class="col-md-4">
+                        <div class="card-modern p-4 text-center h-100">
+                            <h6 class="text-muted mb-3">Total Bruto</h6>
+                            <h2 id="relatorioTotalBruto" class="text-primary">R$ 0,00</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-modern p-4 text-center h-100">
+                            <h6 class="text-muted mb-3">Despesas (25%)</h6>
+                            <h2 id="relatorioTotalDespesas" class="text-danger">R$ 0,00</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-modern p-4 text-center h-100">
+                            <h6 class="text-muted mb-3">Receita Disponível (75%)</h6>
+                            <h2 id="relatorioTotalDisponivel" class="text-success">R$ 0,00</h2>
+                        </div>
+                    </div>
+
+                    <!-- Relatório de Atendimentos -->
+                    <div class="col-12">
+                        <div class="card-modern p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-0"><i class="bi bi-calendar-check me-2" style="color: var(--accent-primary);"></i>Relatório de Atendimentos</h5>
+                                <div>
+                                    <span class="badge bg-secondary me-2">Total: <span id="totalAtendimentos">0</span></span>
+                                    <span class="badge bg-danger">Faltas: <span id="totalFaltas">0</span></span>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0" id="relatorioAtendimentosTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Paciente</th>
+                                            <th>Data</th>
+                                            <th>Tipo Pacote</th>
+                                            <th>Início Pacote</th>
+                                            <th>Status</th>
+                                            <th>Unidade</th>
+                                            <th>Observações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">Selecione os filtros e clique em "Gerar Relatórios"</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Relatório Financeiro -->
+                    <div class="col-12">
+                        <div class="card-modern p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-0"><i class="bi bi-cash-coin me-2" style="color: var(--accent-success);"></i>Relatório Financeiro</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0" id="relatorioFinanceiroTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Paciente</th>
+                                            <th>Data</th>
+                                            <th>Clínica</th>
+                                            <th>Tipo Pacote</th>
+                                            <th>Valor</th>
+                                            <th>Despesa (25%)</th>
+                                            <th>Disponível (75%)</th>
+                                            <th>Forma Pgto</th>
+                                            <th>NF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted py-4">Selecione os filtros e clique em "Gerar Relatórios"</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Relatório de Pacientes -->
+                    <div class="col-12">
+                        <div class="card-modern p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-0"><i class="bi bi-people me-2" style="color: var(--accent-info);"></i>Relatório de Pacientes</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0" id="relatorioPacientesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nome</th>
+                                            <th>Telefone</th>
+                                            <th>Email</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">Selecione os filtros e clique em "Gerar Relatórios"</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOVO ATENDIMENTO -->
+            <div class="tab-pane fade" id="novoAtendimento" role="tabpanel">
+                <div class="card-modern p-5 mx-auto" style="max-width: 650px;">
+                    <div class="text-center mb-4">
+                        <div class="d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; margin: 0 auto; background: var(--accent-primary-bg); border-radius: 16px;">
+                            <i class="bi bi-calendar-plus fs-3" style="color: var(--accent-primary);"></i>
+                        </div>
+                        <h4>Registrar Nova Sessão</h4>
+                        <p class="text-muted">Preencha os dados abaixo para agendar um atendimento</p>
+                    </div>
+                    
+                    <form id="atendimentoForm">
+                        <div class="mb-4">
+                            <label class="form-label">Paciente *</label>
+                            <select id="atendPaciente" class="form-select form-select-lg" required>
+                                <option value="">Selecione um paciente</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Data do Atendimento *</label>
+                                <input type="date" id="atendData" class="form-control form-control-lg" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de Pacote</label>
+                                <select id="atendPacoteTipo" class="form-select form-select-lg">
+                                    <option>Quinzenal</option>
+                                    <option>Mensal</option>
+                                    <option>Avulso</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Início do Pacote *</label>
+                            <input type="date" id="atendInicioPacote" class="form-control form-control-lg" required>
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select id="atendStatus" class="form-select form-select-lg">
+                                    <option>Confirmado</option>
+                                    <option>Falta</option>
+                                    <option>Reagendado</option>
+                                    <option>Exceção Justificada</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Unidade</label>
+                                <select id="atendUnidade" class="form-select form-select-lg">
+                                    <option>ANIMO</option>
+                                    <option>ESPAÇO GUANAIS</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3">
+                            <i class="bi bi-calendar-check me-2"></i>Salvar Atendimento
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- CONFIGURAÇÕES -->
+            <div class="tab-pane fade" id="configuracoes" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card-modern p-4">
+                            <h5 class="mb-4"><i class="bi bi-person-plus me-2" style="color: var(--accent-primary);"></i>Novo Usuário</h5>
+                            <form id="usuarioForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Usuário *</label>
+                                    <input type="text" id="usuUsuario" class="form-control" placeholder="Nome de usuário" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Senha *</label>
+                                    <input type="password" id="usuSenha" class="form-control" placeholder="Senha de acesso" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nome Completo *</label>
+                                    <input type="text" id="usuNome" class="form-control" placeholder="Nome completo" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" id="usuEmail" class="form-control" placeholder="email@exemplo.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo de Usuário</label>
+                                    <select id="usuTipo" class="form-select">
+                                        <option value="secretaria">Secretaria</option>
+                                        <option value="terapeuta">Terapeuta</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-check-lg me-2"></i>Criar Usuário
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card-modern p-4">
+                            <h5 class="mb-4"><i class="bi bi-people-fill me-2" style="color: var(--accent-primary);"></i>Usuários do Sistema</h5>
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Usuário</th>
+                                            <th>Nome</th>
+                                            <th>Tipo</th>
+                                            <th>Status</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usuariosTbody">
+                                        <!-- Dados carregados via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal de Permissões -->
+                <div class="modal fade" id="modalPermissoes" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Permissões do Usuário</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="permUsuarioId">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Módulo</th>
+                                                <th class="text-center">Visualizar</th>
+                                                <th class="text-center">Criar</th>
+                                                <th class="text-center">Editar</th>
+                                                <th class="text-center">Excluir</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="permissoesBody">
+                                            <!-- Permissões carregadas via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" onclick="salvarPermissoes()">
+                                    <i class="bi bi-check-lg me-2"></i>Salvar Permissões
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal de Edição de Usuário -->
+                <div class="modal fade" id="modalEditarUsuario" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="bi bi-person-gear me-2"></i>Editar Usuário</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="editUsuId">
+                                <div class="mb-3">
+                                    <label class="form-label">Nome Completo</label>
+                                    <input type="text" id="editUsuNome" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" id="editUsuEmail" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo</label>
+                                    <select id="editUsuTipo" class="form-select">
+                                        <option value="secretaria">Secretaria</option>
+                                        <option value="terapeuta">Terapeuta</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nova Senha (deixe vazio para manter)</label>
+                                    <input type="password" id="editUsuSenha" class="form-control">
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editUsuAtivo" checked>
+                                    <label class="form-check-label">Usuário ativo</label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" onclick="atualizarUsuario()">
+                                    <i class="bi bi-check-lg me-2"></i>Atualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AJUDA -->
+            <div class="tab-pane fade" id="ajuda" role="tabpanel">
+                <div class="card-modern p-5">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h4 class="mb-4"><i class="bi bi-file-earmark-excel me-2" style="color: var(--accent-success);"></i>Importação e Exportação</h4>
+                            <p class="mb-3">Utilize os botões no cabeçalho para gerenciar backups dos seus dados:</p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-download text-success me-2"></i>
+                                    <strong>Exportar:</strong> Gera um arquivo Excel com todos os dados do sistema.
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-upload text-primary me-2"></i>
+                                    <strong>Importar:</strong> Carrega dados de arquivos Excel (.xlsx, .xls, .csv).
+                                </li>
+                            </ul>
+                            <hr class="my-4">
+                            <h5 class="mb-3"><i class="bi bi-database me-2" style="color: var(--accent-info);"></i>API Backend</h5>
+                            <p class="text-muted" style="font-size: 0.85rem;">
+                                Este sistema utiliza uma API PHP para persistência de dados em banco MySQL.
+                                Os endpoints disponíveis são:
+                            </p>
+                            <ul class="list-unstyled text-muted" style="font-size: 0.8rem;">
+                                <li><code>api/auth.php</code> - Autenticação</li>
+                                <li><code>api/pacientes.php</code> - Gestão de pacientes</li>
+                                <li><code>api/atendimentos.php</code> - Gestão de atendimentos</li>
+                                <li><code>api/financeiro.php</code> - Gestão financeira</li>
+                                <li><code>api/despesas.php</code> - Gestão de despesas</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-6">
+                            <h4 class="mb-4"><i class="bi bi-palette me-2" style="color: var(--accent-secondary);"></i>Aparência</h4>
+                            <p class="mb-3">Personalize a aparência do sistema:</p>
+                            <div class="card-modern p-3 mb-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <strong>Modo Escuro/Claro</strong>
+                                        <p class="text-muted mb-0" style="font-size: 0.8rem;">Altere o tema do sistema</p>
+                                    </div>
+                                    <button class="btn btn-outline" onclick="toggleTheme()">
+                                        <i class="bi bi-sun-fill"></i>
+                                        <i class="bi bi-moon-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <hr class="my-4">
+                            <h5 class="mb-3"><i class="bi bi-shield-check me-2" style="color: var(--accent-success);"></i>Segurança</h5>
+                            <p class="text-muted" style="font-size: 0.85rem;">
+                                • Session management com validação no servidor<br>
+                                • API com CORS configurado<br>
+                                • Dados sanitizados antes de salvar<br>
+                                • Logout seguro com destruição de sessão
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
