@@ -7,10 +7,8 @@
 
 require_once 'config.php';
 
-// Iniciar sessão
 startSession();
 
-// Verificar autenticação
 if (!isAuthenticated()) {
     errorResponse('Não autorizado', 401);
 }
@@ -18,13 +16,11 @@ if (!isAuthenticated()) {
 $method = getRequestMethod();
 $db = Database::getInstance()->getConnection();
 
-// Módulos e ações disponíveis
 $modulosDisponiveis = ['pacientes', 'atendimentos', 'financeiro', 'despesas', 'configuracoes'];
 $acoesDisponiveis = ['visualizar', 'editar', 'excluir', 'criar'];
 
 switch ($method) {
     case 'GET':
-        // Listar usuários (apenas admin)
         if (!hasPermission('configuracoes', 'visualizar')) {
             errorResponse('Permissão negada', 403);
         }
@@ -33,7 +29,6 @@ switch ($method) {
         $stmt->execute();
         $usuarios = $stmt->fetchAll();
         
-        // Buscar permissões de cada usuário
         foreach ($usuarios as &$usuario) {
             $stmt = $db->prepare("SELECT modulo, acao, permitido FROM permissoes WHERE usuario_id = ?");
             $stmt->execute([$usuario['id']]);
@@ -44,7 +39,6 @@ switch ($method) {
         break;
         
     case 'POST':
-        // Criar novo usuário (apenas admin)
         if (!hasPermission('configuracoes', 'criar')) {
             errorResponse('Permissão negada', 403);
         }
@@ -57,7 +51,6 @@ switch ($method) {
         $tipo = isset($input['tipo']) ? $input['tipo'] : 'secretaria';
         $permissoes = isset($input['permissoes']) ? $input['permissoes'] : [];
         
-        // Validações
         $errors = [];
         if (empty($usuario)) $errors[] = 'Usuário é obrigatório';
         if (empty($senha)) $errors[] = 'Senha é obrigatória';
@@ -68,7 +61,6 @@ switch ($method) {
             errorResponse('Erro de validação', 400, $errors);
         }
         
-        // Verificar se usuário já existe
         $stmt = $db->prepare("SELECT id FROM usuarios WHERE usuario = ?");
         $stmt->execute([$usuario]);
         if ($stmt->fetch()) {
@@ -76,13 +68,11 @@ switch ($method) {
         }
         
         try {
-            // Criar usuário
             $senhaHash = password_hash($senha, PASSWORD_BCRYPT);
             $stmt = $db->prepare("INSERT INTO usuarios (usuario, senha, nome, email, tipo) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$usuario, $senhaHash, $nome, $email, $tipo]);
             $usuarioId = $db->lastInsertId();
             
-            // Criar permissões
             if (!empty($permissoes)) {
                 $stmt = $db->prepare("INSERT INTO permissoes (usuario_id, modulo, acao, permitido) VALUES (?, ?, ?, ?)");
                 foreach ($permissoes as $p) {
@@ -124,6 +114,22 @@ switch ($method) {
             successResponse(['id' => $usuarioId], 'Usuário criado com sucesso');
             
         } catch (PDOException $e) {
-            errorResponse('Erro ao criar usuário', 500);
+            errorResponse('Erro no banco de dados: ' . $e->getMessage(), 500);
+        } catch (Exception $e) {
+            errorResponse('Erro inesperado: ' . $e->getMessage(), 500);
         }
         break;
+        
+    case 'PUT':
+        // Atualização de usuário (implementação similar, se necessário)
+        errorResponse('Método não implementado', 501);
+        break;
+        
+    case 'DELETE':
+        // Exclusão de usuário (implementação similar)
+        errorResponse('Método não implementado', 501);
+        break;
+        
+    default:
+        errorResponse('Método não permitido', 405);
+}
