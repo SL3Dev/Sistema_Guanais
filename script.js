@@ -298,7 +298,12 @@ async function inicializarSistema() {
     renderDespesas();
     atualizarSelectPacientes();
     
-    document.getElementById('finMesFiltro').value = new Date().toISOString().slice(0, 7);
+    // Setar valor padrão do mês atual
+    const hoje = new Date();
+    const mesAtual = hoje.toISOString().slice(0, 7);
+    document.getElementById('finMesFiltro').value = mesAtual;
+    document.getElementById('relatorioMes').value = mesAtual;
+    
     document.getElementById('finMesFiltro').addEventListener('change', () => {
         carregarFinanceiro(document.getElementById('finMesFiltro').value, document.getElementById('finClinicaFiltro').value)
             .then(() => renderFinanceiro());
@@ -326,8 +331,14 @@ async function inicializarSistema() {
 function atualizarSelectPacientes() {
     let opts = '<option value="">Selecione</option>';
     dados.pacientes.forEach(p => opts += `<option value="${p.id}">${p.nome}</option>`);
-    document.getElementById('finPaciente').innerHTML = opts;
-    document.getElementById('atendPaciente').innerHTML = opts;
+    
+    const finPaciente = document.getElementById('finPaciente');
+    const atendPaciente = document.getElementById('atendPaciente');
+    const relatorioPaciente = document.getElementById('relatorioPaciente');
+    
+    if (finPaciente) finPaciente.innerHTML = opts;
+    if (atendPaciente) atendPaciente.innerHTML = opts;
+    if (relatorioPaciente) relatorioPaciente.innerHTML = '<option value="">Todos os pacientes</option>' + opts.replace('<option value="">Selecione</option>', '');
 }
 
 // ========== PACIENTES ==========
@@ -338,7 +349,8 @@ function renderPacientes() {
     filtered.forEach(p => {
         html += `<tr><td>${p.id}</td><td>${p.nome}</td><td>${p.telefone}</td><td>${calcularIdade(p.data_nascimento)}</td><td><button class="btn btn-sm btn-outline" onclick="editarPaciente('${p.id}')"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline text-danger" onclick="excluirPaciente('${p.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
     });
-    document.getElementById('pacientesTbody').innerHTML = html;
+    document.getElementById('pacientesTbody').innerHTML = html || '<tr><td colspan="5" class="text-center py-3 text-muted">Nenhum paciente encontrado</td></tr>';
+    document.getElementById('pacientesCount').innerText = filtered.length;
     document.getElementById('dashAtivos').innerText = dados.pacientes.length;
 }
 
@@ -352,17 +364,20 @@ async function editarPaciente(id) {
     document.getElementById('pacTel').value = p.telefone;
     document.getElementById('pacEmail').value = p.email || '';
     document.getElementById('pacEnd').value = p.endereco || '';
-    if (p.responsavel) {
-        document.getElementById('respNome').value = p.responsavel.nome;
-        document.getElementById('respTel').value = p.responsavel.telefone;
+    if (p.responsavel_nome) {
+        document.getElementById('respNome').value = p.responsavel_nome;
+        document.getElementById('respTel').value = p.responsavel_telefone;
     }
-    if (p.emergencia) {
-        document.getElementById('emergNome').value = p.emergencia.nome;
-        document.getElementById('emergTel').value = p.emergencia.telefone;
+    if (p.emergencia_nome) {
+        document.getElementById('emergNome').value = p.emergencia_nome;
+        document.getElementById('emergTel').value = p.emergencia_telefone;
     }
     let idade = calcularIdade(p.data_nascimento);
     document.getElementById('respSec').classList.toggle('d-none', idade >= 18);
     document.getElementById('emergSec').classList.toggle('d-none', idade < 18);
+    
+    // Rolar para o formulário
+    document.getElementById('pacientes').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function excluirPaciente(id) {
@@ -378,6 +393,8 @@ async function excluirPaciente(id) {
 function resetPacienteForm() {
     document.getElementById('pacienteForm').reset();
     document.getElementById('pacId').value = '';
+    document.getElementById('respSec').classList.add('d-none');
+    document.getElementById('emergSec').classList.remove('d-none');
 }
 
 document.getElementById('pacienteForm').addEventListener('submit', async (e) => {
@@ -396,15 +413,11 @@ document.getElementById('pacienteForm').addEventListener('submit', async (e) => 
     };
     
     if (idade < 18) {
-        paciente.responsavel = {
-            nome: document.getElementById('respNome').value,
-            telefone: document.getElementById('respTel').value
-        };
+        paciente.responsavel_nome = document.getElementById('respNome').value;
+        paciente.responsavel_telefone = document.getElementById('respTel').value;
     } else {
-        paciente.emergencia = {
-            nome: document.getElementById('emergNome').value,
-            telefone: document.getElementById('emergTel').value
-        };
+        paciente.emergencia_nome = document.getElementById('emergNome').value;
+        paciente.emergencia_telefone = document.getElementById('emergTel').value;
     }
     
     const success = await salvarPaciente(paciente);
@@ -418,7 +431,6 @@ document.getElementById('pacienteForm').addEventListener('submit', async (e) => 
 // ========== AGENDA ==========
 function aplicarRegraExcecao() {
     // A regra de exceção agora é aplicada no backend
-    // Esta função mantém a lógica local para exibição
     if (!dados.atendimentos.length) return;
     
     let hoje = new Date();
@@ -428,7 +440,7 @@ function aplicarRegraExcecao() {
         let dataInicio = new Date(formataDataISO(a.dataInicioPacote || a.data_inicio_pacote));
         let diff = (dataAtual - dataInicio) / 86400000;
         let limite = a.tipoPacote === 'Mensal' ? 35 : 20;
-        // Apenas marca para exibição, não altera o dado
+        // Apenas para referência visual
     });
 }
 
@@ -448,6 +460,13 @@ function renderAgenda() {
             (!pacote || tipoPacote === pacote) &&
             (!status || statusAtend === status) &&
             (!unidade || unidadeAtend === unidade);
+    });
+    
+    // Ordenar por data decrescente
+    filtrados.sort((a, b) => {
+        let da = a.dataAtendimento || a.data_atendimento || '';
+        let db = b.dataAtendimento || b.data_atendimento || '';
+        return new Date(formataDataISO(db)) - new Date(formataDataISO(da));
     });
     
     let faltasMes = 0, excecoes = 0, hoje = new Date(), proxData = null, proxNome = '';
@@ -482,7 +501,7 @@ function renderAgenda() {
         
         html += `<tr><td>${idAtend}</td><td>${nomePaciente}</td><td>${unidadeAtend}</td><td>${dataAtend}</td><td>${tipoPacote}</td><td>${dataInicioPacote}</td><td><span class="badge-custom ${badgeClass}">${statusAtend}</span></td><td><button class="btn btn-sm btn-outline" onclick="excluirAtendimento('${idAtend}')"><i class="bi bi-trash"></i></button></td></tr>`;
     });
-    document.getElementById('agendaTbody').innerHTML = html;
+    document.getElementById('agendaTbody').innerHTML = html || '<tr><td colspan="8" class="text-center py-3 text-muted">Nenhum atendimento encontrado</td></tr>';
 }
 
 async function excluirAtendimento(id) {
@@ -521,6 +540,8 @@ document.getElementById('atendimentoForm').addEventListener('submit', async (e) 
     if (success) {
         renderAgenda();
         e.target.reset();
+        // Manter data de hoje como padrão
+        document.getElementById('atendData').value = new Date().toISOString().slice(0, 10);
     }
 });
 
@@ -536,15 +557,15 @@ async function renderFinanceiro() {
     
     dados.financeiro.forEach(f => {
         let valor = f.valor || 0;
-        let liquido = f.liquido || (valor * 0.75);
-        let dataFormatada = f.data || '';
+        let liquido = f.receita_disponivel || (valor * 0.75);
+        let dataFormatada = formataDataBR(f.data);
         
         totalBruto += valor;
         
         html += `<tr><td>${dataFormatada}</td><td>${f.paciente_nome || f.pacienteNome || ''}</td><td>${f.clinica || ''}</td><td>R$ ${valor.toFixed(2)}</td><td>R$ ${liquido.toFixed(2)}</td><td>${f.forma_pagamento || f.formaPagamento || ''}</td><td>${f.nf_emitida || f.nfEmitida ? 'Sim' : 'Não'}</td><td><button class="btn btn-sm btn-outline" onclick="excluirFinanceiro('${f.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
     });
     
-    document.getElementById('finTbody').innerHTML = html;
+    document.getElementById('finTbody').innerHTML = html || '<tr><td colspan="8" class="text-center py-3 text-muted">Nenhum lançamento encontrado</td></tr>';
     
     if (resumo) {
         document.getElementById('finTotalBruto').innerHTML = `R$ ${resumo.total_bruto.toFixed(2)}`;
@@ -577,6 +598,7 @@ document.getElementById('financeiroForm').addEventListener('submit', async (e) =
         paciente_nome: pacienteNome,
         clinica: document.getElementById('finClinica').value,
         tipo_pacote: document.getElementById('finTipoPacote').value,
+        data_inicio_pacote: document.getElementById('finDataInicio').value,
         data: document.getElementById('finData').value,
         valor: parseFloat(document.getElementById('finValor').value),
         forma_pagamento: document.getElementById('finForma').value,
@@ -587,6 +609,7 @@ document.getElementById('financeiroForm').addEventListener('submit', async (e) =
     if (success) {
         renderFinanceiro();
         e.target.reset();
+        document.getElementById('finData').value = new Date().toISOString().slice(0, 10);
     }
 });
 
@@ -594,13 +617,15 @@ document.getElementById('financeiroForm').addEventListener('submit', async (e) =
 function renderDespesas() {
     let html = '';
     dados.despesas.forEach(d => {
-        let status = d.status || '';
+        let status = d.parcelas_pagas >= d.num_parcelas ? 'Paga' : (d.parcelas_pagas > 0 ? 'Parcial' : 'Pendente');
         let valor = d.valor_total || 0;
         let numParcelas = d.num_parcelas || 1;
         
-        html += `<tr><td>${d.descricao || ''}</td><td>${d.categoria || ''}</td><td>R$ ${valor.toFixed(2)}</td><td>${numParcelas}x</td><td><span class="badge-custom badge-warning">${status}</span></td><td><button class="btn btn-sm btn-outline" onclick="pagarParcela('${d.id}')"><i class="bi bi-check2"></i></button> <button class="btn btn-sm btn-outline" onclick="excluirDespesa('${d.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
+        let badgeClass = status === 'Paga' ? 'badge-success' : (status === 'Parcial' ? 'badge-warning' : 'badge-danger');
+        
+        html += `<tr><td>${d.descricao || ''}</td><td>${d.categoria || ''}</td><td>R$ ${valor.toFixed(2)}</td><td>${d.parcelas_pagas}/${numParcelas}</td><td><span class="badge-custom ${badgeClass}">${status}</span></td><td><button class="btn btn-sm btn-outline" onclick="pagarParcela('${d.id}')" ${status === 'Paga' ? 'disabled' : ''}><i class="bi bi-check2"></i></button> <button class="btn btn-sm btn-outline" onclick="excluirDespesa('${d.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
     });
-    document.getElementById('despesasTbody').innerHTML = html;
+    document.getElementById('despesasTbody').innerHTML = html || '<tr><td colspan="6" class="text-center py-3 text-muted">Nenhuma despesa cadastrada</td></tr>';
 }
 
 async function pagarParcela(id) {
@@ -636,10 +661,94 @@ document.getElementById('despesaForm').addEventListener('submit', async (e) => {
     if (success) {
         renderDespesas();
         e.target.reset();
+        document.getElementById('despParcelas').value = 1;
+        document.getElementById('despPagas').value = 0;
     }
 });
 
-// ========== EXPORTAR / IMPORTAR ==========
+// ====================== FUNÇÕES DE PACOTES ======================
+async function buscarPacoteAutomatico(pacienteId) {
+    try {
+        const response = await fetch(`api/pacotes.php?paciente_id=${pacienteId}&status=Ativo`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const pacotes = result.data?.pacotes || result.data || [];
+            
+            if (pacotes.length > 0) {
+                // Ordena por data de início decrescente para pegar o mais recente
+                pacotes.sort((a, b) => {
+                    const dateA = new Date(a.data_inicio.split('/').reverse().join('-'));
+                    const dateB = new Date(b.data_inicio.split('/').reverse().join('-'));
+                    return dateB - dateA;
+                });
+                
+                const pacote = pacotes[0];
+                
+                // Verificar se o pacote está vencido (data_fim no passado)
+                if (pacote.data_fim) {
+                    const dataFim = new Date(pacote.data_fim.split('/').reverse().join('-'));
+                    if (dataFim < new Date()) {
+                        mostrarToast(`Pacote vencido em ${pacote.data_fim}`, 'danger');
+                        return null;
+                    }
+                }
+                
+                return pacote;
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('Erro ao buscar pacote automático:', error);
+        return null;
+    }
+}
+
+async function preencherPacoteAutomatico(pacienteId) {
+    if (!pacienteId) return;
+    
+    const pacote = await buscarPacoteAutomatico(pacienteId);
+    
+    if (pacote) {
+        // Converte data BR (dd/mm/aaaa) para ISO (aaaa-mm-dd)
+        const dataInicioISO = pacote.data_inicio.split('/').reverse().join('-');
+        
+        // Formulário de Atendimento
+        const tipoPacoteField = document.getElementById('atendPacoteTipo');
+        const dataInicioField = document.getElementById('atendInicioPacote');
+        
+        if (tipoPacoteField) tipoPacoteField.value = pacote.tipo_pacote;
+        if (dataInicioField) dataInicioField.value = dataInicioISO;
+        
+        // Formulário Financeiro
+        const finTipoPacote = document.getElementById('finTipoPacote');
+        const finDataInicio = document.getElementById('finDataInicio');
+        if (finTipoPacote) finTipoPacote.value = pacote.tipo_pacote;
+        if (finDataInicio) finDataInicio.value = dataInicioISO;
+        
+        mostrarToast(`Pacote ${pacote.tipo_pacote} encontrado e preenchido automaticamente`, 'success');
+    }
+}
+
+// Listeners para preencher automaticamente quando selecionar paciente
+document.addEventListener('DOMContentLoaded', function() {
+    const atendPaciente = document.getElementById('atendPaciente');
+    const finPaciente = document.getElementById('finPaciente');
+    
+    if (atendPaciente) {
+        atendPaciente.addEventListener('change', function() {
+            if (this.value) preencherPacoteAutomatico(this.value);
+        });
+    }
+    
+    if (finPaciente) {
+        finPaciente.addEventListener('change', function() {
+            if (this.value) preencherPacoteAutomatico(this.value);
+        });
+    }
+});
+
+// ====================== EXPORTAR / IMPORTAR ======================
 function exportarExcel() {
     if (typeof XLSX === 'undefined') {
         mostrarToast('Erro ao exportar', 'danger');
@@ -686,8 +795,6 @@ function importarExcel(event, restaurar) {
             else if (nome.toLowerCase().includes('despesa')) novosDespesas = data;
         });
         
-        // Em um sistema com API, a importação deveria enviar os dados para o backend
-        // Por enquanto, mantemos a lógica local para demonstração
         if (restaurar) {
             dados.pacientes = novosPacientes;
             dados.atendimentos = novosAtendimentos;
@@ -762,7 +869,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 // Se já logado, mostra sistema diretamente
 async function verificarLoginSalvo() {
     if (sessionStorage.getItem('logged') === 'true') {
-        // Verifica com o servidor se ainda está autenticado
         const authValid = await verificarAuth();
         if (authValid) {
             document.getElementById('loginScreen').style.display = 'none';
@@ -774,13 +880,11 @@ async function verificarLoginSalvo() {
     }
 }
 
-// Inicializar verificação de login
 verificarLoginSalvo();
 
 // ========== GESTÃO DE USUÁRIOS ==========
 let usuariosData = [];
 
-// Carregar usuários (apenas admin)
 async function carregarUsuarios() {
     try {
         const result = await apiRequest('usuarios.php');
@@ -793,7 +897,6 @@ async function carregarUsuarios() {
     }
 }
 
-// Renderizar lista de usuários
 function renderUsuarios() {
     let html = '';
     usuariosData.forEach(u => {
@@ -820,10 +923,9 @@ function renderUsuarios() {
             </td>
         </tr>`;
     });
-    document.getElementById('usuariosTbody').innerHTML = html;
+    document.getElementById('usuariosTbody').innerHTML = html || '<tr><td colspan="6" class="text-center py-3 text-muted">Nenhum usuário encontrado</td></tr>';
 }
 
-// Criar novo usuário
 document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -833,31 +935,12 @@ document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => 
     const email = document.getElementById('usuEmail').value.trim();
     const tipo = document.getElementById('usuTipo').value;
     
-    // Validações no frontend
-    if (!usuario) {
-        mostrarToast('Usuário é obrigatório', 'danger');
-        return;
-    }
-    if (!senha || senha.length < 4) {
-        mostrarToast('Senha deve ter pelo menos 4 caracteres', 'danger');
-        return;
-    }
-    if (!nome) {
-        mostrarToast('Nome é obrigatório', 'danger');
-        return;
-    }
-    if (email && !email.includes('@')) {
-        mostrarToast('Email inválido', 'danger');
-        return;
-    }
+    if (!usuario) { mostrarToast('Usuário é obrigatório', 'danger'); return; }
+    if (!senha || senha.length < 4) { mostrarToast('Senha deve ter pelo menos 4 caracteres', 'danger'); return; }
+    if (!nome) { mostrarToast('Nome é obrigatório', 'danger'); return; }
+    if (email && !email.includes('@')) { mostrarToast('Email inválido', 'danger'); return; }
     
-    const novoUsuario = {
-        usuario: usuario,
-        senha: senha,
-        nome: nome,
-        email: email,
-        tipo: tipo
-    };
+    const novoUsuario = { usuario, senha, nome, email, tipo };
     
     try {
         const result = await apiRequest('usuarios.php', 'POST', novoUsuario);
@@ -874,7 +957,6 @@ document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => 
     }
 });
 
-// Editar usuário (abre modal)
 async function editarUsuario(id) {
     const usuario = usuariosData.find(u => u.id === id);
     if (!usuario) return;
@@ -890,7 +972,6 @@ async function editarUsuario(id) {
     modal.show();
 }
 
-// Atualizar usuário
 async function atualizarUsuario() {
     const id = document.getElementById('editUsuId').value;
     const dados = {
@@ -902,9 +983,7 @@ async function atualizarUsuario() {
     };
     
     const senha = document.getElementById('editUsuSenha').value;
-    if (senha) {
-        dados.senha = senha;
-    }
+    if (senha) dados.senha = senha;
     
     try {
         const result = await apiRequest('usuarios.php', 'PUT', dados);
@@ -918,13 +997,11 @@ async function atualizarUsuario() {
     }
 }
 
-// Excluir usuário
 async function excluirUsuario(id) {
     if (id === 1) {
         mostrarToast('Não é possível excluir o usuário administrador principal', 'danger');
         return;
     }
-    
     if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
     
     try {
@@ -938,18 +1015,15 @@ async function excluirUsuario(id) {
     }
 }
 
-// Módulos e ações para permissões
 const modulosPermissoes = ['pacientes', 'atendimentos', 'financeiro', 'despesas', 'configuracoes'];
 const acoesPermissoes = ['visualizar', 'criar', 'editar', 'excluir'];
 
-// Editar permissões (abre modal)
 async function editarPermissoes(usuarioId) {
     const usuario = usuariosData.find(u => u.id === usuarioId);
     if (!usuario) return;
     
     document.getElementById('permUsuarioId').value = usuarioId;
     
-    // Gerar tabela de permissões
     let html = '';
     modulosPermissoes.forEach(modulo => {
         const moduloLabel = modulo.charAt(0).toUpperCase() + modulo.slice(1);
@@ -973,7 +1047,6 @@ async function editarPermissoes(usuarioId) {
     modal.show();
 }
 
-// Salvar permissões
 async function salvarPermissoes() {
     const usuarioId = parseInt(document.getElementById('permUsuarioId').value);
     const permissoes = [];
@@ -987,11 +1060,7 @@ async function salvarPermissoes() {
     });
     
     try {
-        const result = await apiRequest('usuarios.php', 'PATCH', {
-            usuario_id: usuarioId,
-            permissoes: permissoes
-        });
-        
+        const result = await apiRequest('usuarios.php', 'PATCH', { usuario_id: usuarioId, permissoes });
         if (result.success) {
             mostrarToast('Permissões atualizadas com sucesso');
             bootstrap.Modal.getInstance(document.getElementById('modalPermissoes')).hide();
@@ -1006,67 +1075,10 @@ async function salvarPermissoes() {
 const inicializarSistemaOriginal = inicializarSistema;
 async function inicializarSistema() {
     await inicializarSistemaOriginal();
-    
-    // Carregar usuários se for admin
     if (usuarioLogado && usuarioLogado.usuario === 'admin') {
         await carregarUsuarios();
     }
 }
-
-// ====================== FUNÇÕES DE PACOTES ======================
-
-async function buscarPacoteAutomatico(pacienteId) {
-    try {
-        const response = await fetch(`api/pacotes.php?paciente_id=${pacienteId}&status=Ativo`);
-        const data = await response.json();
-        
-        if (data.success && data.pacotes && data.pacotes.length > 0) {
-            // Buscar o pacote mais recente
-            const pacote = data.pacotes[0];
-            
-            // Verificar se está vencido
-            if (pacote.data_fim && new Date(pacote.data_fim) < new Date()) {
-                mostrarToast(`Pacote vencido em ${pacote.data_fim}`, 'danger');
-                return null;
-            }
-            
-            return pacote;
-        }
-        return null;
-    } catch (error) {
-        console.error('Erro ao buscar pacote automático:', error);
-        return null;
-    }
-}
-
-async function preencherPacoteAutomatico(pacienteId) {
-    const pacote = await buscarPacoteAutomatico(pacienteId);
-    
-    if (pacote) {
-        // Preencher campos do formulário de atendimento
-        const tipoPacoteField = document.getElementById('atendPacoteTipo');
-        const dataInicioField = document.getElementById('atendInicioPacote');
-        
-        if (tipoPacoteField) tipoPacoteField.value = pacote.tipo_pacote;
-        if (dataInicioField) dataInicioField.value = pacote.data_inicio;
-        
-        mostrarToast(`Pacote ${pacote.tipo_pacote} encontrado e preenchido automaticamente`, 'success');
-    }
-}
-
-// Listener para preencher automaticamente quando selecionar paciente
-document.getElementById('atendPaciente')?.addEventListener('change', function() {
-    if (this.value) {
-        preencherPacoteAutomatico(this.value);
-    }
-});
-
-// Listener para preencher automaticamente no formulário financeiro
-document.getElementById('finPaciente')?.addEventListener('change', function() {
-    if (this.value) {
-        preencherPacoteAutomatico(this.value);
-    }
-});
 
 // ====================== FUNÇÕES DE RELATÓRIOS ======================
 
@@ -1085,24 +1097,26 @@ async function carregarRelatorioAtendimentos() {
         if (data.success) {
             const tbody = document.querySelector('#relatorioAtendimentosTable tbody');
             if (tbody) {
-                tbody.innerHTML = '';
-                
-                data.atendimentos.forEach(atendimento => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${atendimento.paciente_nome}</td>
-                        <td>${atendimento.data_atendimento}</td>
-                        <td>${atendimento.tipo_pacote}</td>
-                        <td>${atendimento.data_inicio_pacote}</td>
-                        <td>${atendimento.status}</td>
-                        <td>${atendimento.unidade}</td>
-                        <td>${atendimento.observacoes || '-'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                if (data.atendimentos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">Nenhum atendimento encontrado</td></tr>';
+                } else {
+                    tbody.innerHTML = '';
+                    data.atendimentos.forEach(atendimento => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${atendimento.paciente_nome}</td>
+                            <td>${formataDataBR(atendimento.data_atendimento)}</td>
+                            <td>${atendimento.tipo_pacote}</td>
+                            <td>${formataDataBR(atendimento.data_inicio_pacote)}</td>
+                            <td>${atendimento.status}</td>
+                            <td>${atendimento.unidade}</td>
+                            <td>${atendimento.observacoes || '-'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
             }
             
-            // Atualizar totais
             const totalEl = document.getElementById('totalAtendimentos');
             const faltasEl = document.getElementById('totalFaltas');
             if (totalEl) totalEl.textContent = data.resumo.total_atendimentos || 0;
@@ -1115,7 +1129,7 @@ async function carregarRelatorioAtendimentos() {
 
 async function carregarRelatorioFinanceiro() {
     try {
-        const mes = document.getElementById('relatorioMesFinanceiro')?.value || '';
+        const mes = document.getElementById('relatorioMesFinanceiro')?.value || document.getElementById('relatorioMes')?.value || '';
         const clinica = document.getElementById('relatorioClinica')?.value || '';
         
         const params = new URLSearchParams();
@@ -1128,26 +1142,28 @@ async function carregarRelatorioFinanceiro() {
         if (data.success) {
             const tbody = document.querySelector('#relatorioFinanceiroTable tbody');
             if (tbody) {
-                tbody.innerHTML = '';
-                
-                data.lancamentos.forEach(lancamento => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${lancamento.paciente_nome}</td>
-                        <td>${lancamento.data}</td>
-                        <td>${lancamento.clinica}</td>
-                        <td>${lancamento.tipo_pacote || '-'}</td>
-                        <td>R$ ${lancamento.valor.toFixed(2)}</td>
-                        <td>R$ ${lancamento.despesa_automatica.toFixed(2)}</td>
-                        <td>R$ ${lancamento.receita_disponivel.toFixed(2)}</td>
-                        <td>${lancamento.forma_pagamento}</td>
-                        <td>${lancamento.nf_emitida ? 'Sim' : 'Não'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                if (data.lancamentos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-3 text-muted">Nenhum lançamento encontrado</td></tr>';
+                } else {
+                    tbody.innerHTML = '';
+                    data.lancamentos.forEach(lancamento => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${lancamento.paciente_nome}</td>
+                            <td>${formataDataBR(lancamento.data)}</td>
+                            <td>${lancamento.clinica}</td>
+                            <td>${lancamento.tipo_pacote || '-'}</td>
+                            <td>R$ ${lancamento.valor.toFixed(2)}</td>
+                            <td>R$ ${lancamento.despesa_automatica.toFixed(2)}</td>
+                            <td>R$ ${lancamento.receita_disponivel.toFixed(2)}</td>
+                            <td>${lancamento.forma_pagamento}</td>
+                            <td>${lancamento.nf_emitida ? 'Sim' : 'Não'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
             }
             
-            // Atualizar totais
             const totalBrutoEl = document.getElementById('relatorioTotalBruto');
             const totalDespesasEl = document.getElementById('relatorioTotalDespesas');
             const totalDisponivelEl = document.getElementById('relatorioTotalDisponivel');
@@ -1169,19 +1185,22 @@ async function carregarRelatorioPacientes() {
         if (data.success) {
             const tbody = document.querySelector('#relatorioPacientesTable tbody');
             if (tbody) {
-                tbody.innerHTML = '';
-                
-                data.pacientes.forEach(paciente => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${paciente.id}</td>
-                        <td>${paciente.nome}</td>
-                        <td>${paciente.telefone}</td>
-                        <td>${paciente.email || '-'}</td>
-                        <td>${paciente.ativo ? 'Ativo' : 'Inativo'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                if (data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">Nenhum paciente encontrado</td></tr>';
+                } else {
+                    tbody.innerHTML = '';
+                    data.data.forEach(paciente => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${paciente.id}</td>
+                            <td>${paciente.nome}</td>
+                            <td>${paciente.telefone}</td>
+                            <td>${paciente.email || '-'}</td>
+                            <td>${paciente.ativo ? 'Ativo' : 'Inativo'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
             }
         }
     } catch (error) {
@@ -1189,13 +1208,12 @@ async function carregarRelatorioPacientes() {
     }
 }
 
-// Função para exportar relatórios para CSV
 function exportarRelatorio(tipo) {
-    let dados = [];
+    let dadosExport = [];
     let nomeArquivo = '';
     
     if (tipo === 'atendimentos') {
-        dados = dados.atendimentos.map(a => ({
+        dadosExport = dados.atendimentos.map(a => ({
             Paciente: a.nomePaciente || a.paciente_nome,
             Data: a.dataAtendimento || a.data_atendimento,
             TipoPacote: a.tipoPacote || a.tipo_pacote,
@@ -1204,7 +1222,7 @@ function exportarRelatorio(tipo) {
         }));
         nomeArquivo = 'relatorio_atendimentos.csv';
     } else if (tipo === 'financeiro') {
-        dados = dados.financeiro.map(f => ({
+        dadosExport = dados.financeiro.map(f => ({
             Paciente: f.paciente_nome,
             Data: f.data,
             Clinica: f.clinica,
@@ -1214,7 +1232,7 @@ function exportarRelatorio(tipo) {
         }));
         nomeArquivo = 'relatorio_financeiro.csv';
     } else if (tipo === 'pacientes') {
-        dados = dados.pacientes.map(p => ({
+        dadosExport = dados.pacientes.map(p => ({
             ID: p.id,
             Nome: p.nome,
             Telefone: p.telefone,
@@ -1224,14 +1242,13 @@ function exportarRelatorio(tipo) {
         nomeArquivo = 'relatorio_pacientes.csv';
     }
     
-    if (dados.length === 0) {
+    if (dadosExport.length === 0) {
         mostrarToast('Não há dados para exportar', 'danger');
         return;
     }
     
-    // Criar CSV
-    let csv = Object.keys(dados[0]).join(',') + '\n';
-    dados.forEach(d => {
+    let csv = Object.keys(dadosExport[0]).join(',') + '\n';
+    dadosExport.forEach(d => {
         csv += Object.values(d).map(v => `"${v}"`).join(',') + '\n';
     });
     
@@ -1248,51 +1265,15 @@ function exportarRelatorio(tipo) {
     mostrarToast('Relatório exportado com sucesso');
 }
 
-// Função para gerar todos os relatórios
 async function gerarRelatorios() {
-    const mes = document.getElementById('relatorioMes').value;
-    const pacienteId = document.getElementById('relatorioPaciente').value;
-    const clinica = document.getElementById('relatorioClinica').value;
-    
-    // Carregar todos os relatórios
     await carregarRelatorioAtendimentos();
     await carregarRelatorioFinanceiro();
     await carregarRelatorioPacientes();
-    
     mostrarToast('Relatórios gerados com sucesso');
 }
 
-// Função para exportar relatórios em CSV
 function exportarRelatorioCSV() {
     exportarRelatorio('atendimentos');
     exportarRelatorio('financeiro');
     exportarRelatorio('pacientes');
-}
-
-// Atualizar a função de exportar Excel para incluir mais dados
-function exportarExcel() {
-    if (typeof XLSX === 'undefined') {
-        mostrarToast('Erro ao exportar', 'danger');
-        return;
-    }
-    let wb = XLSX.utils.book_new();
-    
-    if (dados.atendimentos.length) {
-        let agendaData = dados.atendimentos.map(a => ({
-            ID: a.idAtendimento || a.id_atendimento,
-            Paciente: a.nomePaciente || a.paciente_nome,
-            Data: a.dataAtendimento || a.data_atendimento,
-            TipoPacote: a.tipoPacote || a.tipo_pacote,
-            InicioPacote: a.dataInicioPacote || a.data_inicio_pacote,
-            Status: a.status,
-            Unidade: a.unidade
-        }));
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(agendaData), 'Agenda');
-    }
-    if (dados.pacientes.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.pacientes), 'Pacientes');
-    if (dados.financeiro.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.financeiro), 'Financeiro');
-    if (dados.despesas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.despesas), 'Despesas');
-    
-    XLSX.writeFile(wb, `backup_guanais_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    mostrarToast('Backup exportado');
 }
