@@ -14,42 +14,42 @@
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     
-    /* Light mode (default) */
+    /* Light mode (default) - Contraste melhorado */
     --bg-body: #f0f4f8;
     --bg-surface: #ffffff;
     --bg-surface-rgb: 255, 255, 255;
     --bg-elevated: #e8eef4;
     --bg-hover: #f5f9fc;
-    --text-primary: #1a202c;
-    --text-secondary: #4a5568;
-    --text-muted: #718096;
-    --border-light: #e2e8f0;
-    --border-medium: #cbd5e0;
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --border-light: #cbd5e1;
+    --border-medium: #94a3b8;
     --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     
     /* Accent Colors */
-    --accent-primary: #0ea5e9;
+    --accent-primary: #0284c7;
     --accent-primary-light: #38bdf8;
-    --accent-primary-dark: #0284c7;
-    --accent-primary-bg: rgba(14, 165, 233, 0.1);
-    --accent-secondary: #f59e0b;
-    --accent-secondary-bg: rgba(245, 158, 11, 0.1);
-    --accent-success: #10b981;
-    --accent-success-bg: rgba(16, 185, 129, 0.1);
-    --accent-danger: #ef4444;
-    --accent-danger-bg: rgba(239, 68, 68, 0.1);
-    --accent-warning: #f59e0b;
-    --accent-warning-bg: rgba(245, 158, 11, 0.1);
-    --accent-info: #3b82f6;
-    --accent-info-bg: rgba(59, 130, 246, 0.1);
+    --accent-primary-dark: #0369a1;
+    --accent-primary-bg: rgba(2, 132, 199, 0.12);
+    --accent-secondary: #d97706;
+    --accent-secondary-bg: rgba(217, 119, 6, 0.12);
+    --accent-success: #059669;
+    --accent-success-bg: rgba(5, 150, 105, 0.12);
+    --accent-danger: #dc2626;
+    --accent-danger-bg: rgba(220, 38, 38, 0.12);
+    --accent-warning: #d97706;
+    --accent-warning-bg: rgba(217, 119, 6, 0.12);
+    --accent-info: #2563eb;
+    --accent-info-bg: rgba(37, 99, 235, 0.12);
     
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
     --gradient-primary: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-dark) 100%);
-    --gradient-card: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+    --gradient-card: linear-gradient(135deg, rgba(2, 132, 199, 0.06) 0%, rgba(37, 99, 235, 0.06) 100%);
     
     /* Spacing & Sizing */
     --card-radius: 1rem;
@@ -58,22 +58,68 @@
     --header-height: 64px;
 }
 
-/* Dark mode */
+/* Dark mode - Contraste melhorado */
 body.dark {
     --bg-body: #0f172a;
     --bg-surface: #1e293b;
     --bg-surface-rgb: 30, 41, 59;
     --bg-elevated: #334155;
     --bg-hover: #3a4a62;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
+    --text-primary: #f8fafc;
+    --text-secondary: #e2e8f0;
     --text-muted: #94a3b8;
-    --border-light: #334155;
-    --border-medium: #475569;
+    --border-light: #475569;
+    --border-medium: #64748b;
     --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
     --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e1b2f 50%, #1a1a2e 100%);
+}
+
+/* Dashboard cards no modo escuro - Contraste melhorado */
+body.dark .card-modern h3 {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    background: none !important;
+    text-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+}
+
+body.dark .card-modern.text-center h3,
+body.dark .card-modern.text-center .fw-semibold {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    background: none !important;
+}
+
+body.dark .card-modern.text-center .text-muted {
+    color: #94a3b8 !important;
+    opacity: 1;
+}
+
+body.dark .card-modern.text-center .fs-4 {
+    color: var(--accent-success) !important;
+}
+
+body.dark #dashFaltas {
+    color: #f87171 !important;
+    -webkit-text-fill-color: #f87171 !important;
+    background: none !important;
+}
+
+body.dark #dashExcecoes {
+    color: #fbbf24 !important;
+    -webkit-text-fill-color: #fbbf24 !important;
+    background: none !important;
+}
+
+body.dark #dashProximo {
+    color: #60a5fa !important;
+    -webkit-text-fill-color: #60a5fa !important;
+    background: none !important;
+}
+
+body.dark .card-modern {
+    border: 1px solid var(--border-medium);
 }
 
 /* Dark mode specific overrides */

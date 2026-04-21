@@ -93,10 +93,30 @@ switch ($method) {
                 $atendimento['data_inicio_pacote'] = formatDateToBR($atendimento['data_inicio_pacote']);
             }
             
+            // Calcular resumo
+            $totalAtendimentos = count($atendimentos);
+            $totalFaltas = 0;
+            foreach ($atendimentos as $a) {
+                if ($a['status'] === 'Falta') {
+                    $totalFaltas++;
+                }
+            }
+            
+            $resumo = [
+                'total_atendimentos' => $totalAtendimentos,
+                'total_faltas' => $totalFaltas
+            ];
+            
             if (!empty($id) && count($atendimentos) === 1) {
-                successResponse($atendimentos[0], 'Atendimento encontrado');
+                successResponse([
+                    'atendimento' => $atendimentos[0],
+                    'resumo' => $resumo
+                ], 'Atendimento encontrado');
             } else {
-                successResponse($atendimentos, 'Atendimentos listados');
+                successResponse([
+                    'atendimentos' => $atendimentos,
+                    'resumo' => $resumo
+                ], 'Atendimentos listados');
             }
         } catch (PDOException $e) {
             errorResponse('Erro ao listar atendimentos', 500);

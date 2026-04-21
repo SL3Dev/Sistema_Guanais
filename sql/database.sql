@@ -1,10 +1,13 @@
 -- =====================================================
 -- SISTEMA DE GESTÃO CLÍNICA ESPAÇO GUANAIS
--- Script de criação do banco de dados
+-- Script completo de criação do banco de dados
 -- Compatível com MySQL 5.7+ / MariaDB 10.2+
 -- =====================================================
 
--- Criar banco de dados (se não existir)
+-- Dropar banco de dados se existir (para recriação limpa)
+DROP DATABASE IF EXISTS espaco_guanais;
+
+-- Criar banco de dados
 CREATE DATABASE IF NOT EXISTS espaco_guanais 
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
@@ -27,11 +30,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Inserir usuário padrão: admin / 0301
--- O hash abaixo é gerado com password_hash('0301', PASSWORD_DEFAULT)
--- Em produção, use password_hash() do PHP para gerar um hash único
+-- Senha hash gerada com password_hash('0301', PASSWORD_DEFAULT)
 INSERT INTO usuarios (usuario, senha, nome, email, tipo) VALUES 
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador', 'admin@espacoguanais.com.br', 'admin')
-ON DUPLICATE KEY UPDATE senha = VALUES(senha);
+('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador', 'admin@espacoguanais.com.br', 'admin');
 
 -- -----------------------------------------------------
 -- Tabela de permissões
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS permissoes (
     acao VARCHAR(50) NOT NULL,
     permitido BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE ON UPDATE CASCADE,
     UNIQUE KEY unique_permissao (usuario_id, modulo, acao)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -50,26 +52,46 @@ CREATE TABLE IF NOT EXISTS permissoes (
 -- Inserir permissões padrão para admin (acesso total)
 INSERT INTO permissoes (usuario_id, modulo, acao, permitido) VALUES
 (1, 'pacientes', 'visualizar', TRUE),
+(1, 'pacientes', 'criar', TRUE),
 (1, 'pacientes', 'editar', TRUE),
 (1, 'pacientes', 'excluir', TRUE),
-(1, 'pacientes', 'criar', TRUE),
 (1, 'atendimentos', 'visualizar', TRUE),
+(1, 'atendimentos', 'criar', TRUE),
 (1, 'atendimentos', 'editar', TRUE),
 (1, 'atendimentos', 'excluir', TRUE),
-(1, 'atendimentos', 'criar', TRUE),
 (1, 'financeiro', 'visualizar', TRUE),
+(1, 'financeiro', 'criar', TRUE),
 (1, 'financeiro', 'editar', TRUE),
 (1, 'financeiro', 'excluir', TRUE),
-(1, 'financeiro', 'criar', TRUE),
 (1, 'despesas', 'visualizar', TRUE),
+(1, 'despesas', 'criar', TRUE),
 (1, 'despesas', 'editar', TRUE),
 (1, 'despesas', 'excluir', TRUE),
-(1, 'despesas', 'criar', TRUE),
 (1, 'configuracoes', 'visualizar', TRUE),
+(1, 'configuracoes', 'criar', TRUE),
 (1, 'configuracoes', 'editar', TRUE),
-(1, 'configuracoes', 'excluir', TRUE),
-(1, 'configuracoes', 'criar', TRUE)
-ON DUPLICATE KEY UPDATE permitido = VALUES(permitido);
+(1, 'configuracoes', 'excluir', TRUE);
+
+-- -----------------------------------------------------
+-- Tabela de configurações do sistema
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS configuracoes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    chave VARCHAR(100) UNIQUE NOT NULL,
+    valor TEXT,
+    tipo ENUM('texto', 'numero', 'booleano', 'arquivo') DEFAULT 'texto',
+    descricao VARCHAR(255),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Inserir configurações padrão
+INSERT INTO configuracoes (chave, valor, tipo, descricao) VALUES
+('nome_sistema', 'Espaço Guanais', 'texto', 'Nome do sistema exibido no cabeçalho'),
+('logo_path', 'logo/logo.png', 'arquivo', 'Caminho da logo do sistema'),
+('logo_login', 'logo/logo.png', 'arquivo', 'Caminho da logo na tela de login'),
+('tema_padrao', 'light', 'texto', 'Tema padrão do sistema (light/dark)'),
+('permite_cadastro_online', '0', 'booleano', 'Permitir cadastro online de pacientes');
 
 -- -----------------------------------------------------
 -- Tabela de pacientes
@@ -82,10 +104,14 @@ CREATE TABLE IF NOT EXISTS pacientes (
     telefone VARCHAR(20) NOT NULL,
     email VARCHAR(100),
     endereco TEXT,
+    -- Responsável (menores de 18 anos)
     responsavel_nome VARCHAR(200),
     responsavel_telefone VARCHAR(20),
+    -- Contato de emergência (maiores de 18 anos)
     emergencia_nome VARCHAR(200),
     emergencia_telefone VARCHAR(20),
+    emergencia_parentesco VARCHAR(50),
+    emergencia_info_adicionais TEXT,
     ativo BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -199,8 +225,7 @@ SELECT
     COUNT(*) as total_lancamentos,
     SUM(f.valor) as total_bruto,
     SUM(f.despesa_automatica) as total_despesas,
-    SUM(f.receita_disponivel) as total_liquido,
-    SUM(f.valor * 0.25) as total_custos
+    SUM(f.receita_disponivel) as total_liquido
 FROM financeiro f
 GROUP BY YEAR(f.data), MONTH(f.data), f.clinica
 ORDER BY ano DESC, mes DESC;
@@ -236,5 +261,25 @@ LEFT JOIN (
 ) pa ON p.id = pa.paciente_id AND pa.rn = 1
 WHERE p.ativo = TRUE
 ORDER BY p.nome;
+
+-- =====================================================
+-- SCRIPT DE ATUALIZAÇÃO (ALTER TABLE para banco existente)
+-- =====================================================
+-- Execute apenas estas linhas se já tiver um banco existente:
+
+-- Adicionar campos de emergência ao paciente (se não existirem)
+-- ALTER TABLE pacientes ADD COLUMN emergencia_parentesco VARCHAR(50) AFTER emergencia_telefone;
+-- ALTER TABLE pacientes ADD COLUMN emergencia_info_adicionais TEXT AFTER emergencia_parentesco;
+
+-- Adicionar tabela de configurações (se não existir)
+-- CREATE TABLE IF NOT EXISTS configuracoes (
+--     id INT PRIMARY KEY AUTO_INCREMENT,
+--     chave VARCHAR(100) UNIQUE NOT NULL,
+--     valor TEXT,
+--     tipo ENUM('texto', 'numero', 'booleano', 'arquivo') DEFAULT 'texto',
+--     descricao VARCHAR(255),
+--     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Fim do script

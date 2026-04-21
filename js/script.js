@@ -370,7 +370,9 @@ async function editarPaciente(id) {
     }
     if (p.emergencia_nome) {
         document.getElementById('emergNome').value = p.emergencia_nome;
-        document.getElementById('emergTel').value = p.emergencia_telefone;
+        document.getElementById('emergTel').value = p.emergencia_telefone || '';
+        document.getElementById('emergParentesco').value = p.emergencia_parentesco || '';
+        document.getElementById('emergInfoAdicionais').value = p.emergencia_info_adicionais || '';
     }
     let idade = calcularIdade(p.data_nascimento);
     document.getElementById('respSec').classList.toggle('d-none', idade >= 18);
@@ -418,6 +420,8 @@ document.getElementById('pacienteForm').addEventListener('submit', async (e) => 
     } else {
         paciente.emergencia_nome = document.getElementById('emergNome').value;
         paciente.emergencia_telefone = document.getElementById('emergTel').value;
+        paciente.emergencia_parentesco = document.getElementById('emergParentesco').value;
+        paciente.emergencia_info_adicionais = document.getElementById('emergInfoAdicionais').value;
     }
     
     const success = await salvarPaciente(paciente);
@@ -523,17 +527,37 @@ function limparFiltrosAgenda() {
 
 document.getElementById('atendimentoForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
     let pacienteId = document.getElementById('atendPaciente').value;
     let pacienteNome = document.getElementById('atendPaciente').options[document.getElementById('atendPaciente').selectedIndex]?.text || '';
+    let dataAtendimento = document.getElementById('atendData').value;
+    let tipoPacote = document.getElementById('atendPacoteTipo').value;
+    let dataInicioPacote = document.getElementById('atendInicioPacote').value;
+    let status = document.getElementById('atendStatus').value;
+    let unidade = document.getElementById('atendUnidade').value;
+    
+    // Validações
+    if (!pacienteId) {
+        mostrarToast('Selecione um paciente', 'danger');
+        return;
+    }
+    if (!dataAtendimento) {
+        mostrarToast('Informe a data do atendimento', 'danger');
+        return;
+    }
+    if (!dataInicioPacote) {
+        mostrarToast('Informe a data de início do pacote', 'danger');
+        return;
+    }
     
     let novo = {
         paciente_id: pacienteId,
         paciente_nome: pacienteNome,
-        data_atendimento: formataDataISO(document.getElementById('atendData').value),
-        tipo_pacote: document.getElementById('atendPacoteTipo').value,
-        data_inicio_pacote: formataDataISO(document.getElementById('atendInicioPacote').value),
-        status: document.getElementById('atendStatus').value,
-        unidade: document.getElementById('atendUnidade').value
+        data_atendimento: formataDataISO(dataAtendimento),
+        tipo_pacote: tipoPacote,
+        data_inicio_pacote: formataDataISO(dataInicioPacote),
+        status: status,
+        unidade: unidade
     };
     
     const success = await salvarAtendimento(novo);
@@ -542,6 +566,8 @@ document.getElementById('atendimentoForm').addEventListener('submit', async (e) 
         e.target.reset();
         // Manter data de hoje como padrão
         document.getElementById('atendData').value = new Date().toISOString().slice(0, 10);
+        // Resetar informações do paciente
+        resetarInfoAtendimento();
     }
 });
 
@@ -550,33 +576,77 @@ async function renderFinanceiro() {
     let mes = document.getElementById('finMesFiltro')?.value || new Date().toISOString().slice(0, 7);
     let clinicaFiltro = document.getElementById('finClinicaFiltro')?.value || '';
     
-    let resumo = await carregarFinanceiro(mes, clinicaFiltro);
+    // Recarregar dados do financeiro
+    await carregarFinanceiro(mes, clinicaFiltro);
     
     let html = '';
     let totalBruto = 0;
+    let totalCusto = 0;
+    let totalLiquido = 0;
     
     dados.financeiro.forEach(f => {
-        let valor = f.valor || 0;
-        let liquido = f.receita_disponivel || (valor * 0.75);
-        let dataFormatada = formataDataBR(f.data);
+        let valor = parseFloat(f.valor) || 0;
+        let despesa = parseFloat(f.despesa_automatica) || (valor * 0.25);
+        let liquido = parseFloat(f.receita_disponivel) || (valor * 0.75);
+        let dataFormatada = f.data || '';
         
         totalBruto += valor;
+        totalCusto += despesa;
+        totalLiquido += liquido;
         
-        html += `<tr><td>${dataFormatada}</td><td>${f.paciente_nome || f.pacienteNome || ''}</td><td>${f.clinica || ''}</td><td>R$ ${valor.toFixed(2)}</td><td>R$ ${liquido.toFixed(2)}</td><td>${f.forma_pagamento || f.formaPagamento || ''}</td><td>${f.nf_emitida || f.nfEmitida ? 'Sim' : 'Não'}</td><td><button class="btn btn-sm btn-outline" onclick="excluirFinanceiro('${f.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
+        html += `<tr>
+            <td>${dataFormatada}</td>
+            <td>${f.paciente_nome || ''}</td>
+            <td>${f.clinica || ''}</td>
+            <td>R$ ${valor.toFixed(2)}</td>
+            <td>R$ ${despesa.toFixed(2)}</td>
+            <td>R$ ${liquido.toFixed(2)}</td>
+            <td>${f.forma_pagamento || ''}</td>
+            <td>${f.nf_emitida == 1 || f.nf_emitida === true ? 'Sim' : 'Não'}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline" onclick="editarFinanceiro('${f.id}')" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline text-danger" onclick="excluirFinanceiro('${f.id}')" title="Excluir">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>`;
     });
     
-    document.getElementById('finTbody').innerHTML = html || '<tr><td colspan="8" class="text-center py-3 text-muted">Nenhum lançamento encontrado</td></tr>';
+    document.getElementById('finTbody').innerHTML = html || '<tr><td colspan="9" class="text-center py-3 text-muted">Nenhum lançamento encontrado</td></tr>';
     
-    if (resumo) {
-        document.getElementById('finTotalBruto').innerHTML = `R$ ${resumo.total_bruto.toFixed(2)}`;
-        document.getElementById('finCusto').innerHTML = `R$ ${resumo.custo.toFixed(2)}`;
-        document.getElementById('finLiquido').innerHTML = `R$ ${resumo.liquido.toFixed(2)}`;
-    } else {
-        let custo = totalBruto * 0.25;
-        document.getElementById('finTotalBruto').innerHTML = `R$ ${totalBruto.toFixed(2)}`;
-        document.getElementById('finCusto').innerHTML = `R$ ${custo.toFixed(2)}`;
-        document.getElementById('finLiquido').innerHTML = `R$ ${(totalBruto - custo).toFixed(2)}`;
-    }
+    // Atualizar resumo financeiro
+    document.getElementById('finTotalBruto').innerHTML = `R$ ${totalBruto.toFixed(2)}`;
+    document.getElementById('finCusto').innerHTML = `R$ ${totalCusto.toFixed(2)}`;
+    document.getElementById('finLiquido').innerHTML = `R$ ${totalLiquido.toFixed(2)}`;
+}
+
+async function editarFinanceiro(id) {
+    const lancamento = dados.financeiro.find(f => f.id === id);
+    if (!lancamento) return;
+    
+    // Preencher formulário com dados do lançamento
+    document.getElementById('finPaciente').value = lancamento.paciente_id || '';
+    document.getElementById('finClinica').value = lancamento.clinica || 'ANIMO';
+    document.getElementById('finTipoPacote').value = lancamento.tipo_pacote || '';
+    document.getElementById('finDataInicio').value = lancamento.data_inicio_pacote || '';
+    document.getElementById('finData').value = lancamento.data || '';
+    document.getElementById('finValor').value = lancamento.valor || 0;
+    document.getElementById('finForma').value = lancamento.forma_pagamento || 'Pix';
+    document.getElementById('finNf').checked = lancamento.nf_emitida == 1 || lancamento.nf_emitida === true;
+    
+    // Armazenar ID para edição
+    document.getElementById('finEditId').value = id;
+    
+    // Mudar texto do botão
+    const submitBtn = document.querySelector('#financeiroForm button[type="submit"]');
+    submitBtn.innerHTML = '<i class="bi bi-pencil me-2"></i>Atualizar Recebimento';
+    
+    // Rolar para o formulário
+    document.getElementById('financeiro').scrollIntoView({ behavior: 'smooth' });
+    
+    mostrarToast('Dados carregados para edição', 'info');
 }
 
 async function excluirFinanceiro(id) {
@@ -590,10 +660,11 @@ async function excluirFinanceiro(id) {
 
 document.getElementById('financeiroForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    let editId = document.getElementById('finEditId').value;
     let pacienteId = document.getElementById('finPaciente').value;
     let pacienteNome = document.getElementById('finPaciente').options[document.getElementById('finPaciente').selectedIndex]?.text || '';
     
-    let novo = {
+    let lancamento = {
         paciente_id: pacienteId,
         paciente_nome: pacienteNome,
         clinica: document.getElementById('finClinica').value,
@@ -605,13 +676,40 @@ document.getElementById('financeiroForm').addEventListener('submit', async (e) =
         nf_emitida: document.getElementById('finNf').checked
     };
     
-    const success = await salvarFinanceiro(novo);
+    let success;
+    if (editId) {
+        // Modo edição (PUT)
+        lancamento.id = editId;
+        success = await atualizarFinanceiro(lancamento);
+        if (success) {
+            document.getElementById('finEditId').value = '';
+            const submitBtn = document.querySelector('#financeiroForm button[type="submit"]');
+            submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Registrar Recebimento';
+        }
+    } else {
+        // Modo criação (POST)
+        success = await salvarFinanceiro(lancamento);
+    }
+    
     if (success) {
         renderFinanceiro();
         e.target.reset();
         document.getElementById('finData').value = new Date().toISOString().slice(0, 10);
     }
 });
+
+async function atualizarFinanceiro(lancamento) {
+    try {
+        const result = await apiRequest('financeiro.php', 'PUT', lancamento);
+        if (result.success) {
+            mostrarToast('Recebimento atualizado com sucesso');
+            await carregarFinanceiro();
+            return true;
+        }
+    } catch (error) {
+        return false;
+    }
+}
 
 // ========== DESPESAS ==========
 function renderDespesas() {
@@ -623,9 +721,51 @@ function renderDespesas() {
         
         let badgeClass = status === 'Paga' ? 'badge-success' : (status === 'Parcial' ? 'badge-warning' : 'badge-danger');
         
-        html += `<tr><td>${d.descricao || ''}</td><td>${d.categoria || ''}</td><td>R$ ${valor.toFixed(2)}</td><td>${d.parcelas_pagas}/${numParcelas}</td><td><span class="badge-custom ${badgeClass}">${status}</span></td><td><button class="btn btn-sm btn-outline" onclick="pagarParcela('${d.id}')" ${status === 'Paga' ? 'disabled' : ''}><i class="bi bi-check2"></i></button> <button class="btn btn-sm btn-outline" onclick="excluirDespesa('${d.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
+        html += `<tr>
+            <td>${d.descricao || ''}</td>
+            <td>${d.categoria || ''}</td>
+            <td>R$ ${valor.toFixed(2)}</td>
+            <td>${d.parcelas_pagas}/${numParcelas}</td>
+            <td><span class="badge-custom ${badgeClass}">${status}</span></td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline" onclick="editarDespesa('${d.id}')" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="pagarParcela('${d.id}')" ${status === 'Paga' ? 'disabled' : ''} title="Pagar parcela">
+                    <i class="bi bi-check2"></i>
+                </button>
+                <button class="btn btn-sm btn-outline text-danger" onclick="excluirDespesa('${d.id}')" title="Excluir">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>`;
     });
     document.getElementById('despesasTbody').innerHTML = html || '<tr><td colspan="6" class="text-center py-3 text-muted">Nenhuma despesa cadastrada</td></tr>';
+}
+
+async function editarDespesa(id) {
+    const despesa = dados.despesas.find(d => d.id === id);
+    if (!despesa) return;
+    
+    document.getElementById('despDesc').value = despesa.descricao || '';
+    document.getElementById('despCat').value = despesa.categoria || 'Fixa';
+    document.getElementById('despValor').value = despesa.valor_total || 0;
+    document.getElementById('despParcelas').value = despesa.num_parcelas || 1;
+    document.getElementById('despPagas').value = despesa.parcelas_pagas || 0;
+    document.getElementById('despDiaVenc').value = despesa.dia_vencimento || '';
+    document.getElementById('despDataInicio').value = despesa.data_inicio || '';
+    
+    // Armazenar ID para edição
+    document.getElementById('despesaEditId').value = id;
+    
+    // Mudar texto do botão
+    const submitBtn = document.querySelector('#despesaForm button[type="submit"]');
+    submitBtn.innerHTML = '<i class="bi bi-pencil me-2"></i>Atualizar Despesa';
+    
+    // Rolar para o formulário
+    document.getElementById('despesas').scrollIntoView({ behavior: 'smooth' });
+    
+    mostrarToast('Dados carregados para edição', 'info');
 }
 
 async function pagarParcela(id) {
@@ -646,8 +786,9 @@ async function excluirDespesa(id) {
 
 document.getElementById('despesaForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    let editId = document.getElementById('despesaEditId').value;
     
-    let nova = {
+    let despesa = {
         descricao: document.getElementById('despDesc').value,
         categoria: document.getElementById('despCat').value,
         valor_total: parseFloat(document.getElementById('despValor').value),
@@ -657,7 +798,21 @@ document.getElementById('despesaForm').addEventListener('submit', async (e) => {
         data_inicio: document.getElementById('despDataInicio').value || null
     };
     
-    const success = await salvarDespesa(nova);
+    let success;
+    if (editId) {
+        // Modo edição (PUT)
+        despesa.id = editId;
+        success = await atualizarDespesa(despesa);
+        if (success) {
+            document.getElementById('despesaEditId').value = '';
+            const submitBtn = document.querySelector('#despesaForm button[type="submit"]');
+            submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Salvar Despesa';
+        }
+    } else {
+        // Modo criação (POST)
+        success = await salvarDespesa(despesa);
+    }
+    
     if (success) {
         renderDespesas();
         e.target.reset();
@@ -666,78 +821,243 @@ document.getElementById('despesaForm').addEventListener('submit', async (e) => {
     }
 });
 
-// ====================== FUNÇÕES DE PACOTES ======================
-async function buscarPacoteAutomatico(pacienteId) {
+async function atualizarDespesa(despesa) {
     try {
-        const response = await fetch(`api/pacotes.php?paciente_id=${pacienteId}&status=Ativo`);
+        const result = await apiRequest('despesas.php', 'PUT', despesa);
+        if (result.success) {
+            mostrarToast('Despesa atualizada com sucesso');
+            await carregarDespesas();
+            return true;
+        }
+    } catch (error) {
+        return false;
+    }
+}
+
+// ====================== FUNÇÕES DE PACOTES E ATENDIMENTOS ======================
+let pacienteInfoAtual = null; // Armazena informações do paciente selecionado
+
+/**
+ * Busca informações completas do paciente incluindo pacote ativo e contagem de atendimentos
+ * Usa o novo endpoint da API com ?completo=true
+ */
+async function buscarInfoCompletaPaciente(pacienteId) {
+    if (!pacienteId) return null;
+    
+    try {
+        const response = await fetch(`api/pacientes.php?id=${encodeURIComponent(pacienteId)}&completo=true`);
         const result = await response.json();
         
-        if (result.success) {
-            const pacotes = result.data?.pacotes || result.data || [];
-            
-            if (pacotes.length > 0) {
-                // Ordena por data de início decrescente para pegar o mais recente
-                pacotes.sort((a, b) => {
-                    const dateA = new Date(a.data_inicio.split('/').reverse().join('-'));
-                    const dateB = new Date(b.data_inicio.split('/').reverse().join('-'));
-                    return dateB - dateA;
-                });
-                
-                const pacote = pacotes[0];
-                
-                // Verificar se o pacote está vencido (data_fim no passado)
-                if (pacote.data_fim) {
-                    const dataFim = new Date(pacote.data_fim.split('/').reverse().join('-'));
-                    if (dataFim < new Date()) {
-                        mostrarToast(`Pacote vencido em ${pacote.data_fim}`, 'danger');
-                        return null;
-                    }
-                }
-                
-                return pacote;
-            }
+        if (result.success && result.data) {
+            return result.data;
         }
         return null;
     } catch (error) {
-        console.error('Erro ao buscar pacote automático:', error);
+        console.error('Erro ao buscar informações completas do paciente:', error);
         return null;
     }
 }
 
+/**
+ * Preenche automaticamente os campos de pacote quando um paciente é selecionado
+ * Esta função é chamada quando o usuário seleciona um paciente no formulário
+ */
 async function preencherPacoteAutomatico(pacienteId) {
-    if (!pacienteId) return;
+    if (!pacienteId) {
+        resetarInfoAtendimento();
+        return;
+    }
     
-    const pacote = await buscarPacoteAutomatico(pacienteId);
+    // Buscar informações completas do paciente (inclui pacote e atendimentos)
+    const pacienteInfo = await buscarInfoCompletaPaciente(pacienteId);
+    pacienteInfoAtual = pacienteInfo;
     
-    if (pacote) {
+    if (!pacienteInfo) {
+        mostrarToast('Erro ao buscar informações do paciente', 'danger');
+        resetarInfoAtendimento();
+        return;
+    }
+    
+    // Elementos do formulário de Atendimento
+    const tipoPacoteField = document.getElementById('atendPacoteTipo');
+    const dataInicioField = document.getElementById('atendInicioPacote');
+    const infoPacienteDiv = document.getElementById('infoPacienteSelecionado');
+    
+    // Elementos do formulário Financeiro
+    const finTipoPacote = document.getElementById('finTipoPacote');
+    const finDataInicio = document.getElementById('finDataInicio');
+    
+    if (pacienteInfo.pacote) {
+        // Paciente tem pacote ativo - preencher automaticamente
+        const pacote = pacienteInfo.pacote;
+        
         // Converte data BR (dd/mm/aaaa) para ISO (aaaa-mm-dd)
-        const dataInicioISO = pacote.data_inicio.split('/').reverse().join('-');
+        const dataInicioISO = pacote.data_inicio.includes('-') ? pacote.data_inicio : pacote.data_inicio.split('/').reverse().join('-');
         
-        // Formulário de Atendimento
-        const tipoPacoteField = document.getElementById('atendPacoteTipo');
-        const dataInicioField = document.getElementById('atendInicioPacote');
-        
+        // Preencher formulário de Atendimento
         if (tipoPacoteField) tipoPacoteField.value = pacote.tipo_pacote;
         if (dataInicioField) dataInicioField.value = dataInicioISO;
         
-        // Formulário Financeiro
-        const finTipoPacote = document.getElementById('finTipoPacote');
-        const finDataInicio = document.getElementById('finDataInicio');
+        // Preencher formulário Financeiro
         if (finTipoPacote) finTipoPacote.value = pacote.tipo_pacote;
         if (finDataInicio) finDataInicio.value = dataInicioISO;
         
-        mostrarToast(`Pacote ${pacote.tipo_pacote} encontrado e preenchido automaticamente`, 'success');
+        // Mostrar informações do paciente, pacote e atendimentos
+        if (infoPacienteDiv) {
+            const sessoesRealizadas = pacote.sessoes_realizadas || 0;
+            const sessoesRestantes = pacote.sessoes_restantes || 0;
+            const totalAtendimentos = pacienteInfo.total_atendimentos || 0;
+            const totalFaltas = pacienteInfo.total_faltas || 0;
+            
+            let statusPacote = 'Ativo';
+            if (sessoesRestantes === 0) {
+                statusPacote = 'Pacote concluído';
+            } else if (sessoesRestantes > 0) {
+                statusPacote = `${sessoesRestantes} sessão(ões) restante(s)`;
+            }
+            
+            infoPacienteDiv.innerHTML = `
+                <div class="alert alert-info mb-0">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-person-circle me-2 text-primary"></i>
+                                <div>
+                                    <strong>Paciente:</strong><br>
+                                    <span class="text-muted">${pacienteInfo.nome}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-telephone me-2 text-muted"></i>
+                                <span class="text-muted">${pacienteInfo.telefone || '—'}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-box-seam me-2 text-success"></i>
+                                <div>
+                                    <strong>Pacote ${pacote.tipo_pacote}</strong><br>
+                                    <span class="text-muted">Início: ${pacote.data_inicio}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock me-2 text-muted"></i>
+                                <span class="text-muted">${statusPacote}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
+                                        <small class="text-muted d-block">Atendimentos</small>
+                                        <strong class="text-primary">${totalAtendimentos}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
+                                        <small class="text-muted d-block">Sessões no Pacote</small>
+                                        <strong class="text-success">${sessoesRealizadas}/${pacote.sessoes_estimadas || 0}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
+                                        <small class="text-muted d-block">Faltas</small>
+                                        <strong class="text-danger">${totalFaltas}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
+                                        <small class="text-muted d-block">Restantes</small>
+                                        <strong class="text-warning">${sessoesRestantes}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        mostrarToast(`Pacote ${pacote.tipo_pacote} encontrado! Dados preenchidos automaticamente.`, 'success');
+    } else {
+        // Paciente sem pacote ativo
+        if (infoPacienteDiv) {
+            const totalAtendimentos = pacienteInfo.total_atendimentos || 0;
+            const totalFaltas = pacienteInfo.total_faltas || 0;
+            
+            infoPacienteDiv.innerHTML = `
+                <div class="alert alert-warning mb-0">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-person-circle me-2 text-primary"></i>
+                                <div>
+                                    <strong>Paciente:</strong><br>
+                                    <span class="text-muted">${pacienteInfo.nome}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-telephone me-2 text-muted"></i>
+                                <span class="text-muted">${pacienteInfo.telefone || '—'}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
+                                        <small class="text-muted d-block">Atendimentos</small>
+                                        <strong class="text-primary">${totalAtendimentos}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
+                                        <small class="text-muted d-block">Faltas</small>
+                                        <strong class="text-danger">${totalFaltas}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <em class="text-muted">Nenhum pacote ativo encontrado. Preencha os dados do atendimento manualmente.</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Definir como Avulso e limpar data de início
+        if (tipoPacoteField) tipoPacoteField.value = 'Avulso';
+        if (dataInicioField) dataInicioField.value = '';
+        
+        // Limpar campos do financeiro
+        if (finTipoPacote) finTipoPacote.value = 'Avulso';
+        if (finDataInicio) finDataInicio.value = '';
     }
+}
+
+function resetarInfoAtendimento() {
+    const infoPacienteDiv = document.getElementById('infoPacienteSelecionado');
+    if (infoPacienteDiv) {
+        infoPacienteDiv.innerHTML = '';
+    }
+    pacienteInfoAtual = null;
 }
 
 // Listeners para preencher automaticamente quando selecionar paciente
 document.addEventListener('DOMContentLoaded', function() {
+    // Definir data de hoje como padrão no formulário de atendimento
+    const atendData = document.getElementById('atendData');
+    if (atendData) {
+        atendData.value = new Date().toISOString().slice(0, 10);
+    }
+    
     const atendPaciente = document.getElementById('atendPaciente');
     const finPaciente = document.getElementById('finPaciente');
     
     if (atendPaciente) {
         atendPaciente.addEventListener('change', function() {
             if (this.value) preencherPacoteAutomatico(this.value);
+            else resetarInfoAtendimento();
         });
     }
     
@@ -789,10 +1109,64 @@ function importarExcel(event, restaurar) {
         wb.SheetNames.forEach(nome => {
             let sheet = wb.Sheets[nome];
             let data = XLSX.utils.sheet_to_json(sheet);
-            if (nome.toLowerCase().includes('paciente')) novosPacientes = data;
-            else if (nome.toLowerCase().includes('agenda')) novosAtendimentos = data;
-            else if (nome.toLowerCase().includes('financeiro')) novosFinanceiro = data;
-            else if (nome.toLowerCase().includes('despesa')) novosDespesas = data;
+            
+            if (nome.toLowerCase().includes('paciente')) {
+                // Mapear colunas do Excel para o formato do sistema
+                novosPacientes = data.map(p => ({
+                    id: p['ID'] || gerarId('P'),
+                    nome: p['Nome'] || p['nome'] || '',
+                    cpf: p['CPF'] || p['cpf'] || '',
+                    data_nascimento: converterDataBR(p['Nascimento'] || p['data_nascimento'] || ''),
+                    telefone: p['Telefone'] || p['telefone'] || '',
+                    email: p['Email'] || p['email'] || '',
+                    endereco: p['Endereço'] || p['endereco'] || '',
+                    ativo: true
+                }));
+            }
+            else if (nome.toLowerCase().includes('agenda')) {
+                // Mapear colunas do Excel para o formato do sistema
+                novosAtendimentos = data.map(a => ({
+                    id_atendimento: a['ID'] || a['id'] || gerarId('A'),
+                    paciente_id: a['Paciente ID'] || '',
+                    paciente_nome: a['Paciente'] || a['paciente_nome'] || '',
+                    data_atendimento: converterDataBR(a['Data'] || a['data_atendimento'] || ''),
+                    tipo_pacote: a['Tipo Pacote'] || a['tipo_pacote'] || 'Avulso',
+                    data_inicio_pacote: converterDataBR(a['Início Pacote'] || a['data_inicio_pacote'] || ''),
+                    status: a['Status'] || a['status'] || 'Confirmado',
+                    unidade: a['Unidade'] || a['unidade'] || 'ANIMO',
+                    observacoes: a['Observação'] || a['observacoes'] || ''
+                }));
+            }
+            else if (nome.toLowerCase().includes('financeiro')) {
+                // Mapear colunas do Excel para o formato do sistema
+                novosFinanceiro = data.map(f => ({
+                    id: 'fin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    paciente_id: f['Paciente ID'] || '',
+                    paciente_nome: f['Paciente'] || f['paciente_nome'] || '',
+                    clinica: f['Clínica'] || f['clinica'] || 'ANIMO',
+                    tipo_pacote: f['Tipo Pacote'] || '',
+                    data: converterDataBR(f['Data'] || f['data'] || ''),
+                    valor: parseFloat(f['Valor Bruto'] || f['valor'] || 0),
+                    forma_pagamento: f['Forma Pagamento'] || f['forma_pagamento'] || 'Pix',
+                    nf_emitida: (f['NF Emitida'] === 'Sim') ? 1 : 0,
+                    observacoes: f['Observação'] || '',
+                    despesa_automatica: parseFloat(f['Valor Bruto'] || 0) * 0.25,
+                    receita_disponivel: parseFloat(f['Valor Líquido'] || f['Valor Bruto'] || 0)
+                }));
+            }
+            else if (nome.toLowerCase().includes('despesa')) {
+                // Mapear colunas do Excel para o formato do sistema
+                novosDespesas = data.map(d => ({
+                    id: 'desp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    descricao: d['Descrição'] || d['descricao'] || '',
+                    categoria: d['Categoria'] || d['categoria'] || 'Fixa',
+                    valor_total: parseFloat(d['Valor Total'] || d['valor_total'] || 0),
+                    num_parcelas: parseInt(d['Num Parcelas'] || d['num_parcelas'] || 1),
+                    parcelas_pagas: parseInt(d['Parcelas Pagas'] || d['parcelas_pagas'] || 0),
+                    dia_vencimento: parseInt(d['Dia Vencimento'] || d['dia_vencimento'] || null),
+                    data_inicio: converterDataBR(d['Data Início'] || d['data_inicio'] || '')
+                }));
+            }
         });
         
         if (restaurar) {
@@ -808,10 +1182,25 @@ function importarExcel(event, restaurar) {
         }
         
         inicializarSistema();
-        mostrarToast('Importação concluída');
+        mostrarToast('Importação concluída com ' + (novosPacientes.length + novosAtendimentos.length + novosFinanceiro.length + novosDespesas.length) + ' registros');
     };
     reader.readAsArrayBuffer(file);
     event.target.value = '';
+}
+
+// Função auxiliar para converter data BR (dd/mm/aaaa) para ISO (aaaa-mm-dd)
+function converterDataBR(data) {
+    if (!data) return '';
+    // Se já estiver no formato ISO
+    if (data.includes('-') && data.split('-')[0].length === 4) return data;
+    // Converter de BR para ISO
+    if (data.includes('/')) {
+        let partes = data.split('/');
+        if (partes.length === 3) {
+            return `${partes[2]}-${partes[1]}-${partes[0]}`;
+        }
+    }
+    return data;
 }
 
 // ========== TEMA ESCURO/CLARO ==========
@@ -1132,32 +1521,36 @@ async function carregarRelatorioFinanceiro() {
         const mes = document.getElementById('relatorioMesFinanceiro')?.value || document.getElementById('relatorioMes')?.value || '';
         const clinica = document.getElementById('relatorioClinica')?.value || '';
         
-        const params = new URLSearchParams();
-        if (mes) params.append('mes', mes);
-        if (clinica) params.append('clinica', clinica);
+        // Construir URL com parâmetros
+        let url = 'api/financeiro.php?';
+        if (mes) url += 'mes=' + encodeURIComponent(mes) + '&';
+        if (clinica) url += 'clinica=' + encodeURIComponent(clinica);
         
-        const response = await fetch(`api/financeiro.php?${params}`);
+        const response = await fetch(url);
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.data) {
+            const lancamentos = data.data.lancamentos || [];
+            const resumo = data.data.resumo || null;
+            
             const tbody = document.querySelector('#relatorioFinanceiroTable tbody');
             if (tbody) {
-                if (data.lancamentos.length === 0) {
+                if (lancamentos.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="9" class="text-center py-3 text-muted">Nenhum lançamento encontrado</td></tr>';
                 } else {
                     tbody.innerHTML = '';
-                    data.lancamentos.forEach(lancamento => {
+                    lancamentos.forEach(lancamento => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td>${lancamento.paciente_nome}</td>
-                            <td>${formataDataBR(lancamento.data)}</td>
-                            <td>${lancamento.clinica}</td>
+                            <td>${lancamento.paciente_nome || ''}</td>
+                            <td>${lancamento.data || ''}</td>
+                            <td>${lancamento.clinica || ''}</td>
                             <td>${lancamento.tipo_pacote || '-'}</td>
-                            <td>R$ ${lancamento.valor.toFixed(2)}</td>
-                            <td>R$ ${lancamento.despesa_automatica.toFixed(2)}</td>
-                            <td>R$ ${lancamento.receita_disponivel.toFixed(2)}</td>
-                            <td>${lancamento.forma_pagamento}</td>
-                            <td>${lancamento.nf_emitida ? 'Sim' : 'Não'}</td>
+                            <td>R$ ${(parseFloat(lancamento.valor) || 0).toFixed(2)}</td>
+                            <td>R$ ${(parseFloat(lancamento.despesa_automatica) || 0).toFixed(2)}</td>
+                            <td>R$ ${(parseFloat(lancamento.receita_disponivel) || 0).toFixed(2)}</td>
+                            <td>${lancamento.forma_pagamento || ''}</td>
+                            <td>${lancamento.nf_emitida == 1 || lancamento.nf_emitida === true ? 'Sim' : 'Não'}</td>
                         `;
                         tbody.appendChild(tr);
                     });
@@ -1168,9 +1561,11 @@ async function carregarRelatorioFinanceiro() {
             const totalDespesasEl = document.getElementById('relatorioTotalDespesas');
             const totalDisponivelEl = document.getElementById('relatorioTotalDisponivel');
             
-            if (totalBrutoEl) totalBrutoEl.textContent = `R$ ${(data.resumo.total_bruto || 0).toFixed(2)}`;
-            if (totalDespesasEl) totalDespesasEl.textContent = `R$ ${(data.resumo.total_despesas || 0).toFixed(2)}`;
-            if (totalDisponivelEl) totalDisponivelEl.textContent = `R$ ${(data.resumo.total_liquido || 0).toFixed(2)}`;
+            if (resumo) {
+                if (totalBrutoEl) totalBrutoEl.textContent = `R$ ${(resumo.total_bruto || 0).toFixed(2)}`;
+                if (totalDespesasEl) totalDespesasEl.textContent = `R$ ${(resumo.custo || 0).toFixed(2)}`;
+                if (totalDisponivelEl) totalDisponivelEl.textContent = `R$ ${(resumo.liquido || 0).toFixed(2)}`;
+            }
         }
     } catch (error) {
         console.error('Erro ao carregar relatório financeiro:', error);
@@ -1276,4 +1671,308 @@ function exportarRelatorioCSV() {
     exportarRelatorio('atendimentos');
     exportarRelatorio('financeiro');
     exportarRelatorio('pacientes');
+}
+
+// ==================== GESTÃO DE USUÁRIOS ====================
+
+/**
+ * Carrega a lista de usuários via API e preenche a tabela
+ */
+async function carregarUsuarios() {
+    const tbody = document.getElementById('usuariosTbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Carregando...</td></tr>';
+
+    try {
+        const response = await fetch('api/usuarios.php', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+
+        if (result.success && Array.isArray(result.data)) {
+            tbody.innerHTML = '';
+            result.data.forEach(usuario => {
+                const statusBadge = usuario.ativo == 1
+                    ? '<span class="badge bg-success">Ativo</span>'
+                    : '<span class="badge bg-secondary">Inativo</span>';
+
+                const row = `
+                    <tr>
+                        <td>${usuario.id}</td>
+                        <td>${escapeHtml(usuario.usuario)}</td>
+                        <td>${escapeHtml(usuario.nome)}</td>
+                        <td>${escapeHtml(usuario.tipo)}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline" onclick="editarUsuario(${usuario.id})" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline" onclick="gerenciarPermissoes(${usuario.id})" title="Permissões">
+                                <i class="bi bi-shield-lock"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline" onclick="toggleUsuarioStatus(${usuario.id}, ${usuario.ativo})" title="${usuario.ativo == 1 ? 'Desativar' : 'Ativar'}">
+                                <i class="bi ${usuario.ativo == 1 ? 'bi-toggle-on text-success' : 'bi-toggle-off text-muted'}"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar usuários: ' + (result.error || 'Desconhecido') + '</td></tr>';
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Falha de conexão com a API</td></tr>';
+    }
+}
+
+/**
+ * Previne XSS
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+/**
+ * Abre o modal de edição de usuário e carrega os dados atuais
+ */
+async function editarUsuario(id) {
+    // Busca os dados do usuário via GET com parâmetro id
+    try {
+        const response = await fetch(`api/usuarios.php?id=${id}`, { credentials: 'same-origin' });
+        const result = await response.json();
+        if (result.success && result.data) {
+            const usuario = result.data;
+            document.getElementById('editUsuId').value = usuario.id;
+            document.getElementById('editUsuNome').value = usuario.nome || '';
+            document.getElementById('editUsuEmail').value = usuario.email || '';
+            document.getElementById('editUsuTipo').value = usuario.tipo || 'secretaria';
+            document.getElementById('editUsuAtivo').checked = usuario.ativo == 1;
+            document.getElementById('editUsuSenha').value = ''; // limpa campo senha
+
+            new bootstrap.Modal(document.getElementById('modalEditarUsuario')).show();
+        } else {
+            alert('Erro ao carregar dados do usuário');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Erro de conexão');
+    }
+}
+
+/**
+ * Salva as alterações do usuário (PUT)
+ */
+async function atualizarUsuario() {
+    const id = document.getElementById('editUsuId').value;
+    const nome = document.getElementById('editUsuNome').value;
+    const email = document.getElementById('editUsuEmail').value;
+    const tipo = document.getElementById('editUsuTipo').value;
+    const ativo = document.getElementById('editUsuAtivo').checked ? 1 : 0;
+    const senha = document.getElementById('editUsuSenha').value;
+
+    const payload = { nome, email, tipo, ativo };
+    if (senha.trim() !== '') payload.senha = senha;
+
+    try {
+        const response = await fetch(`api/usuarios.php?id=${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
+            carregarUsuarios(); // recarrega a lista
+            alert('Usuário atualizado com sucesso');
+        } else {
+            alert('Erro: ' + (result.error || 'Não foi possível atualizar'));
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Erro de conexão');
+    }
+}
+
+/**
+ * Gerencia permissões do usuário (abre modal e carrega as permissões)
+ */
+async function gerenciarPermissoes(usuarioId) {
+    try {
+        const response = await fetch(`api/usuarios.php?permissoes=${usuarioId}`, { credentials: 'same-origin' });
+        const result = await response.json();
+        if (result.success && result.data) {
+            const permissoes = result.data.permissoes || [];
+            document.getElementById('permUsuarioId').value = usuarioId;
+
+            const tbody = document.getElementById('permissoesBody');
+            if (tbody) {
+                // Módulos possíveis (ajuste conforme seu sistema)
+                const modulos = ['pacientes', 'atendimentos', 'financeiro', 'despesas', 'configuracoes'];
+                const acoes = ['visualizar', 'criar', 'editar', 'excluir'];
+
+                tbody.innerHTML = '';
+                modulos.forEach(modulo => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td><strong>${modulo}</strong></td>`;
+                    acoes.forEach(acao => {
+                        const permitido = permissoes.find(p => p.modulo === modulo && p.acao === acao)?.permitido || 0;
+                        const checked = permitido == 1 ? 'checked' : '';
+                        row.innerHTML += `
+                            <td class="text-center">
+                                <input type="checkbox" class="perm-checkbox" data-modulo="${modulo}" data-acao="${acao}" ${checked}>
+                            </td>
+                        `;
+                    });
+                    tbody.appendChild(row);
+                });
+            }
+            new bootstrap.Modal(document.getElementById('modalPermissoes')).show();
+        } else {
+            alert('Erro ao carregar permissões');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Erro de conexão');
+    }
+}
+
+/**
+ * Salva as permissões marcadas no modal
+ */
+async function salvarPermissoes() {
+    const usuarioId = document.getElementById('permUsuarioId').value;
+    const checkboxes = document.querySelectorAll('#permissoesBody .perm-checkbox');
+    const permissoes = [];
+
+    checkboxes.forEach(cb => {
+        permissoes.push({
+            modulo: cb.getAttribute('data-modulo'),
+            acao: cb.getAttribute('data-acao'),
+            permitido: cb.checked ? 1 : 0
+        });
+    });
+
+    try {
+        const response = await fetch(`api/usuarios.php?permissoes=${usuarioId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ permissoes })
+        });
+        const result = await response.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalPermissoes')).hide();
+            alert('Permissões salvas com sucesso');
+        } else {
+            alert('Erro: ' + (result.error || 'Não foi possível salvar'));
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Erro de conexão');
+    }
+}
+
+/**
+ * Ativa/desativa um usuário
+ */
+async function toggleUsuarioStatus(id, ativoAtual) {
+    const novoStatus = ativoAtual == 1 ? 0 : 1;
+    const acao = novoStatus == 1 ? 'ativar' : 'desativar';
+    if (!confirm(`Tem certeza que deseja ${acao} este usuário?`)) return;
+
+    try {
+        const response = await fetch(`api/usuarios.php?id=${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ ativo: novoStatus })
+        });
+        const result = await response.json();
+        if (result.success) {
+            carregarUsuarios(); // recarrega a lista
+        } else {
+            alert('Erro: ' + (result.error || 'Não foi possível alterar o status'));
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Erro de conexão');
+    }
+}
+
+/**
+ * Dispara o carregamento da lista quando a aba "Configurações" for ativada
+ */
+function initUsuariosTab() {
+    const configTab = document.querySelector('#mainTab button[data-bs-target="#configuracoes"]');
+    if (configTab) {
+        configTab.addEventListener('shown.bs.tab', function() {
+            carregarUsuarios();
+        });
+    }
+    // Se a aba já estiver ativa ao carregar a página, carrega também
+    if (document.querySelector('#configuracoes').classList.contains('show')) {
+        carregarUsuarios();
+    }
+}
+
+// Inicializa quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+    initUsuariosTab();
+    initTabListeners();
+});
+
+// ====================== LISTENERS DAS ABAS ======================
+// Garante que os dados sejam renderizados quando as abas forem ativadas
+function initTabListeners() {
+    // Listener para aba Pacientes
+    const pacientesTab = document.querySelector('[data-bs-target="#pacientes"]');
+    if (pacientesTab) {
+        pacientesTab.addEventListener('shown.bs.tab', function() {
+            renderPacientes();
+        });
+    }
+    
+    // Listener para aba Agenda
+    const agendaTab = document.querySelector('[data-bs-target="#agenda"]');
+    if (agendaTab) {
+        agendaTab.addEventListener('shown.bs.tab', function() {
+            renderAgenda();
+        });
+    }
+    
+    // Listener para aba Financeiro
+    const financeiroTab = document.querySelector('[data-bs-target="#financeiro"]');
+    if (financeiroTab) {
+        financeiroTab.addEventListener('shown.bs.tab', function() {
+            renderFinanceiro();
+        });
+    }
+    
+    // Listener para aba Despesas
+    const despesasTab = document.querySelector('[data-bs-target="#despesas"]');
+    if (despesasTab) {
+        despesasTab.addEventListener('shown.bs.tab', function() {
+            renderDespesas();
+        });
+    }
+    
+    // Listener para aba Relatórios
+    const relatoriosTab = document.querySelector('[data-bs-target="#relatorios"]');
+    if (relatoriosTab) {
+        relatoriosTab.addEventListener('shown.bs.tab', function() {
+            // Atualizar selects de pacientes nos relatórios
+            atualizarSelectPacientes();
+        });
+    }
 }
