@@ -2,6 +2,7 @@
 -- SISTEMA DE GESTÃO CLÍNICA ESPAÇO GUANAIS
 -- Script completo de criação do banco de dados
 -- Compatível com MySQL 5.7+ / MariaDB 10.2+
+-- Versão atualizada: 2026-04-21
 -- =====================================================
 
 -- Dropar banco de dados se existir (para recriação limpa)
@@ -100,7 +101,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
     id VARCHAR(20) PRIMARY KEY,
     nome VARCHAR(200) NOT NULL,
     cpf VARCHAR(14),
-    data_nasc DATE NOT NULL,
+    data_nascimento DATE NOT NULL,
     telefone VARCHAR(20) NOT NULL,
     email VARCHAR(100),
     endereco TEXT,
@@ -263,7 +264,7 @@ WHERE p.ativo = TRUE
 ORDER BY p.nome;
 
 -- =====================================================
--- SCRIPT DE ATUALIZAÇÃO (ALTER TABLE para banco existente)
+-- SCRIPT DE ATUALIZAÇÃO (para banco existente)
 -- =====================================================
 -- Execute apenas estas linhas se já tiver um banco existente:
 

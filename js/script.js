@@ -16,6 +16,7 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
         headers: {
             'Content-Type': 'application/json',
         },
+        credentials: 'same-origin'
     };
     
     if (data && method !== 'GET') {
@@ -119,7 +120,7 @@ async function carregarAtendimentos() {
     try {
         const result = await apiRequest('atendimentos.php');
         if (result.success) {
-            dados.atendimentos = result.data || [];
+            dados.atendimentos = result.data.atendimentos || [];
         }
     } catch (error) {
         dados.atendimentos = [];
@@ -244,6 +245,239 @@ async function excluirDespesaAPI(id) {
         }
     } catch (error) {
         return false;
+    }
+}
+
+// ====================== USUÁRIOS E PERMISSÕES ======================
+let usuariosData = [];
+
+async function carregarUsuarios() {
+    try {
+        const result = await apiRequest('usuarios.php');
+        if (result.success) {
+            usuariosData = result.data || [];
+            renderUsuarios();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar usuários:', error);
+    }
+}
+
+function renderUsuarios() {
+    let html = '';
+    usuariosData.forEach(u => {
+        const tipoLabel = u.tipo === 'admin' ? 'Administrador' : u.tipo === 'terapeuta' ? 'Terapeuta' : 'Secretaria';
+        const statusClass = u.ativo ? 'badge-success' : 'badge-danger';
+        const statusLabel = u.ativo ? 'Ativo' : 'Inativo';
+        
+        html += `<tr>
+            <td>${u.id}</td>
+            <td>${u.usuario}</td>
+            <td>${u.nome}</td>
+            <td><span class="badge-custom ${u.tipo === 'admin' ? 'badge-warning' : 'badge-info'}">${tipoLabel}</span></td>
+            <td><span class="badge-custom ${statusClass}">${statusLabel}</span></td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline" onclick="gerenciarPermissoes(${u.id})" title="Permissões">
+                    <i class="bi bi-shield-lock"></i>
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="editarUsuario(${u.id})" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline text-danger" onclick="excluirUsuario(${u.id})" title="Excluir" ${u.id === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>`;
+    });
+    document.getElementById('usuariosTbody').innerHTML = html || '<tr><td colspan="6" class="text-center py-3 text-muted">Nenhum usuário encontrado</td></tr>';
+}
+
+document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const usuario = document.getElementById('usuUsuario').value.trim();
+    const senha = document.getElementById('usuSenha').value;
+    const nome = document.getElementById('usuNome').value.trim();
+    const email = document.getElementById('usuEmail').value.trim();
+    const tipo = document.getElementById('usuTipo').value;
+    
+    if (!usuario) { mostrarToast('Usuário é obrigatório', 'danger'); return; }
+    if (!senha || senha.length < 4) { mostrarToast('Senha deve ter pelo menos 4 caracteres', 'danger'); return; }
+    if (!nome) { mostrarToast('Nome é obrigatório', 'danger'); return; }
+    if (email && !email.includes('@')) { mostrarToast('Email inválido', 'danger'); return; }
+    
+    const novoUsuario = { usuario, senha, nome, email, tipo };
+    
+    try {
+        const result = await apiRequest('usuarios.php', 'POST', novoUsuario);
+        if (result.success) {
+            mostrarToast('Usuário criado com sucesso');
+            document.getElementById('usuarioForm').reset();
+            await carregarUsuarios();
+        } else {
+            mostrarToast(result.error || 'Erro ao criar usuário', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro ao criar usuário:', error);
+        mostrarToast('Erro ao criar usuário: ' + error.message, 'danger');
+    }
+});
+
+async function editarUsuario(id) {
+    try {
+        const response = await fetch(`api/usuarios.php?id=${id}`, { credentials: 'same-origin' });
+        const result = await response.json();
+        if (result.success && result.data) {
+            const usuario = result.data;
+            document.getElementById('editUsuId').value = usuario.id;
+            document.getElementById('editUsuNome').value = usuario.nome || '';
+            document.getElementById('editUsuEmail').value = usuario.email || '';
+            document.getElementById('editUsuTipo').value = usuario.tipo || 'secretaria';
+            document.getElementById('editUsuAtivo').checked = usuario.ativo == 1;
+            document.getElementById('editUsuSenha').value = '';
+
+            new bootstrap.Modal(document.getElementById('modalEditarUsuario')).show();
+        } else {
+            mostrarToast('Erro ao carregar dados do usuário', 'danger');
+        }
+    } catch (error) {
+        console.error(error);
+        mostrarToast('Erro de conexão', 'danger');
+    }
+}
+
+async function atualizarUsuario() {
+    const id = document.getElementById('editUsuId').value;
+    const nome = document.getElementById('editUsuNome').value;
+    const email = document.getElementById('editUsuEmail').value;
+    const tipo = document.getElementById('editUsuTipo').value;
+    const ativo = document.getElementById('editUsuAtivo').checked ? 1 : 0;
+    const senha = document.getElementById('editUsuSenha').value;
+
+    const payload = { nome, email, tipo, ativo };
+    if (senha.trim() !== '') payload.senha = senha;
+
+    try {
+        const response = await fetch(`api/usuarios.php?id=${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
+            carregarUsuarios();
+            mostrarToast('Usuário atualizado com sucesso');
+        } else {
+            mostrarToast('Erro: ' + (result.error || 'Não foi possível atualizar'), 'danger');
+        }
+    } catch (error) {
+        console.error(error);
+        mostrarToast('Erro de conexão', 'danger');
+    }
+}
+
+async function excluirUsuario(id) {
+    if (id === 1) {
+        mostrarToast('Não é possível excluir o usuário administrador principal', 'danger');
+        return;
+    }
+    if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+    
+    try {
+        const result = await apiRequest('usuarios.php?id=' + id, 'DELETE');
+        if (result.success) {
+            mostrarToast('Usuário excluído com sucesso');
+            await carregarUsuarios();
+        }
+    } catch (error) {
+        console.error('Erro ao excluir usuário:', error);
+    }
+}
+
+async function gerenciarPermissoes(usuarioId) {
+    try {
+        const response = await fetch(`api/usuarios.php?id=${usuarioId}`, { credentials: 'same-origin' });
+        const result = await response.json();
+        if (result.success && result.data) {
+            const usuario = result.data;
+            document.getElementById('permUsuarioId').value = usuarioId;
+
+            const tbody = document.getElementById('permissoesBody');
+            if (tbody) {
+                const modulos = ['pacientes', 'atendimentos', 'financeiro', 'despesas', 'configuracoes'];
+                const acoes = ['visualizar', 'criar', 'editar', 'excluir'];
+
+                tbody.innerHTML = '';
+                modulos.forEach(modulo => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td><strong>${modulo.charAt(0).toUpperCase() + modulo.slice(1)}</strong></td>`;
+                    acoes.forEach(acao => {
+                        const permissao = usuario.permissoes?.find(p => p.modulo === modulo && p.acao === acao);
+                        const checked = permissao && permissao.permitido == 1 ? 'checked' : '';
+                        row.innerHTML += `
+                            <td class="text-center">
+                                <input type="checkbox" class="perm-checkbox" data-modulo="${modulo}" data-acao="${acao}" ${checked}>
+                            </td>
+                        `;
+                    });
+                    tbody.appendChild(row);
+                });
+            }
+            new bootstrap.Modal(document.getElementById('modalPermissoes')).show();
+        } else {
+            mostrarToast('Erro ao carregar permissões', 'danger');
+        }
+    } catch (error) {
+        console.error(error);
+        mostrarToast('Erro de conexão', 'danger');
+    }
+}
+
+async function salvarPermissoes() {
+    const usuarioId = document.getElementById('permUsuarioId').value;
+    const checkboxes = document.querySelectorAll('#permissoesBody .perm-checkbox');
+    const permissoes = [];
+
+    checkboxes.forEach(cb => {
+        permissoes.push({
+            modulo: cb.getAttribute('data-modulo'),
+            acao: cb.getAttribute('data-acao'),
+            permitido: cb.checked ? 1 : 0
+        });
+    });
+
+    try {
+        const response = await fetch(`api/usuarios.php?id=${usuarioId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ permissoes })
+        });
+        const result = await response.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalPermissoes')).hide();
+            mostrarToast('Permissões salvas com sucesso');
+            await carregarUsuarios();
+        } else {
+            mostrarToast('Erro: ' + (result.error || 'Não foi possível salvar'), 'danger');
+        }
+    } catch (error) {
+        console.error(error);
+        mostrarToast('Erro de conexão', 'danger');
+    }
+}
+
+function initUsuariosTab() {
+    const configTab = document.querySelector('#mainTab button[data-bs-target="#configuracoes"]');
+    if (configTab) {
+        configTab.addEventListener('shown.bs.tab', function() {
+            carregarUsuarios();
+        });
+    }
+    if (document.querySelector('#configuracoes').classList.contains('show')) {
+        carregarUsuarios();
     }
 }
 
@@ -434,17 +668,15 @@ document.getElementById('pacienteForm').addEventListener('submit', async (e) => 
 
 // ========== AGENDA ==========
 function aplicarRegraExcecao() {
-    // A regra de exceção agora é aplicada no backend
     if (!dados.atendimentos.length) return;
     
     let hoje = new Date();
     dados.atendimentos.forEach(a => {
-        if (a.status !== 'Confirmado' || a.tipoPacote === 'Avulso') return;
-        let dataAtual = new Date(formataDataISO(a.dataAtendimento || a.data_atendimento));
-        let dataInicio = new Date(formataDataISO(a.dataInicioPacote || a.data_inicio_pacote));
+        if (a.status !== 'Confirmado' || a.tipo_pacote === 'Avulso') return;
+        let dataAtual = new Date(formataDataISO(a.data_atendimento));
+        let dataInicio = new Date(formataDataISO(a.data_inicio_pacote));
         let diff = (dataAtual - dataInicio) / 86400000;
-        let limite = a.tipoPacote === 'Mensal' ? 35 : 20;
-        // Apenas para referência visual
+        let limite = a.tipo_pacote === 'Mensal' ? 35 : 20;
     });
 }
 
@@ -455,8 +687,8 @@ function renderAgenda() {
     let unidade = document.getElementById('filtroUnidade')?.value || '';
     
     let filtrados = dados.atendimentos.filter(a => {
-        let nomePaciente = (a.nomePaciente || a.paciente_nome || '').toLowerCase();
-        let tipoPacote = a.tipoPacote || a.tipo_pacote || '';
+        let nomePaciente = (a.paciente_nome || '').toLowerCase();
+        let tipoPacote = a.tipo_pacote || '';
         let statusAtend = a.status || '';
         let unidadeAtend = a.unidade || '';
         
@@ -468,17 +700,17 @@ function renderAgenda() {
     
     // Ordenar por data decrescente
     filtrados.sort((a, b) => {
-        let da = a.dataAtendimento || a.data_atendimento || '';
-        let db = b.dataAtendimento || b.data_atendimento || '';
+        let da = a.data_atendimento || '';
+        let db = b.data_atendimento || '';
         return new Date(formataDataISO(db)) - new Date(formataDataISO(da));
     });
     
     let faltasMes = 0, excecoes = 0, hoje = new Date(), proxData = null, proxNome = '';
     filtrados.forEach(a => {
-        let dataAtend = a.dataAtendimento || a.data_atendimento || '';
+        let dataAtend = a.data_atendimento || '';
         let dt = new Date(formataDataISO(dataAtend));
         let statusAtend = a.status || '';
-        let nomePaciente = a.nomePaciente || a.paciente_nome || '';
+        let nomePaciente = a.paciente_nome || '';
         
         if (statusAtend === 'Falta' && dt.getMonth() === hoje.getMonth() && dt.getFullYear() === hoje.getFullYear()) faltasMes++;
         if (statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada') excecoes++;
@@ -491,12 +723,12 @@ function renderAgenda() {
     
     let html = '';
     filtrados.forEach(a => {
-        let idAtend = a.idAtendimento || a.id_atendimento || '';
-        let nomePaciente = a.nomePaciente || a.paciente_nome || '';
+        let idAtend = a.id_atendimento || '';
+        let nomePaciente = a.paciente_nome || '';
         let unidadeAtend = a.unidade || '';
-        let dataAtend = a.dataAtendimento || a.data_atendimento || '';
-        let tipoPacote = a.tipoPacote || a.tipo_pacote || '';
-        let dataInicioPacote = a.dataInicioPacote || a.data_inicio_pacote || '';
+        let dataAtend = a.data_atendimento || '';
+        let tipoPacote = a.tipo_pacote || '';
+        let dataInicioPacote = a.data_inicio_pacote || '';
         let statusAtend = a.status || '';
         
         let badgeClass = statusAtend === 'Confirmado' ? 'badge-success' :
@@ -564,9 +796,7 @@ document.getElementById('atendimentoForm').addEventListener('submit', async (e) 
     if (success) {
         renderAgenda();
         e.target.reset();
-        // Manter data de hoje como padrão
         document.getElementById('atendData').value = new Date().toISOString().slice(0, 10);
-        // Resetar informações do paciente
         resetarInfoAtendimento();
     }
 });
@@ -576,7 +806,6 @@ async function renderFinanceiro() {
     let mes = document.getElementById('finMesFiltro')?.value || new Date().toISOString().slice(0, 7);
     let clinicaFiltro = document.getElementById('finClinicaFiltro')?.value || '';
     
-    // Recarregar dados do financeiro
     await carregarFinanceiro(mes, clinicaFiltro);
     
     let html = '';
@@ -616,7 +845,6 @@ async function renderFinanceiro() {
     
     document.getElementById('finTbody').innerHTML = html || '<tr><td colspan="9" class="text-center py-3 text-muted">Nenhum lançamento encontrado</td></tr>';
     
-    // Atualizar resumo financeiro
     document.getElementById('finTotalBruto').innerHTML = `R$ ${totalBruto.toFixed(2)}`;
     document.getElementById('finCusto').innerHTML = `R$ ${totalCusto.toFixed(2)}`;
     document.getElementById('finLiquido').innerHTML = `R$ ${totalLiquido.toFixed(2)}`;
@@ -626,7 +854,6 @@ async function editarFinanceiro(id) {
     const lancamento = dados.financeiro.find(f => f.id === id);
     if (!lancamento) return;
     
-    // Preencher formulário com dados do lançamento
     document.getElementById('finPaciente').value = lancamento.paciente_id || '';
     document.getElementById('finClinica').value = lancamento.clinica || 'ANIMO';
     document.getElementById('finTipoPacote').value = lancamento.tipo_pacote || '';
@@ -636,14 +863,11 @@ async function editarFinanceiro(id) {
     document.getElementById('finForma').value = lancamento.forma_pagamento || 'Pix';
     document.getElementById('finNf').checked = lancamento.nf_emitida == 1 || lancamento.nf_emitida === true;
     
-    // Armazenar ID para edição
     document.getElementById('finEditId').value = id;
     
-    // Mudar texto do botão
     const submitBtn = document.querySelector('#financeiroForm button[type="submit"]');
     submitBtn.innerHTML = '<i class="bi bi-pencil me-2"></i>Atualizar Recebimento';
     
-    // Rolar para o formulário
     document.getElementById('financeiro').scrollIntoView({ behavior: 'smooth' });
     
     mostrarToast('Dados carregados para edição', 'info');
@@ -678,7 +902,6 @@ document.getElementById('financeiroForm').addEventListener('submit', async (e) =
     
     let success;
     if (editId) {
-        // Modo edição (PUT)
         lancamento.id = editId;
         success = await atualizarFinanceiro(lancamento);
         if (success) {
@@ -687,7 +910,6 @@ document.getElementById('financeiroForm').addEventListener('submit', async (e) =
             submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Registrar Recebimento';
         }
     } else {
-        // Modo criação (POST)
         success = await salvarFinanceiro(lancamento);
     }
     
@@ -755,14 +977,11 @@ async function editarDespesa(id) {
     document.getElementById('despDiaVenc').value = despesa.dia_vencimento || '';
     document.getElementById('despDataInicio').value = despesa.data_inicio || '';
     
-    // Armazenar ID para edição
     document.getElementById('despesaEditId').value = id;
     
-    // Mudar texto do botão
     const submitBtn = document.querySelector('#despesaForm button[type="submit"]');
     submitBtn.innerHTML = '<i class="bi bi-pencil me-2"></i>Atualizar Despesa';
     
-    // Rolar para o formulário
     document.getElementById('despesas').scrollIntoView({ behavior: 'smooth' });
     
     mostrarToast('Dados carregados para edição', 'info');
@@ -800,7 +1019,6 @@ document.getElementById('despesaForm').addEventListener('submit', async (e) => {
     
     let success;
     if (editId) {
-        // Modo edição (PUT)
         despesa.id = editId;
         success = await atualizarDespesa(despesa);
         if (success) {
@@ -809,7 +1027,6 @@ document.getElementById('despesaForm').addEventListener('submit', async (e) => {
             submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Salvar Despesa';
         }
     } else {
-        // Modo criação (POST)
         success = await salvarDespesa(despesa);
     }
     
@@ -835,12 +1052,8 @@ async function atualizarDespesa(despesa) {
 }
 
 // ====================== FUNÇÕES DE PACOTES E ATENDIMENTOS ======================
-let pacienteInfoAtual = null; // Armazena informações do paciente selecionado
+let pacienteInfoAtual = null;
 
-/**
- * Busca informações completas do paciente incluindo pacote ativo e contagem de atendimentos
- * Usa o novo endpoint da API com ?completo=true
- */
 async function buscarInfoCompletaPaciente(pacienteId) {
     if (!pacienteId) return null;
     
@@ -858,17 +1071,12 @@ async function buscarInfoCompletaPaciente(pacienteId) {
     }
 }
 
-/**
- * Preenche automaticamente os campos de pacote quando um paciente é selecionado
- * Esta função é chamada quando o usuário seleciona um paciente no formulário
- */
 async function preencherPacoteAutomatico(pacienteId) {
     if (!pacienteId) {
         resetarInfoAtendimento();
         return;
     }
     
-    // Buscar informações completas do paciente (inclui pacote e atendimentos)
     const pacienteInfo = await buscarInfoCompletaPaciente(pacienteId);
     pacienteInfoAtual = pacienteInfo;
     
@@ -878,31 +1086,24 @@ async function preencherPacoteAutomatico(pacienteId) {
         return;
     }
     
-    // Elementos do formulário de Atendimento
     const tipoPacoteField = document.getElementById('atendPacoteTipo');
     const dataInicioField = document.getElementById('atendInicioPacote');
     const infoPacienteDiv = document.getElementById('infoPacienteSelecionado');
     
-    // Elementos do formulário Financeiro
     const finTipoPacote = document.getElementById('finTipoPacote');
     const finDataInicio = document.getElementById('finDataInicio');
     
     if (pacienteInfo.pacote) {
-        // Paciente tem pacote ativo - preencher automaticamente
         const pacote = pacienteInfo.pacote;
         
-        // Converte data BR (dd/mm/aaaa) para ISO (aaaa-mm-dd)
         const dataInicioISO = pacote.data_inicio.includes('-') ? pacote.data_inicio : pacote.data_inicio.split('/').reverse().join('-');
         
-        // Preencher formulário de Atendimento
         if (tipoPacoteField) tipoPacoteField.value = pacote.tipo_pacote;
         if (dataInicioField) dataInicioField.value = dataInicioISO;
         
-        // Preencher formulário Financeiro
         if (finTipoPacote) finTipoPacote.value = pacote.tipo_pacote;
         if (finDataInicio) finDataInicio.value = dataInicioISO;
         
-        // Mostrar informações do paciente, pacote e atendimentos
         if (infoPacienteDiv) {
             const sessoesRealizadas = pacote.sessoes_realizadas || 0;
             const sessoesRestantes = pacote.sessoes_restantes || 0;
@@ -980,7 +1181,6 @@ async function preencherPacoteAutomatico(pacienteId) {
         
         mostrarToast(`Pacote ${pacote.tipo_pacote} encontrado! Dados preenchidos automaticamente.`, 'success');
     } else {
-        // Paciente sem pacote ativo
         if (infoPacienteDiv) {
             const totalAtendimentos = pacienteInfo.total_atendimentos || 0;
             const totalFaltas = pacienteInfo.total_faltas || 0;
@@ -1025,11 +1225,9 @@ async function preencherPacoteAutomatico(pacienteId) {
             `;
         }
         
-        // Definir como Avulso e limpar data de início
         if (tipoPacoteField) tipoPacoteField.value = 'Avulso';
         if (dataInicioField) dataInicioField.value = '';
         
-        // Limpar campos do financeiro
         if (finTipoPacote) finTipoPacote.value = 'Avulso';
         if (finDataInicio) finDataInicio.value = '';
     }
@@ -1045,7 +1243,6 @@ function resetarInfoAtendimento() {
 
 // Listeners para preencher automaticamente quando selecionar paciente
 document.addEventListener('DOMContentLoaded', function() {
-    // Definir data de hoje como padrão no formulário de atendimento
     const atendData = document.getElementById('atendData');
     if (atendData) {
         atendData.value = new Date().toISOString().slice(0, 10);
@@ -1078,11 +1275,11 @@ function exportarExcel() {
     
     if (dados.atendimentos.length) {
         let agendaData = dados.atendimentos.map(a => ({
-            ID: a.idAtendimento || a.id_atendimento,
-            Paciente: a.nomePaciente || a.paciente_nome,
-            Data: a.dataAtendimento || a.data_atendimento,
-            TipoPacote: a.tipoPacote || a.tipo_pacote,
-            InicioPacote: a.dataInicioPacote || a.data_inicio_pacote,
+            ID: a.id_atendimento,
+            Paciente: a.paciente_nome,
+            Data: a.data_atendimento,
+            TipoPacote: a.tipo_pacote,
+            InicioPacote: a.data_inicio_pacote,
             Status: a.status,
             Unidade: a.unidade
         }));
@@ -1096,13 +1293,14 @@ function exportarExcel() {
     mostrarToast('Backup exportado');
 }
 
-function importarExcel(event, restaurar) {
+// Função para importar dados e salvar no banco de dados
+async function importarExcel(event, restaurar) {
     let file = event.target.files[0];
     if (!file) return;
     if (restaurar && !confirm('Restaurar apagará dados atuais. Continuar?')) return;
     
     let reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         let wb = XLSX.read(e.target.result, { type: 'array' });
         let novosPacientes = [], novosAtendimentos = [], novosFinanceiro = [], novosDespesas = [];
         
@@ -1111,7 +1309,6 @@ function importarExcel(event, restaurar) {
             let data = XLSX.utils.sheet_to_json(sheet);
             
             if (nome.toLowerCase().includes('paciente')) {
-                // Mapear colunas do Excel para o formato do sistema
                 novosPacientes = data.map(p => ({
                     id: p['ID'] || gerarId('P'),
                     nome: p['Nome'] || p['nome'] || '',
@@ -1124,7 +1321,6 @@ function importarExcel(event, restaurar) {
                 }));
             }
             else if (nome.toLowerCase().includes('agenda')) {
-                // Mapear colunas do Excel para o formato do sistema
                 novosAtendimentos = data.map(a => ({
                     id_atendimento: a['ID'] || a['id'] || gerarId('A'),
                     paciente_id: a['Paciente ID'] || '',
@@ -1138,7 +1334,6 @@ function importarExcel(event, restaurar) {
                 }));
             }
             else if (nome.toLowerCase().includes('financeiro')) {
-                // Mapear colunas do Excel para o formato do sistema
                 novosFinanceiro = data.map(f => ({
                     id: 'fin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
                     paciente_id: f['Paciente ID'] || '',
@@ -1155,7 +1350,6 @@ function importarExcel(event, restaurar) {
                 }));
             }
             else if (nome.toLowerCase().includes('despesa')) {
-                // Mapear colunas do Excel para o formato do sistema
                 novosDespesas = data.map(d => ({
                     id: 'desp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
                     descricao: d['Descrição'] || d['descricao'] || '',
@@ -1169,31 +1363,44 @@ function importarExcel(event, restaurar) {
             }
         });
         
-        if (restaurar) {
-            dados.pacientes = novosPacientes;
-            dados.atendimentos = novosAtendimentos;
-            dados.financeiro = novosFinanceiro;
-            dados.despesas = novosDespesas;
-        } else {
-            dados.pacientes.push(...novosPacientes);
-            dados.atendimentos.push(...novosAtendimentos);
-            dados.financeiro.push(...novosFinanceiro);
-            dados.despesas.push(...novosDespesas);
+        try {
+            // Salvar pacientes no banco
+            for (const paciente of novosPacientes) {
+                await apiRequest('pacientes.php', 'POST', paciente);
+            }
+            
+            // Salvar atendimentos no banco
+            for (const atendimento of novosAtendimentos) {
+                await apiRequest('atendimentos.php', 'POST', atendimento);
+            }
+            
+            // Salvar lançamentos financeiros no banco
+            for (const lancamento of novosFinanceiro) {
+                await apiRequest('financeiro.php', 'POST', lancamento);
+            }
+            
+            // Salvar despesas no banco
+            for (const despesa of novosDespesas) {
+                await apiRequest('despesas.php', 'POST', despesa);
+            }
+            
+            // Recarregar todos os dados
+            await inicializarSistema();
+            
+            const totalRegistros = novosPacientes.length + novosAtendimentos.length + novosFinanceiro.length + novosDespesas.length;
+            mostrarToast(`Importação concluída com ${totalRegistros} registros salvos no banco de dados`);
+        } catch (error) {
+            console.error('Erro na importação:', error);
+            mostrarToast('Erro ao importar dados: ' + error.message, 'danger');
         }
-        
-        inicializarSistema();
-        mostrarToast('Importação concluída com ' + (novosPacientes.length + novosAtendimentos.length + novosFinanceiro.length + novosDespesas.length) + ' registros');
     };
     reader.readAsArrayBuffer(file);
     event.target.value = '';
 }
 
-// Função auxiliar para converter data BR (dd/mm/aaaa) para ISO (aaaa-mm-dd)
 function converterDataBR(data) {
     if (!data) return '';
-    // Se já estiver no formato ISO
     if (data.includes('-') && data.split('-')[0].length === 4) return data;
-    // Converter de BR para ISO
     if (data.includes('/')) {
         let partes = data.split('/');
         if (partes.length === 3) {
@@ -1220,13 +1427,11 @@ function updateThemeIcons() {
     if (moonIcon) moonIcon.style.display = isDark ? 'inline' : 'none';
 }
 
-// Aplicar tema salvo ao carregar
 if (localStorage.getItem('theme') === 'dark') {
     document.body.classList.add('dark');
 }
 updateThemeIcons();
 
-// Adicionar listener para o botão de tema
 const themeToggle = document.getElementById('themeToggle');
 if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
@@ -1255,7 +1460,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Se já logado, mostra sistema diretamente
 async function verificarLoginSalvo() {
     if (sessionStorage.getItem('logged') === 'true') {
         const authValid = await verificarAuth();
@@ -1271,206 +1475,45 @@ async function verificarLoginSalvo() {
 
 verificarLoginSalvo();
 
-// ========== GESTÃO DE USUÁRIOS ==========
-let usuariosData = [];
-
-async function carregarUsuarios() {
-    try {
-        const result = await apiRequest('usuarios.php');
-        if (result.success) {
-            usuariosData = result.data || [];
-            renderUsuarios();
-        }
-    } catch (error) {
-        console.error('Erro ao carregar usuários:', error);
-    }
-}
-
-function renderUsuarios() {
-    let html = '';
-    usuariosData.forEach(u => {
-        const tipoLabel = u.tipo === 'admin' ? 'Administrador' : u.tipo === 'terapeuta' ? 'Terapeuta' : 'Secretaria';
-        const statusClass = u.ativo ? 'badge-success' : 'badge-danger';
-        const statusLabel = u.ativo ? 'Ativo' : 'Inativo';
-        
-        html += `<tr>
-            <td>${u.id}</td>
-            <td>${u.usuario}</td>
-            <td>${u.nome}</td>
-            <td><span class="badge-custom ${u.tipo === 'admin' ? 'badge-warning' : 'badge-info'}">${tipoLabel}</span></td>
-            <td><span class="badge-custom ${statusClass}">${statusLabel}</span></td>
-            <td class="text-center">
-                <button class="btn btn-sm btn-outline" onclick="editarPermissoes(${u.id})" title="Permissões">
-                    <i class="bi bi-shield-lock"></i>
-                </button>
-                <button class="btn btn-sm btn-outline" onclick="editarUsuario(${u.id})" title="Editar">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline text-danger" onclick="excluirUsuario(${u.id})" title="Excluir" ${u.id === 1 ? 'disabled' : ''}>
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        </tr>`;
-    });
-    document.getElementById('usuariosTbody').innerHTML = html || '<tr><td colspan="6" class="text-center py-3 text-muted">Nenhum usuário encontrado</td></tr>';
-}
-
-document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const usuario = document.getElementById('usuUsuario').value.trim();
-    const senha = document.getElementById('usuSenha').value;
-    const nome = document.getElementById('usuNome').value.trim();
-    const email = document.getElementById('usuEmail').value.trim();
-    const tipo = document.getElementById('usuTipo').value;
-    
-    if (!usuario) { mostrarToast('Usuário é obrigatório', 'danger'); return; }
-    if (!senha || senha.length < 4) { mostrarToast('Senha deve ter pelo menos 4 caracteres', 'danger'); return; }
-    if (!nome) { mostrarToast('Nome é obrigatório', 'danger'); return; }
-    if (email && !email.includes('@')) { mostrarToast('Email inválido', 'danger'); return; }
-    
-    const novoUsuario = { usuario, senha, nome, email, tipo };
-    
-    try {
-        const result = await apiRequest('usuarios.php', 'POST', novoUsuario);
-        if (result.success) {
-            mostrarToast('Usuário criado com sucesso');
-            document.getElementById('usuarioForm').reset();
-            await carregarUsuarios();
-        } else {
-            mostrarToast(result.error || 'Erro ao criar usuário', 'danger');
-        }
-    } catch (error) {
-        console.error('Erro ao criar usuário:', error);
-        mostrarToast('Erro ao criar usuário: ' + error.message, 'danger');
-    }
-});
-
-async function editarUsuario(id) {
-    const usuario = usuariosData.find(u => u.id === id);
-    if (!usuario) return;
-    
-    document.getElementById('editUsuId').value = usuario.id;
-    document.getElementById('editUsuNome').value = usuario.nome;
-    document.getElementById('editUsuEmail').value = usuario.email || '';
-    document.getElementById('editUsuTipo').value = usuario.tipo;
-    document.getElementById('editUsuSenha').value = '';
-    document.getElementById('editUsuAtivo').checked = usuario.ativo;
-    
-    const modal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
-    modal.show();
-}
-
-async function atualizarUsuario() {
-    const id = document.getElementById('editUsuId').value;
-    const dados = {
-        id: parseInt(id),
-        nome: document.getElementById('editUsuNome').value,
-        email: document.getElementById('editUsuEmail').value,
-        tipo: document.getElementById('editUsuTipo').value,
-        ativo: document.getElementById('editUsuAtivo').checked
-    };
-    
-    const senha = document.getElementById('editUsuSenha').value;
-    if (senha) dados.senha = senha;
-    
-    try {
-        const result = await apiRequest('usuarios.php', 'PUT', dados);
-        if (result.success) {
-            mostrarToast('Usuário atualizado com sucesso');
-            bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
-            await carregarUsuarios();
-        }
-    } catch (error) {
-        console.error('Erro ao atualizar usuário:', error);
-    }
-}
-
-async function excluirUsuario(id) {
-    if (id === 1) {
-        mostrarToast('Não é possível excluir o usuário administrador principal', 'danger');
-        return;
-    }
-    if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
-    
-    try {
-        const result = await apiRequest('usuarios.php?id=' + id, 'DELETE');
-        if (result.success) {
-            mostrarToast('Usuário excluído com sucesso');
-            await carregarUsuarios();
-        }
-    } catch (error) {
-        console.error('Erro ao excluir usuário:', error);
-    }
-}
-
-const modulosPermissoes = ['pacientes', 'atendimentos', 'financeiro', 'despesas', 'configuracoes'];
-const acoesPermissoes = ['visualizar', 'criar', 'editar', 'excluir'];
-
-async function editarPermissoes(usuarioId) {
-    const usuario = usuariosData.find(u => u.id === usuarioId);
-    if (!usuario) return;
-    
-    document.getElementById('permUsuarioId').value = usuarioId;
-    
-    let html = '';
-    modulosPermissoes.forEach(modulo => {
-        const moduloLabel = modulo.charAt(0).toUpperCase() + modulo.slice(1);
-        html += `<tr><td><strong>${moduloLabel}</strong></td>`;
-        
-        acoesPermissoes.forEach(acao => {
-            const permissao = usuario.permissoes?.find(p => p.modulo === modulo && p.acao === acao);
-            const checked = permissao ? permissao.permitido : false;
-            html += `<td class="text-center">
-                <input type="checkbox" class="form-check-input perm-check" 
-                    data-modulo="${modulo}" data-acao="${acao}" ${checked ? 'checked' : ''}>
-            </td>`;
+// ====================== LISTENERS DAS ABAS ======================
+function initTabListeners() {
+    const pacientesTab = document.querySelector('[data-bs-target="#pacientes"]');
+    if (pacientesTab) {
+        pacientesTab.addEventListener('shown.bs.tab', function() {
+            renderPacientes();
         });
-        
-        html += '</tr>';
-    });
+    }
     
-    document.getElementById('permissoesBody').innerHTML = html;
-    
-    const modal = new bootstrap.Modal(document.getElementById('modalPermissoes'));
-    modal.show();
-}
-
-async function salvarPermissoes() {
-    const usuarioId = parseInt(document.getElementById('permUsuarioId').value);
-    const permissoes = [];
-    
-    document.querySelectorAll('.perm-check').forEach(checkbox => {
-        permissoes.push({
-            modulo: checkbox.dataset.modulo,
-            acao: checkbox.dataset.acao,
-            permitido: checkbox.checked
+    const agendaTab = document.querySelector('[data-bs-target="#agenda"]');
+    if (agendaTab) {
+        agendaTab.addEventListener('shown.bs.tab', function() {
+            renderAgenda();
         });
-    });
+    }
     
-    try {
-        const result = await apiRequest('usuarios.php', 'PATCH', { usuario_id: usuarioId, permissoes });
-        if (result.success) {
-            mostrarToast('Permissões atualizadas com sucesso');
-            bootstrap.Modal.getInstance(document.getElementById('modalPermissoes')).hide();
-            await carregarUsuarios();
-        }
-    } catch (error) {
-        console.error('Erro ao salvar permissões:', error);
+    const financeiroTab = document.querySelector('[data-bs-target="#financeiro"]');
+    if (financeiroTab) {
+        financeiroTab.addEventListener('shown.bs.tab', function() {
+            renderFinanceiro();
+        });
+    }
+    
+    const despesasTab = document.querySelector('[data-bs-target="#despesas"]');
+    if (despesasTab) {
+        despesasTab.addEventListener('shown.bs.tab', function() {
+            renderDespesas();
+        });
+    }
+    
+    const relatoriosTab = document.querySelector('[data-bs-target="#relatorios"]');
+    if (relatoriosTab) {
+        relatoriosTab.addEventListener('shown.bs.tab', function() {
+            atualizarSelectPacientes();
+        });
     }
 }
 
-// Sobrescrever inicializarSistema para incluir carregamento de usuários
-const inicializarSistemaOriginal = inicializarSistema;
-async function inicializarSistema() {
-    await inicializarSistemaOriginal();
-    if (usuarioLogado && usuarioLogado.usuario === 'admin') {
-        await carregarUsuarios();
-    }
-}
-
-// ====================== FUNÇÕES DE RELATÓRIOS ======================
-
+// ====================== RELATÓRIOS ======================
 async function carregarRelatorioAtendimentos() {
     try {
         const mes = document.getElementById('relatorioMes')?.value || '';
@@ -1521,7 +1564,6 @@ async function carregarRelatorioFinanceiro() {
         const mes = document.getElementById('relatorioMesFinanceiro')?.value || document.getElementById('relatorioMes')?.value || '';
         const clinica = document.getElementById('relatorioClinica')?.value || '';
         
-        // Construir URL com parâmetros
         let url = 'api/financeiro.php?';
         if (mes) url += 'mes=' + encodeURIComponent(mes) + '&';
         if (clinica) url += 'clinica=' + encodeURIComponent(clinica);
@@ -1603,15 +1645,28 @@ async function carregarRelatorioPacientes() {
     }
 }
 
+async function gerarRelatorios() {
+    await carregarRelatorioAtendimentos();
+    await carregarRelatorioFinanceiro();
+    await carregarRelatorioPacientes();
+    mostrarToast('Relatórios gerados com sucesso');
+}
+
+function exportarRelatorioCSV() {
+    exportarRelatorio('atendimentos');
+    exportarRelatorio('financeiro');
+    exportarRelatorio('pacientes');
+}
+
 function exportarRelatorio(tipo) {
     let dadosExport = [];
     let nomeArquivo = '';
     
     if (tipo === 'atendimentos') {
         dadosExport = dados.atendimentos.map(a => ({
-            Paciente: a.nomePaciente || a.paciente_nome,
-            Data: a.dataAtendimento || a.data_atendimento,
-            TipoPacote: a.tipoPacote || a.tipo_pacote,
+            Paciente: a.paciente_nome,
+            Data: a.data_atendimento,
+            TipoPacote: a.tipo_pacote,
             Status: a.status,
             Unidade: a.unidade
         }));
@@ -1660,319 +1715,11 @@ function exportarRelatorio(tipo) {
     mostrarToast('Relatório exportado com sucesso');
 }
 
-async function gerarRelatorios() {
-    await carregarRelatorioAtendimentos();
-    await carregarRelatorioFinanceiro();
-    await carregarRelatorioPacientes();
-    mostrarToast('Relatórios gerados com sucesso');
-}
-
-function exportarRelatorioCSV() {
-    exportarRelatorio('atendimentos');
-    exportarRelatorio('financeiro');
-    exportarRelatorio('pacientes');
-}
-
-// ==================== GESTÃO DE USUÁRIOS ====================
-
-/**
- * Carrega a lista de usuários via API e preenche a tabela
- */
-async function carregarUsuarios() {
-    const tbody = document.getElementById('usuariosTbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Carregando...</td></tr>';
-
-    try {
-        const response = await fetch('api/usuarios.php', {
-            method: 'GET',
-            credentials: 'same-origin'
-        });
-        const result = await response.json();
-
-        if (result.success && Array.isArray(result.data)) {
-            tbody.innerHTML = '';
-            result.data.forEach(usuario => {
-                const statusBadge = usuario.ativo == 1
-                    ? '<span class="badge bg-success">Ativo</span>'
-                    : '<span class="badge bg-secondary">Inativo</span>';
-
-                const row = `
-                    <tr>
-                        <td>${usuario.id}</td>
-                        <td>${escapeHtml(usuario.usuario)}</td>
-                        <td>${escapeHtml(usuario.nome)}</td>
-                        <td>${escapeHtml(usuario.tipo)}</td>
-                        <td>${statusBadge}</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline" onclick="editarUsuario(${usuario.id})" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline" onclick="gerenciarPermissoes(${usuario.id})" title="Permissões">
-                                <i class="bi bi-shield-lock"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline" onclick="toggleUsuarioStatus(${usuario.id}, ${usuario.ativo})" title="${usuario.ativo == 1 ? 'Desativar' : 'Ativar'}">
-                                <i class="bi ${usuario.ativo == 1 ? 'bi-toggle-on text-success' : 'bi-toggle-off text-muted'}"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar usuários: ' + (result.error || 'Desconhecido') + '</td></tr>';
-        }
-    } catch (error) {
-        console.error('Erro na requisição:', error);
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Falha de conexão com a API</td></tr>';
-    }
-}
-
-/**
- * Previne XSS
- */
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-/**
- * Abre o modal de edição de usuário e carrega os dados atuais
- */
-async function editarUsuario(id) {
-    // Busca os dados do usuário via GET com parâmetro id
-    try {
-        const response = await fetch(`api/usuarios.php?id=${id}`, { credentials: 'same-origin' });
-        const result = await response.json();
-        if (result.success && result.data) {
-            const usuario = result.data;
-            document.getElementById('editUsuId').value = usuario.id;
-            document.getElementById('editUsuNome').value = usuario.nome || '';
-            document.getElementById('editUsuEmail').value = usuario.email || '';
-            document.getElementById('editUsuTipo').value = usuario.tipo || 'secretaria';
-            document.getElementById('editUsuAtivo').checked = usuario.ativo == 1;
-            document.getElementById('editUsuSenha').value = ''; // limpa campo senha
-
-            new bootstrap.Modal(document.getElementById('modalEditarUsuario')).show();
-        } else {
-            alert('Erro ao carregar dados do usuário');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Erro de conexão');
-    }
-}
-
-/**
- * Salva as alterações do usuário (PUT)
- */
-async function atualizarUsuario() {
-    const id = document.getElementById('editUsuId').value;
-    const nome = document.getElementById('editUsuNome').value;
-    const email = document.getElementById('editUsuEmail').value;
-    const tipo = document.getElementById('editUsuTipo').value;
-    const ativo = document.getElementById('editUsuAtivo').checked ? 1 : 0;
-    const senha = document.getElementById('editUsuSenha').value;
-
-    const payload = { nome, email, tipo, ativo };
-    if (senha.trim() !== '') payload.senha = senha;
-
-    try {
-        const response = await fetch(`api/usuarios.php?id=${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify(payload)
-        });
-        const result = await response.json();
-        if (result.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
-            carregarUsuarios(); // recarrega a lista
-            alert('Usuário atualizado com sucesso');
-        } else {
-            alert('Erro: ' + (result.error || 'Não foi possível atualizar'));
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Erro de conexão');
-    }
-}
-
-/**
- * Gerencia permissões do usuário (abre modal e carrega as permissões)
- */
-async function gerenciarPermissoes(usuarioId) {
-    try {
-        const response = await fetch(`api/usuarios.php?permissoes=${usuarioId}`, { credentials: 'same-origin' });
-        const result = await response.json();
-        if (result.success && result.data) {
-            const permissoes = result.data.permissoes || [];
-            document.getElementById('permUsuarioId').value = usuarioId;
-
-            const tbody = document.getElementById('permissoesBody');
-            if (tbody) {
-                // Módulos possíveis (ajuste conforme seu sistema)
-                const modulos = ['pacientes', 'atendimentos', 'financeiro', 'despesas', 'configuracoes'];
-                const acoes = ['visualizar', 'criar', 'editar', 'excluir'];
-
-                tbody.innerHTML = '';
-                modulos.forEach(modulo => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td><strong>${modulo}</strong></td>`;
-                    acoes.forEach(acao => {
-                        const permitido = permissoes.find(p => p.modulo === modulo && p.acao === acao)?.permitido || 0;
-                        const checked = permitido == 1 ? 'checked' : '';
-                        row.innerHTML += `
-                            <td class="text-center">
-                                <input type="checkbox" class="perm-checkbox" data-modulo="${modulo}" data-acao="${acao}" ${checked}>
-                            </td>
-                        `;
-                    });
-                    tbody.appendChild(row);
-                });
-            }
-            new bootstrap.Modal(document.getElementById('modalPermissoes')).show();
-        } else {
-            alert('Erro ao carregar permissões');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Erro de conexão');
-    }
-}
-
-/**
- * Salva as permissões marcadas no modal
- */
-async function salvarPermissoes() {
-    const usuarioId = document.getElementById('permUsuarioId').value;
-    const checkboxes = document.querySelectorAll('#permissoesBody .perm-checkbox');
-    const permissoes = [];
-
-    checkboxes.forEach(cb => {
-        permissoes.push({
-            modulo: cb.getAttribute('data-modulo'),
-            acao: cb.getAttribute('data-acao'),
-            permitido: cb.checked ? 1 : 0
-        });
-    });
-
-    try {
-        const response = await fetch(`api/usuarios.php?permissoes=${usuarioId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ permissoes })
-        });
-        const result = await response.json();
-        if (result.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalPermissoes')).hide();
-            alert('Permissões salvas com sucesso');
-        } else {
-            alert('Erro: ' + (result.error || 'Não foi possível salvar'));
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Erro de conexão');
-    }
-}
-
-/**
- * Ativa/desativa um usuário
- */
-async function toggleUsuarioStatus(id, ativoAtual) {
-    const novoStatus = ativoAtual == 1 ? 0 : 1;
-    const acao = novoStatus == 1 ? 'ativar' : 'desativar';
-    if (!confirm(`Tem certeza que deseja ${acao} este usuário?`)) return;
-
-    try {
-        const response = await fetch(`api/usuarios.php?id=${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ ativo: novoStatus })
-        });
-        const result = await response.json();
-        if (result.success) {
-            carregarUsuarios(); // recarrega a lista
-        } else {
-            alert('Erro: ' + (result.error || 'Não foi possível alterar o status'));
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Erro de conexão');
-    }
-}
-
-/**
- * Dispara o carregamento da lista quando a aba "Configurações" for ativada
- */
-function initUsuariosTab() {
-    const configTab = document.querySelector('#mainTab button[data-bs-target="#configuracoes"]');
-    if (configTab) {
-        configTab.addEventListener('shown.bs.tab', function() {
-            carregarUsuarios();
-        });
-    }
-    // Se a aba já estiver ativa ao carregar a página, carrega também
-    if (document.querySelector('#configuracoes').classList.contains('show')) {
-        carregarUsuarios();
-    }
-}
-
-// Inicializa quando o DOM estiver pronto
+// ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', function() {
     initUsuariosTab();
     initTabListeners();
+    
+    // Verificar se está logado e inicializar sistema
+    verificarLoginSalvo();
 });
-
-// ====================== LISTENERS DAS ABAS ======================
-// Garante que os dados sejam renderizados quando as abas forem ativadas
-function initTabListeners() {
-    // Listener para aba Pacientes
-    const pacientesTab = document.querySelector('[data-bs-target="#pacientes"]');
-    if (pacientesTab) {
-        pacientesTab.addEventListener('shown.bs.tab', function() {
-            renderPacientes();
-        });
-    }
-    
-    // Listener para aba Agenda
-    const agendaTab = document.querySelector('[data-bs-target="#agenda"]');
-    if (agendaTab) {
-        agendaTab.addEventListener('shown.bs.tab', function() {
-            renderAgenda();
-        });
-    }
-    
-    // Listener para aba Financeiro
-    const financeiroTab = document.querySelector('[data-bs-target="#financeiro"]');
-    if (financeiroTab) {
-        financeiroTab.addEventListener('shown.bs.tab', function() {
-            renderFinanceiro();
-        });
-    }
-    
-    // Listener para aba Despesas
-    const despesasTab = document.querySelector('[data-bs-target="#despesas"]');
-    if (despesasTab) {
-        despesasTab.addEventListener('shown.bs.tab', function() {
-            renderDespesas();
-        });
-    }
-    
-    // Listener para aba Relatórios
-    const relatoriosTab = document.querySelector('[data-bs-target="#relatorios"]');
-    if (relatoriosTab) {
-        relatoriosTab.addEventListener('shown.bs.tab', function() {
-            // Atualizar selects de pacientes nos relatórios
-            atualizarSelectPacientes();
-        });
-    }
-}

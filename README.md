@@ -1,178 +1,224 @@
-# Espaço Guanais - Sistema de Gestão Clínica
+# Sistema de Gestão Clínica - Espaço Guanais
 
-Sistema completo de gestão para clínicas, com frontend moderno e API PHP/MySQL.
+Sistema web para gestão de clínica de psicologia, com foco em controle de pacientes, atendimentos, financeiro e despesas.
 
-## 📋 Funcionalidades
+## Funcionalidades Principais
 
-- **Agenda**: Visualização e gestão de atendimentos com filtros
-- **Pacientes**: Cadastro completo com dados pessoais e contatos de emergência
-- **Financeiro**: Controle de recebimentos com cálculo automático de líquido (75%) e custos (25%)
-- **Despesas**: Gestão de despesas fixas e extras com controle de parcelas
-- **Relatórios**: Dashboard com indicadores em tempo real
-- **Importação/Exportação**: Backup em Excel
-- **Tema**: Modo claro/escuro
+- **Gestão de Pacientes**: Cadastro, edição e histórico de pacientes
+- **Agenda de Atendimentos**: Controle de sessões, status e pacotes
+- **Financeiro**: Registro de recebimentos, relatórios e controle de NF
+- **Despesas**: Controle de despesas fixas e parceladas
+- **Usuários e Permissões**: Sistema de autenticação e controle de acesso
+- **Importação/Exportação**: Suporte a Excel para migração de dados
 
-## 🚀 Instalação no XAMPP
+## Requisitos Técnicos
 
-### 1. Pré-requisitos
-- XAMPP instalado (PHP 7.4+ e MySQL)
-- Navegador web moderno
+- **Servidor Web**: Apache 2.4+ ou Nginx
+- **PHP**: 7.4+ (recomendado 8.0+)
+- **Banco de Dados**: MySQL 5.7+ ou MariaDB 10.2+
+- **Extensões PHP**: pdo_mysql, json, session, openssl
+- **Armazenamento**: Mínimo 100MB (dependendo do volume de dados)
 
-### 2. Configurar Banco de Dados
+## Instalação
 
-1. Inicie o Apache e MySQL no XAMPP
-2. Acesse o phpMyAdmin em `http://localhost/phpmyadmin`
-3. Execute o script SQL:
-   - Clique em "SQL" na barra superior
-   - Cole o conteúdo do arquivo `sql/database.sql`
-   - Clique em "Executar"
+### 1. Configuração do Servidor
 
-### 3. Configurar Arquivos
+#### XAMPP (Windows/Linux)
+```bash
+# 1. Instalar XAMPP
+# 2. Iniciar Apache e MySQL
+# 3. Copiar arquivos para: c:/xampp/htdocs/Sistema_Guanais/
+```
 
-1. Copie todos os arquivos para a pasta do XAMPP:
+#### Linux (Apache)
+```bash
+# 1. Instalar Apache, MySQL, PHP
+sudo apt update
+sudo apt install apache2 mysql-server php php-mysql php-json
+
+# 2. Copiar arquivos para /var/www/html/
+sudo cp -r Sistema_Guanais /var/www/html/
+
+# 3. Configurar permissões
+sudo chown -R www-data:www-data /var/www/html/Sistema_Guanais
+```
+
+### 2. Banco de Dados
+
+#### Opção A: Banco Novo (Recomendado)
+1. Acesse o phpMyAdmin: `http://localhost/phpmyadmin`
+2. Crie um novo banco de dados: `espaco_guanais`
+3. Importe o script: `sql/database.sql`
+
+#### Opção B: Atualizar Banco Existente
+1. Execute o script: `sql/atualizar_banco.php`
+2. Ou execute manualmente as alterações do `sql/database.sql`
+
+### 3. Configuração do Sistema
+
+1. **Ajustar configurações** em `api/config.php`:
+   ```php
+   define('DB_HOST', 'localhost');
+   define('DB_NAME', 'espaco_guanais');
+   define('DB_USER', 'root');
+   define('DB_PASS', '');
    ```
-   C:\xampp\htdocs\guanais\
-   ```
 
-2. A estrutura deve ficar assim:
-   ```
-   htdocs/guanais/
-   ├── index.html
-   ├── style.css
-   ├── script.js
-   ├── README.md
-   ├── api/
-   │   ├── config.php
-   │   ├── auth.php
-   │   ├── pacientes.php
-   │   ├── atendimentos.php
-   │   ├── financeiro.php
-   │   └── despesas.php
-   ├── sql/
-   │   └── database.sql
-   └── logo/
-       └── Gemini_Generated_Image_mt9rkpmt9rkpmt9r.png
-   ```
+2. **Verificar permissões** de arquivos:
+   - Pasta `api/`: Leitura e escrita
+   - Arquivos `.php`: Leitura
+   - Pasta `sql/`: Leitura
 
-### 4. Ajustar Credenciais (se necessário)
+### 4. Primeiro Acesso
 
-Edite o arquivo `api/config.php` se suas credenciais do MySQL forem diferentes:
+1. Acesse: `http://localhost/Sistema_Guanais/`
+2. Login: `admin`
+3. Senha: `0301`
+4. Recomenda-se alterar a senha após o primeiro login
 
+## Estrutura de Arquivos
+
+```
+Sistema_Guanais/
+├── api/                    # APIs RESTful
+│   ├── config.php         # Configuração do banco
+│   ├── auth.php           # Autenticação
+│   ├── pacientes.php      # CRUD pacientes
+│   ├── atendimentos.php   # CRUD atendimentos
+│   ├── financeiro.php     # CRUD financeiro
+│   ├── despesas.php       # CRUD despesas
+│   └── usuarios.php       # CRUD usuários e permissões
+├── sql/                   # Scripts de banco de dados
+│   ├── database.sql       # Criação completa do banco
+│   └── atualizar_banco.php # Atualização de bancos existentes
+├── js/                    # JavaScript do frontend
+│   └── script.js          # Lógica principal da aplicação
+├── css/                   # Estilos
+│   └── style.css          # Estilos principais
+├── views/                 # Páginas HTML
+│   └── login.html         # Tela de login
+├── logo/                  # Logotipos
+├── index.html             # Página principal
+├── test_sistema.php       # Teste de funcionalidades
+└── README.md             # Este arquivo
+```
+
+## Problemas Comuns e Soluções
+
+### 1. Erro de Conexão com Banco
 ```php
-define('DB_HOST', 'localhost');
+// Verifique em api/config.php:
+define('DB_HOST', 'localhost');  // Ou IP do servidor
 define('DB_NAME', 'espaco_guanais');
-define('DB_USER', 'root');
-define('DB_PASS', ''); // Senha do MySQL (padrão XAMPP é vazio)
+define('DB_USER', 'root');       // Usuário MySQL
+define('DB_PASS', '');           // Senha MySQL
 ```
 
-### 5. Acessar o Sistema
+**Solução**: Verifique se o MySQL está rodando e as credenciais estão corretas.
 
-1. Abra o navegador e acesse: `http://localhost/guanais`
-2. Faça login com as credenciais padrão:
-   - **Usuário**: `admin`
-   - **Senha**: `0301`
-
-## 🔧 Solução de Problemas
-
-### Erro de conexão com banco de dados
-- Verifique se o MySQL está rodando no XAMPP
-- Confirme as credenciais no `api/config.php`
-- Certifique-se de que o banco `espaco_guanais` foi criado
-
-### API não responde
-- Verifique se o Apache está rodando
-- Confirme se os arquivos estão na pasta correta
-- Verifique os logs de erro do Apache
-
-### CORS Error no navegador
-- Os headers CORS já estão configurados no `config.php`
-- Se estiver acessando por domínio diferente, ajuste o `Access-Control-Allow-Origin`
-
-## 📁 Estrutura do Projeto
-
-```
-├── index.html          # Página principal (frontend)
-├── style.css           # Estilos CSS modernos
-├── script.js           # Lógica JavaScript com fetch API
-├── README.md           # Este arquivo
-│
-├── api/                # Backend PHP
-│   ├── config.php      # Configuração e conexão MySQL
-│   ├── auth.php        # Autenticação (login/logout)
-│   ├── pacientes.php   # CRUD de pacientes
-│   ├── atendimentos.php # CRUD de atendimentos
-│   ├── financeiro.php  # CRUD financeiro
-│   └── despesas.php    # CRUD de despesas
-│
-├── sql/                # Scripts de banco
-│   └── database.sql    # Criação do banco e tabelas
-│
-└── logo/               # Imagens
-    └── logo.png        # Logo do sistema
+### 2. Permissões de Arquivo
+```bash
+# Linux/Mac - Corrigir permissões:
+sudo chmod -R 755 /var/www/html/Sistema_Guanais
+sudo chown -R www-data:www-data /var/www/html/Sistema_Guanais
 ```
 
-## 🔐 Segurança
+### 3. Erro de Importação Excel
+- **Problema**: Biblioteca XLSX não carregada
+- **Solução**: Verifique se o arquivo `js/xlsx.full.min.js` está presente
+- **Alternativa**: Use o importador interno do sistema
 
-- Senhas armazenadas com hash MD5 (para demonstração - em produção use `password_hash`)
-- Session management com validação no servidor
-- API com CORS configurado
-- Dados sanitizados antes de salvar no banco
-- Proteção contra SQL Injection com PDO Prepared Statements
+### 4. Pacientes Não Aparecem na Seleção
+- **Problema**: Dados não sincronizados
+- **Solução**: Atualize a página (F5) ou limpe cache do navegador
+- **Verificação**: Confira se os pacientes foram importados corretamente
 
-## 📱 Responsividade
+### 5. Erro 404 nas APIs
+- **Problema**: URL incorreta ou .htaccess mal configurado
+- **Solução**: Verifique se o mod_rewrite está habilitado no Apache
+- **Teste**: Acesse `http://localhost/Sistema_Guanais/api/pacientes.php`
 
-O sistema é totalmente responsivo e funciona em:
-- Desktop (1920x1080+)
-- Tablets (768x1024)
-- Smartphones (375x667+)
+## Segurança
 
-## 🔄 Backup e Restauração
+### Recomendações
+1. **Alterar senha padrão** do usuário admin
+2. **Atualizar PHP** para versão mais recente
+3. **Configurar firewall** para restringir acesso ao MySQL
+4. **Fazer backups** regulares do banco de dados
+5. **Usar HTTPS** em ambiente de produção
 
-### Exportar Dados
-1. Clique no botão "Backup" no cabeçalho
-2. Um arquivo Excel será baixado com todos os dados
+### Configuração de Segurança
+```apache
+# .htaccess - Restringir acesso a pastas sensíveis
+<Directory "api">
+    Require all denied
+</Directory>
+```
 
-### Importar Dados
-1. Clique no botão "Importar" no cabeçalho
-2. Selecione um arquivo Excel (.xlsx, .xls, .csv)
-3. Os dados serão adicionados ao sistema
+## Backup e Restauração
 
-## 📊 API Endpoints
+### Backup do Banco de Dados
+```bash
+# MySQL Dump
+mysqldump -u root -p espaco_guanais > backup_guanais_$(date +%Y%m%d).sql
 
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `api/auth.php` | POST | Login |
-| `api/auth.php` | GET | Verificar autenticação |
-| `api/auth.php` | DELETE | Logout |
-| `api/pacientes.php` | GET | Listar pacientes |
-| `api/pacientes.php` | POST | Criar paciente |
-| `api/pacientes.php` | PUT | Atualizar paciente |
-| `api/pacientes.php` | DELETE | Excluir paciente |
-| `api/atendimentos.php` | GET | Listar atendimentos |
-| `api/atendimentos.php` | POST | Criar atendimento |
-| `api/atendimentos.php` | PUT | Atualizar atendimento |
-| `api/atendimentos.php` | DELETE | Excluir atendimento |
-| `api/financeiro.php` | GET | Listar lançamentos |
-| `api/financeiro.php` | POST | Criar lançamento |
-| `api/financeiro.php` | DELETE | Excluir lançamento |
-| `api/despesas.php` | GET | Listar despesas |
-| `api/despesas.php` | POST | Criar despesa |
-| `api/despesas.php` | PUT | Atualizar despesa |
-| `api/despesas.php` | DELETE | Excluir despesa |
-| `api/despesas.php` | PATCH | Pagar parcela |
+# phpMyAdmin
+# 1. Selecione o banco
+# 2. Clique em Exportar
+# 3. Escolha formato SQL
+```
 
-## 🛠️ Tecnologias Utilizadas
+### Backup de Arquivos
+```bash
+# Linux/Mac
+tar -czf backup_sistema_$(date +%Y%m%d).tar.gz Sistema_Guanais/
 
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Estilos**: Bootstrap 5, CSS Custom Properties
-- **Backend**: PHP 7.4+, PDO
-- **Banco de Dados**: MySQL/MariaDB
-- **Bibliotecas**: Bootstrap Icons, SheetJS (XLSX), Chart.js
+# Windows
+# Use WinRAR ou 7-Zip para compactar a pasta
+```
 
-## 📝 Licença
+## Atualizações
 
-Sistema desenvolvido para uso interno do Espaço Guanais.
+### Atualizar para Nova Versão
+1. Faça backup do sistema atual
+2. Substitua os arquivos (exceto config.php)
+3. Execute script de atualização: `sql/atualizar_banco.php`
+4. Teste todas as funcionalidades
+
+### Verificar Versão
+- Acesse `test_sistema.php` para validar funcionalidades
+- Verifique logs de erro em caso de problemas
+
+## Suporte Técnico
+
+### Logs de Erro
+- **Apache**: `/var/log/apache2/error.log` (Linux) ou `xampp/apache/logs/error.log` (Windows)
+- **PHP**: Configure em `php.ini` com `log_errors = On`
+
+### Testes de Sistema
+- Acesse: `http://localhost/Sistema_Guanais/test_sistema.php`
+- Verifique status de todas as funcionalidades
+
+### Contato
+Para suporte técnico, consulte:
+- Documentação no repositório
+- Logs de erro do servidor
+- Comunidade de desenvolvedores PHP/MySQL
+
+## Licença
+
+Este projeto é de código aberto e está disponível sob a licença MIT.
+
+## Contribuição
+
+Contribuições são bem-vindas! Para contribuir:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature: `git checkout -b minha-feature`
+3. Commit suas mudanças: `git commit -m 'Adiciona nova feature'`
+4. Push para a branch: `git push origin minha-feature`
+5. Abra um Pull Request
 
 ---
 
-**Desenvolvido com ❤️ para Gestão Clínica**
+**Importante**: Este sistema foi desenvolvido para uso interno da clínica Espaço Guanais. Qualquer modificação deve ser testada em ambiente de desenvolvimento antes de ser aplicada em produção.
