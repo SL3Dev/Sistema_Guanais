@@ -1,7 +1,7 @@
 <?php
 /**
  * config.php
- * Configuração e conexão com o banco de dados
+ * Configuração e conexão com o banco de dados!
  * Espaço Guanais - Sistema de Gestão Clínica
  */
 
