@@ -88,64 +88,19 @@ echo "<!DOCTYPE html>
             log('Iniciando atualização do banco de dados...', 'info');
             
             try {
-                // 1. Verificar tabelas existentes
-                const response1 = await fetch('../api/pacientes.php', {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const result1 = await response1.json();
-                
-                if (result1.success) {
-                    log('✓ Tabelas principais existem', 'success');
+                const response = await fetch('../api/update_db.php', { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    result.data.updates.forEach(msg => log('✓ ' + msg, 'success'));
+                    log('Atualização concluída com sucesso!', 'success');
+                    document.getElementById('validacao').innerHTML = '<div class="success">✓ Banco de dados atualizado. Recomenda-se reiniciar o sistema.</div>';
                 } else {
-                    throw new Error('Tabelas principais não encontradas');
+                    throw new Error(result.error || 'Erro desconhecido na API de atualização.');
                 }
-                
-                // 2. Verificar campos de pacientes
-                log('Verificando campos de pacientes...', 'info');
-                const response2 = await fetch('../api/pacientes.php', { method: 'GET' });
-                const result2 = await response2.json();
-                
-                if (result2.success && result2.data && result2.data.length > 0) {
-                    const paciente = result2.data[0];
-                    const camposNecessarios = ['emergencia_parentesco', 'emergencia_info_adicionais'];
-                    let camposFaltantes = [];
-                    
-                    // Verificar campos (simulação - na prática precisaria de consulta SQL)
-                    log('✓ Campos de pacientes verificados', 'success');
-                }
-                
-                // 3. Verificar usuários e permissões
-                log('Verificando usuários e permissões...', 'info');
-                const response3 = await fetch('../api/usuarios.php', { method: 'GET' });
-                const result3 = await response3.json();
-                
-                if (result3.success && result3.data) {
-                    const admin = result3.data.find(u => u.usuario === 'admin');
-                    if (admin) {
-                        log('✓ Usuário admin encontrado', 'success');
-                        
-                        if (admin.permissoes && admin.permissoes.length >= 15) {
-                            log('✓ Permissões do admin configuradas', 'success');
-                        } else {
-                            log('⚠ Permissões do admin podem estar incompletas', 'warning');
-                        }
-                    } else {
-                        log('⚠ Usuário admin não encontrado', 'warning');
-                    }
-                }
-                
-                // 4. Verificar configurações
-                log('Verificando configurações...', 'info');
-                // Simulação - na prática precisaria de consulta SQL
-                log('✓ Configurações básicas verificadas', 'success');
-                
-                log('Atualização concluída com sucesso!', 'success');
-                document.getElementById('validacao').innerHTML = '<div class=\"success\">✓ Banco de dados atualizado. Recomenda-se reiniciar o sistema.</div>';
-                
             } catch (error) {
                 log('Erro durante atualização: ' + error.message, 'error');
-                document.getElementById('validacao').innerHTML = '<div class=\"error\">✗ Falha na atualização. Verifique os logs.</div>';
+                document.getElementById('validacao').innerHTML = '<div class="error">✗ Falha na atualização. Verifique os logs.</div>';
             }
         }
         

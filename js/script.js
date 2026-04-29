@@ -90,20 +90,49 @@ function userHasPermission(modulo, acao) {
 function aplicarPermissoesUI() {
     if (!usuarioLogado) return;
 
-    // 1. Abas principais
+    const modulosConfig = {
+        'agenda': 'atendimentos',
+        'pacientes': 'pacientes',
+        'financeiro': 'financeiro',
+        'despesas': 'despesas',
+        'novoAtendimento': 'atendimentos',
+        'relatorios': 'financeiro',
+        'configuracoes': 'configuracoes',
+        'ajuda': 'configuracoes' // Ajuda pode ter permissão de visualização geral ou de configurações
+    };
+
+    // Aplicar permissões aos cards da tela de seleção de módulos
+    Object.keys(modulosConfig).forEach(moduloId => {
+        const card = document.querySelector(`#moduleSelectionScreen .menu-card[onclick*="${moduloId}"]`);
+        if (card) {
+            if (!userHasPermission(modulosConfig[moduloId], 'visualizar')) {
+                card.parentElement.style.display = 'none';
+            } else {
+                card.parentElement.style.display = 'block';
+            }
+        }
+    });
+
+    // Aplicar permissões às abas principais (mantido do código original)
     const abas = {
+        '#dashboard': 'dashboard', // Dashboard é sempre visível, mas pode ter elementos internos restritos
         '#agenda': 'atendimentos',
         '#pacientes': 'pacientes',
         '#financeiro': 'financeiro',
         '#despesas': 'despesas',
+        '#novoAtendimento': 'atendimentos',
+        '#relatorios': 'financeiro',
         '#configuracoes': 'configuracoes',
-        '#relatorios': 'financeiro' // Relatórios dependem de permissão financeira/atendimentos
+        '#ajuda': 'configuracoes'
     };
 
     Object.keys(abas).forEach(id => {
         const tabBtn = document.querySelector(`[data-bs-target="${id}"]`);
         if (tabBtn) {
-            if (!userHasPermission(abas[id], 'visualizar')) {
+            // O dashboard é um caso especial, sempre visível, mas seus cards internos são controlados
+            if (id === '#dashboard') {
+                tabBtn.parentElement.style.display = 'block';
+            } else if (!userHasPermission(modulosConfig[id.replace('#', '')], 'visualizar')) {
                 tabBtn.parentElement.style.display = 'none';
             } else {
                 tabBtn.parentElement.style.display = 'block';
@@ -111,7 +140,7 @@ function aplicarPermissoesUI() {
         }
     });
 
-    // 2. Botões de ação globais (Criar)
+    // 2. Botões de ação globais (Criar) - Mantido do código original
     if (!userHasPermission('pacientes', 'criar')) {
         const pacForm = document.getElementById('pacienteForm');
         if (pacForm) pacForm.querySelector('button[type="submit"]').disabled = true;
@@ -146,6 +175,14 @@ async function logout() {
     }
     sessionStorage.clear();
     usuarioLogado = null;
+}
+
+// Nova função para selecionar módulo e navegar
+function selectModule(moduleId) {
+    document.getElementById('moduleSelectionScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    irParaAba(moduleId);
+    mostrarToast(`Módulo ${moduleId.charAt(0).toUpperCase() + moduleId.slice(1)} selecionado!`, 'info');
 }
 
 // ====================== PACIENTES ======================
@@ -763,8 +800,172 @@ async function uploadLogo(tipo) {
     }
 }
 
+// ====================== NAVEGAÇÃO ======================
+function irParaAba(tabId) {
+    const tabEl = document.querySelector(`button[data-bs-target="#${tabId}"]`);
+    if (tabEl) {
+        const tab = new bootstrap.Tab(tabEl);
+        tab.show();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
 // ====================== INICIALIZAÇÃO ======================
-async function inicializarSistema() {
+async function inicializarSistema(moduloInicial = 'dashboard') {
+    // Carregar configurações primeiro para as logos
+    await carregarConfiguracoes();
+    
+    // Carregar todos os dados da API
+    await Promise.all([
+        carregarPacientes(),
+        carregarAtendimentos(),
+        carregarFinanceiro(),
+        carregarDespesas()
+    ]);
+
+    // Atualizar nome do usuário no dashboard (se estiver no dashboard)
+    if (usuarioLogado) {
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        if (userNameDisplay) userNameDisplay.textContent = usuarioLogado.nome.split(' ')[0];
+    }
+    
+    // Aplicar restrições de permissão na UI (já feito no login/selectModule)
+    // aplicarPermissoesUI(); 
+
+    // Popular Dashboard
+    renderDashboardSummaries();
+
+    initDashboardInteractivity();
+
+    renderPacientes();
+    renderAgenda();
+    renderFinanceiro();
+    renderDespesas();
+    atualizarSelectPacientes();
+    
+    // Setar valor padrão do mês atual
+    const hoje = new Date();
+    const mesAtual = hoje.toISOString().slice(0, 7);
+    const finMesFiltro = document.getElementById('finMesFiltro');
+    const relatorioMes = document.getElementById('relatorioMes');
+
+    if (finMesFiltro) finMesFiltro.value = mesAtual;
+    if (relatorioMes) relatorioMes.value = mesAtual;
+    
+    const finMesFiltroElement = document.getElementById('finMesFiltro');
+    if (finMesFiltroElement) {
+        finMesFiltroElement.addEventListener('change', () => {
+            carregarFinanceiro(finMesFiltroElement.value, document.getElementById('finClinicaFiltro').value)
+                .then(() => renderFinanceiro());
+        });
+    }
+
+    const finClinicaFiltroElement = document.getElementById('finClinicaFiltro');
+    if (finClinicaFiltroElement) {
+        finClinicaFiltroElement.addEventListener('change', () => {
+            carregarFinanceiro(document.getElementById('finMesFiltro').value, finClinicaFiltroElement.value)
+                .then(() => renderFinanceiro());
+        });
+    }
+    
+    const filtroNomeElement = document.getElementById('filtroNome');
+    if (filtroNomeElement) filtroNomeElement.addEventListener('input', renderAgenda);
+    
+    const filtroPacoteElement = document.getElementById('filtroPacote');
+    if (filtroPacoteElement) filtroPacoteElement.addEventListener('change', renderAgenda);
+    
+    const filtroStatusElement = document.getElementById('filtroStatus');
+    if (filtroStatusElement) filtroStatusElement.addEventListener('change', renderAgenda);
+    
+    const filtroUnidadeElement = document.getElementById('filtroUnidade');
+    if (filtroUnidadeElement) filtroUnidadeElement.addEventListener('change', renderAgenda);
+    
+    const buscaPacienteElement = document.getElementById('buscaPaciente');
+    if (buscaPacienteElement) buscaPacienteElement.addEventListener('input', renderPacientes);
+    
+    const pacNascElement = document.getElementById('pacNasc');
+    if (pacNascElement) {
+        pacNascElement.addEventListener('change', function() {
+            let idade = calcularIdade(this.value);
+            document.getElementById('respSec').classList.toggle('d-none', idade >= 18);
+            document.getElementById('emergSec').classList.toggle('d-none', idade < 18);
+        });
+    }
+    
+    aplicarRegraExcecao();
+
+    // Ativar a aba inicial após a inicialização completa
+    irParaAba(moduloInicial);
+}
+
+function renderDashboardSummaries() {
+    // 1. Próximos Atendimentos
+    const proximosDiv = document.getElementById('dashboardProximos');
+    if (proximosDiv) {
+        const hoje = new Date().toISOString().slice(0, 10);
+        const proximos = (dados.atendimentos || [])
+            .filter(a => a.data_atendimento >= hoje && a.status === 'Confirmado')
+            .sort((a, b) => a.data_atendimento.localeCompare(b.data_atendimento))
+            .slice(0, 5);
+
+        if (proximos.length === 0) {
+            proximosDiv.innerHTML = '<div class="text-center py-4 text-muted">Nenhum atendimento agendado para hoje ou próximos dias.</div>';
+        } else {
+            proximosDiv.innerHTML = proximos.map(a => `
+                <div class="list-group-item-custom" onclick="selectModule('agenda')" style="cursor: pointer;">
+                    <div class="time-badge">${formataDataBR(a.data_atendimento).slice(0, 5)}</div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold mb-0" style="font-size: 0.9rem;">${a.paciente_nome}</div>
+                        <small class="text-muted" style="font-size: 0.75rem;">${a.unidade} • ${a.tipo_pacote}</small>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted" style="font-size: 0.8rem;"></i>
+                </div>
+            `).join('');
+        }
+    }
+
+    // 2. Resumo Financeiro no Dashboard
+    const finResumoDiv = document.getElementById('dashboardFinResumo');
+    if (finResumoDiv) {
+        const mesAtual = new Date().toISOString().slice(0, 7);
+        const lancamentosMes = (dados.financeiro || []).filter(f => f.data && f.data.startsWith(mesAtual));
+        
+        const totalBruto = lancamentosMes.reduce((acc, curr) => acc + parseFloat(curr.valor || 0), 0);
+        const totalLiquido = lancamentosMes.reduce((acc, curr) => acc + parseFloat(curr.receita_disponivel || 0), 0);
+
+        finResumoDiv.innerHTML = `
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded shadow-sm">
+                        <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Bruto</small>
+                        <strong class="text-verde" style="font-size: 1.2rem;">R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded shadow-sm">
+                        <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Líquido</small>
+                        <strong class="text-ouro" style="font-size: 1.2rem;">R$ ${totalLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary w-100 mt-3" onclick="selectModule('financeiro')">
+                Ver Detalhes Financeiros <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        `;
+    }
+}
+
+function formataDataBR(data) {
+    if (!data) return '';
+    const partes = data.split('-');
+    if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+    return data;
+}
+
+// ====================== INICIALIZAÇÃO ======================
+async function inicializarSistema(moduloInicial = 'dashboard') {
     // Carregar configurações primeiro para as logos
     await carregarConfiguracoes();
     
@@ -790,31 +991,56 @@ async function inicializarSistema() {
     // Setar valor padrão do mês atual
     const hoje = new Date();
     const mesAtual = hoje.toISOString().slice(0, 7);
-    document.getElementById('finMesFiltro').value = mesAtual;
-    document.getElementById('relatorioMes').value = mesAtual;
+    const finMesFiltro = document.getElementById('finMesFiltro');
+    const relatorioMes = document.getElementById('relatorioMes');
+
+    if (finMesFiltro) finMesFiltro.value = mesAtual;
+    if (relatorioMes) relatorioMes.value = mesAtual;
     
-    document.getElementById('finMesFiltro').addEventListener('change', () => {
-        carregarFinanceiro(document.getElementById('finMesFiltro').value, document.getElementById('finClinicaFiltro').value)
-            .then(() => renderFinanceiro());
-    });
-    document.getElementById('finClinicaFiltro').addEventListener('change', () => {
-        carregarFinanceiro(document.getElementById('finMesFiltro').value, document.getElementById('finClinicaFiltro').value)
-            .then(() => renderFinanceiro());
-    });
+    const finMesFiltroElement = document.getElementById('finMesFiltro');
+    if (finMesFiltroElement) {
+        finMesFiltroElement.addEventListener('change', () => {
+            carregarFinanceiro(finMesFiltroElement.value, document.getElementById('finClinicaFiltro').value)
+                .then(() => renderFinanceiro());
+        });
+    }
+
+    const finClinicaFiltroElement = document.getElementById('finClinicaFiltro');
+    if (finClinicaFiltroElement) {
+        finClinicaFiltroElement.addEventListener('change', () => {
+            carregarFinanceiro(document.getElementById('finMesFiltro').value, finClinicaFiltroElement.value)
+                .then(() => renderFinanceiro());
+        });
+    }
     
-    document.getElementById('filtroNome').addEventListener('input', renderAgenda);
-    document.getElementById('filtroPacote').addEventListener('change', renderAgenda);
-    document.getElementById('filtroStatus').addEventListener('change', renderAgenda);
-    document.getElementById('filtroUnidade').addEventListener('change', renderAgenda);
-    document.getElementById('buscaPaciente').addEventListener('input', renderPacientes);
+    const filtroNomeElement = document.getElementById('filtroNome');
+    if (filtroNomeElement) filtroNomeElement.addEventListener('input', renderAgenda);
     
-    document.getElementById('pacNasc').addEventListener('change', function() {
-        let idade = calcularIdade(this.value);
-        document.getElementById('respSec').classList.toggle('d-none', idade >= 18);
-        document.getElementById('emergSec').classList.toggle('d-none', idade < 18);
-    });
+    const filtroPacoteElement = document.getElementById('filtroPacote');
+    if (filtroPacoteElement) filtroPacoteElement.addEventListener('change', renderAgenda);
+    
+    const filtroStatusElement = document.getElementById('filtroStatus');
+    if (filtroStatusElement) filtroStatusElement.addEventListener('change', renderAgenda);
+    
+    const filtroUnidadeElement = document.getElementById('filtroUnidade');
+    if (filtroUnidadeElement) filtroUnidadeElement.addEventListener('change', renderAgenda);
+    
+    const buscaPacienteElement = document.getElementById('buscaPaciente');
+    if (buscaPacienteElement) buscaPacienteElement.addEventListener('input', renderPacientes);
+    
+    const pacNascElement = document.getElementById('pacNasc');
+    if (pacNascElement) {
+        pacNascElement.addEventListener('change', function() {
+            let idade = calcularIdade(this.value);
+            document.getElementById('respSec').classList.toggle('d-none', idade >= 18);
+            document.getElementById('emergSec').classList.toggle('d-none', idade < 18);
+        });
+    }
     
     aplicarRegraExcecao();
+
+    // Ativar a aba inicial após a inicialização completa
+    irParaAba(moduloInicial);
 }
 
 function atualizarSelectPacientes() {
@@ -1744,8 +1970,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const success = await login(user, pass);
     if (success) {
         document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display = 'block';
-        await inicializarSistema();
+        document.getElementById('moduleSelectionScreen').style.display = 'flex';
+        document.getElementById('moduleSelectionUserName').textContent = usuarioLogado.nome.split(' ')[0];
+        aplicarPermissoesUI(); // Aplicar permissões aos cards da tela de seleção
         mostrarToast('Bem-vindo ao sistema!');
     } else {
         mostrarToast('Usuário ou senha inválidos', 'danger');
@@ -1757,8 +1984,9 @@ async function verificarLoginSalvo() {
         const authValid = await verificarAuth();
         if (authValid) {
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'block';
-            await inicializarSistema();
+            document.getElementById('moduleSelectionScreen').style.display = 'flex';
+            document.getElementById('moduleSelectionUserName').textContent = usuarioLogado.nome.split(' ')[0];
+            aplicarPermissoesUI(); // Aplicar permissões aos cards da tela de seleção
         } else {
             sessionStorage.clear();
         }
@@ -1766,6 +1994,14 @@ async function verificarLoginSalvo() {
 }
 
 verificarLoginSalvo();
+
+async function sairSistema() {
+    await logout();
+    document.getElementById('appScreen').style.display = 'none';
+    document.getElementById('moduleSelectionScreen').style.display = 'none'; // Ocultar tela de seleção
+    document.getElementById('loginScreen').style.display = 'flex';
+    sessionStorage.clear();
+}
 
 // ====================== LISTENERS DAS ABAS ======================
 function initTabListeners() {

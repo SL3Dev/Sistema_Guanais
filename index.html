@@ -61,6 +61,92 @@
     </div>
 </div>
 
+<!-- TELA DE SELEÇÃO DE MÓDULOS -->
+<div id="moduleSelectionScreen" class="module-selection-container" style="display: none;">
+    <div class="module-selection-card text-center">
+        <h2 class="module-selection-title">Bem-vindo, <span id="moduleSelectionUserName">Usuário</span>!</h2>
+        <p class="module-selection-subtitle">Selecione um módulo para começar:</p>
+
+        <div class="row g-4 justify-content-center mt-4">
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('agenda')">
+                    <div class="menu-card-icon bg-verde-pale text-verde">
+                        <i class="bi bi-calendar-week"></i>
+                    </div>
+                    <h5>Agenda</h5>
+                    <p>Ver atendimentos e compromissos</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('pacientes')">
+                    <div class="menu-card-icon bg-info-pale text-info">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h5>Pacientes</h5>
+                    <p>Cadastrar e gerenciar pacientes</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('financeiro')">
+                    <div class="menu-card-icon bg-ouro-pale text-ouro">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <h5>Financeiro</h5>
+                    <p>Lançamentos e fluxo de caixa</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('despesas')">
+                    <div class="menu-card-icon bg-danger-pale text-danger">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <h5>Despesas</h5>
+                    <p>Controle de gastos e contas</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('novoAtendimento')">
+                    <div class="menu-card-icon bg-primary-pale text-primary">
+                        <i class="bi bi-plus-circle"></i>
+                    </div>
+                    <h5>Novo Atendimento</h5>
+                    <p>Registrar uma nova sessão</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('relatorios')">
+                    <div class="menu-card-icon bg-secondary-pale text-secondary">
+                        <i class="bi bi-bar-chart"></i>
+                    </div>
+                    <h5>Relatórios</h5>
+                    <p>Análise de dados e produtividade</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('configuracoes')">
+                    <div class="menu-card-icon bg-dark-pale text-dark">
+                        <i class="bi bi-gear"></i>
+                    </div>
+                    <h5>Configurações</h5>
+                    <p>Ajustes e gestão de usuários</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('ajuda')">
+                    <div class="menu-card-icon bg-light-pale text-muted">
+                        <i class="bi bi-question-circle"></i>
+                    </div>
+                    <h5>Ajuda</h5>
+                    <p>Suporte e manual do sistema</p>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-light border mt-5" onclick="sairSistema()">
+            <i class="bi bi-box-arrow-right me-2"></i>Sair
+        </button>
+    </div>
+</div>
+
 <!-- SISTEMA PRINCIPAL -->
 <div id="appScreen" style="display: none;">
     <!-- Header -->
@@ -100,7 +186,12 @@
         <!-- Navegação por Abas -->
         <ul class="nav nav-tabs border-0 gap-2 mb-4 flex-wrap" id="mainTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#agenda" type="button" role="tab">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                    <i class="bi bi-house-door"></i> Início
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#agenda" type="button" role="tab">
                     <i class="bi bi-calendar-week"></i> Agenda
                 </button>
             </li>
@@ -144,8 +235,111 @@
         <!-- Conteúdo das Abas -->
         <div class="tab-content" id="mainTabContent">
             
+            <!-- DASHBOARD / INÍCIO -->
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                <div class="welcome-header mb-5">
+                    <h2 class="fw-bold" style="color: var(--verde-escuro);">Bem-vindo, <span id="userNameDisplay">Usuário</span>!</h2>
+                    <p class="text-muted">O que você deseja fazer hoje?</p>
+                </div>
+
+                <div class="row g-4 dashboard-grid">
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('agenda')">
+                            <div class="menu-card-icon bg-verde-pale text-verde">
+                                <i class="bi bi-calendar-week"></i>
+                            </div>
+                            <h5>Agenda</h5>
+                            <p>Ver atendimentos e compromissos</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('pacientes')">
+                            <div class="menu-card-icon bg-info-pale text-info">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <h5>Pacientes</h5>
+                            <p>Cadastrar e gerenciar pacientes</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('financeiro')">
+                            <div class="menu-card-icon bg-ouro-pale text-ouro">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <h5>Financeiro</h5>
+                            <p>Lançamentos e fluxo de caixa</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('despesas')">
+                            <div class="menu-card-icon bg-danger-pale text-danger">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+                            <h5>Despesas</h5>
+                            <p>Controle de gastos e contas</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('novoAtendimento')">
+                            <div class="menu-card-icon bg-primary-pale text-primary">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                            <h5>Novo Atendimento</h5>
+                            <p>Registrar uma nova sessão</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('relatorios')">
+                            <div class="menu-card-icon bg-secondary-pale text-secondary">
+                                <i class="bi bi-bar-chart"></i>
+                            </div>
+                            <h5>Relatórios</h5>
+                            <p>Análise de dados e produtividade</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('configuracoes')">
+                            <div class="menu-card-icon bg-dark-pale text-dark">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <h5>Configurações</h5>
+                            <p>Ajustes e gestão de usuários</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="menu-card" onclick="irParaAba('ajuda')">
+                            <div class="menu-card-icon bg-light-pale text-muted">
+                                <i class="bi bi-question-circle"></i>
+                            </div>
+                            <h5>Ajuda</h5>
+                            <p>Suporte e manual do sistema</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Atalhos Rápidos / Resumo Opcional -->
+                <div class="row mt-5">
+                    <div class="col-md-6">
+                        <div class="caixa-guanais h-100">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Próximos Atendimentos</h6>
+                            <div id="dashboardProximos" class="list-group list-group-flush">
+                                <div class="text-center py-4 text-muted">Carregando agenda...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="caixa-guanais h-100">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2"></i>Resumo Financeiro (Mês)</h6>
+                            <div id="dashboardFinResumo" class="p-3 text-center">
+                                <div class="text-center py-4 text-muted">Carregando dados...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- AGENDA -->
-            <div class="tab-pane fade show active" id="agenda" role="tabpanel">
+            <div class="tab-pane fade" id="agenda" role="tabpanel">
                 <!-- Dashboard Cards -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">

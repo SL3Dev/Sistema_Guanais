@@ -114,10 +114,10 @@ switch ($method) {
             $receitaDisponivel = round($valor - $despesaAutomatica, 2);
             
             $stmt = $db->prepare("INSERT INTO financeiro (
-                id, paciente_id, paciente_nome, clinica, tipo_pacote, data, 
+                id, paciente_id, paciente_nome, clinica, tipo_pacote, data_inicio_pacote, data, 
                 valor, forma_pagamento, nf_emitida, observacoes,
                 despesa_automatica, receita_disponivel
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             $result = $stmt->execute([
                 $id,
@@ -125,6 +125,7 @@ switch ($method) {
                 sanitize($input['paciente_nome']),
                 $input['clinica'],
                 isset($input['tipo_pacote']) ? $input['tipo_pacote'] : null,
+                isset($input['data_inicio_pacote']) ? formatDateToISO($input['data_inicio_pacote']) : null,
                 formatDateToISO($input['data']),
                 $valor,
                 $input['forma_pagamento'],
@@ -171,7 +172,7 @@ switch ($method) {
             }
             
             $stmt = $db->prepare("UPDATE financeiro SET 
-                paciente_id = ?, paciente_nome = ?, clinica = ?, tipo_pacote = ?, 
+                paciente_id = ?, paciente_nome = ?, clinica = ?, tipo_pacote = ?, data_inicio_pacote = ?,
                 data = ?, valor = ?, forma_pagamento = ?, nf_emitida = ?, observacoes = ?
             WHERE id = ?");
             
@@ -180,6 +181,7 @@ switch ($method) {
                 sanitize($input['paciente_nome'] ?? ''),
                 $input['clinica'] ?? 'ANIMO',
                 isset($input['tipo_pacote']) ? $input['tipo_pacote'] : null,
+                isset($input['data_inicio_pacote']) ? formatDateToISO($input['data_inicio_pacote']) : null,
                 isset($input['data']) ? formatDateToISO($input['data']) : null,
                 isset($input['valor']) ? floatval($input['valor']) : 0,
                 $input['forma_pagamento'] ?? 'Pix',

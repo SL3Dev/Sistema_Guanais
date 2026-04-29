@@ -168,6 +168,7 @@ CREATE TABLE IF NOT EXISTS financeiro (
     paciente_nome VARCHAR(200) NOT NULL,
     clinica ENUM('ANIMO', 'ESPAÇO GUANAIS') NOT NULL,
     tipo_pacote ENUM('Quinzenal', 'Mensal', 'Avulso'),
+    data_inicio_pacote DATE,
     data DATE NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
     forma_pagamento ENUM('Pix', 'Dinheiro', 'Cartão Crédito', 'Cartão Débito') NOT NULL,
@@ -262,24 +263,5 @@ LEFT JOIN (
 WHERE p.ativo = TRUE
 ORDER BY p.nome;
 
--- =====================================================
--- SCRIPT DE ATUALIZAÇÃO (para banco existente)
--- =====================================================
--- Execute apenas estas linhas se já tiver um banco existente:
 
--- Adicionar campos de emergência ao paciente (se não existirem)
--- ALTER TABLE pacientes ADD COLUMN emergencia_parentesco VARCHAR(50) AFTER emergencia_telefone;
--- ALTER TABLE pacientes ADD COLUMN emergencia_info_adicionais TEXT AFTER emergencia_parentesco;
 
--- Adicionar tabela de configurações (se não existir)
--- CREATE TABLE IF NOT EXISTS configuracoes (
---     id INT PRIMARY KEY AUTO_INCREMENT,
---     chave VARCHAR(100) UNIQUE NOT NULL,
---     valor TEXT,
---     tipo ENUM('texto', 'numero', 'booleano', 'arquivo') DEFAULT 'texto',
---     descricao VARCHAR(255),
---     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
--- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Fim do script
