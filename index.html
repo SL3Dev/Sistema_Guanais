@@ -23,9 +23,13 @@
 
 <!-- TELA DE LOGIN -->
 <div id="loginScreen" class="login-container">
+    <div class="petal petal-1"></div>
+    <div class="petal petal-2"></div>
+    <div class="petal petal-3"></div>
+    <div class="petal petal-4"></div>
     <div class="login-card text-center">
-        <h2 style="font-family: var(--font-serif);">Espaço Guanais</h2>
-        <p class="text-muted mb-4">Sistema de Gestão Clínica</p>
+        <h2 style="font-family: var(--font-display); font-size: 2.2rem; color: var(--cinza-txt);">Espaço Guanais</h2>
+        <p class="text-muted mb-4" style="letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase;">Sistema de Gestão Clínica</p>
         <form id="loginForm">
             <div class="mb-3 text-start">
                 <label class="form-label" for="loginUser">Usuário</label>
@@ -45,7 +49,7 @@
                     <input type="password" id="loginPass" class="form-control border-start-0 ps-0" placeholder="Digite sua senha" required>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 py-3 fw-semibold">
+            <button type="submit" class="btn btn-verde w-100 py-3 fw-semibold">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Entrar no Sistema
             </button>
         </form>
@@ -60,30 +64,31 @@
     <!-- Header -->
     <header class="app-header d-flex justify-content-between align-items-center flex-wrap">
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: var(--accent-primary-bg); border-radius: 12px;">
-                <i class="bi bi-heart-pulse" style="font-size: 1.25rem; color: var(--accent-primary);"></i>
+            <div class="d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: var(--verde-pale); border-radius: 12px;">
+                <i class="bi bi-heart-pulse" style="font-size: 1.25rem; color: var(--verde);"></i>
             </div>
             <div>
-                <h5 class="mb-0 fw-semibold" style="font-family: var(--font-serif);">Espaço Guanais</h5>
-                <small class="text-muted" style="font-size: 0.7rem;">Gestão Integrada</small>
+                <h5 class="mb-0 fw-semibold" style="font-family: var(--font-display); color: var(--cinza-txt);">Espaço Guanais</h5>
+                <small class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Gestão Integrada</small>
             </div>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
-            <div class="theme-toggle" id="themeToggle" title="Alternar tema">
+            <span id="status-salvo"><i class="bi bi-check-circle-fill"></i>Salvo</span>
+            <div class="theme-toggle" id="themeToggle" title="Alternar tema" style="cursor: pointer; display: flex; align-items: center; gap: 8px; background: var(--verde-pale); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: var(--verde);">
                 <i class="bi bi-sun-fill"></i>
-                <i class="bi bi-moon-fill"></i>
+                <i class="bi bi-moon-fill" style="display:none;"></i>
                 <span class="d-none d-sm-inline">Tema</span>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="sairSistema()" title="Sair">
-                <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Sair</span>
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="exportarExcel()" title="Exportar backup">
-                <i class="bi bi-download"></i> <span class="d-none d-md-inline">Backup</span>
-            </button>
-            <input type="file" id="fileImport" class="d-none" accept=".xlsx,.xls,.csv" onchange="importarExcel(event, false)">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('fileImport').click()" title="Importar dados">
+            <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('fileImport').click()" title="Importar dados">
                 <i class="bi bi-upload"></i> <span class="d-none d-md-inline">Importar</span>
             </button>
+            <button class="btn btn-sm btn-outline-success" onclick="exportarExcel()" title="Exportar backup">
+                <i class="bi bi-download"></i> <span class="d-none d-md-inline">Backup</span>
+            </button>
+            <button class="btn btn-sm btn-light border text-danger" onclick="sairSistema()" title="Sair">
+                <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Sair</span>
+            </button>
+            <input type="file" id="fileImport" class="d-none" accept=".xlsx,.xls,.csv" onchange="importarExcel(event, false)">
         </div>
     </header>
 
@@ -141,46 +146,38 @@
                 <!-- Dashboard Cards -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
-                        <div class="card-modern p-3 text-center hover-lift">
-                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-success-bg); border-radius: 12px;">
-                                <i class="bi bi-person-check fs-4" style="color: var(--accent-success);"></i>
-                            </div>
-                            <h3 id="dashAtivos">0</h3>
-                            <span class="text-muted" style="font-size: 0.8rem;">Pacientes Ativos</span>
+                        <div class="dash-card">
+                            <div class="dash-icon"><i class="bi bi-person-check"></i></div>
+                            <div class="dash-label">Pacientes Ativos</div>
+                            <div class="dash-value" id="dashAtivos">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card-modern p-3 text-center hover-lift">
-                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-danger-bg); border-radius: 12px;">
-                                <i class="bi bi-calendar-x fs-4" style="color: var(--accent-danger);"></i>
-                            </div>
-                            <h3 id="dashFaltas" style="background: linear-gradient(135deg, var(--accent-danger) 0%, #dc2626 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</h3>
-                            <span class="text-muted" style="font-size: 0.8rem;">Faltas no Mês</span>
+                        <div class="dash-card" style="border-left-color: #dc3545 !important;">
+                            <div class="dash-icon" style="background: #ffeaea; color: #dc3545;"><i class="bi bi-calendar-x"></i></div>
+                            <div class="dash-label">Faltas no Mês</div>
+                            <div class="dash-value" id="dashFaltas" style="color: #dc3545;">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card-modern p-3 text-center hover-lift">
-                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-warning-bg); border-radius: 12px;">
-                                <i class="bi bi-exclamation-triangle fs-4" style="color: var(--accent-warning);"></i>
-                            </div>
-                            <h3 id="dashExcecoes" style="background: linear-gradient(135deg, var(--accent-warning) 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</h3>
-                            <span class="text-muted" style="font-size: 0.8rem;">Exceções</span>
+                        <div class="dash-card" style="border-left-color: var(--ouro) !important;">
+                            <div class="dash-icon" style="background: var(--ouro-pale); color: var(--ouro);"><i class="bi bi-exclamation-triangle"></i></div>
+                            <div class="dash-label">Exceções</div>
+                            <div class="dash-value" id="dashExcecoes" style="color: var(--ouro);">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card-modern p-3 text-center hover-lift">
-                            <div class="d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; margin: 0 auto; background: var(--accent-info-bg); border-radius: 12px;">
-                                <i class="bi bi-clock-history fs-4" style="color: var(--accent-info);"></i>
-                            </div>
-                            <div id="dashProximo" class="fw-semibold" style="font-size: 1.1rem;">—</div>
-                            <span class="text-muted" style="font-size: 0.8rem;">Próximo Atend.</span>
+                        <div class="dash-card" style="border-left-color: #0dcaf0 !important;">
+                            <div class="dash-icon" style="background: rgba(13, 202, 240, 0.1); color: #0dcaf0;"><i class="bi bi-clock-history"></i></div>
+                            <div class="dash-label">Próximo Atend.</div>
+                            <div class="dash-value" id="dashProximo" style="font-size: 1.1rem; font-family: var(--font-body) !important;">—</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Filtros -->
-                <div class="card-modern p-3 mb-4">
-                    <h6 class="mb-3"><i class="bi bi-funnel me-2"></i>Filtros</h6>
+                <div class="caixa-guanais mb-4">
+                    <h6 class="mb-3" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-funnel me-2"></i>Filtros de Agenda</h6>
                     <div class="row g-2">
                         <div class="col-md-3">
                             <input type="text" id="filtroNome" class="form-control" placeholder="🔍 Buscar paciente...">
@@ -210,7 +207,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button class="btn btn-outline w-100" onclick="limparFiltrosAgenda()">
+                            <button class="btn btn-outline-secondary w-100" onclick="limparFiltrosAgenda()">
                                 <i class="bi bi-eraser"></i> Limpar filtros
                             </button>
                         </div>
@@ -218,7 +215,7 @@
                 </div>
 
                 <!-- Tabela de Agenda -->
-                <div class="card-modern p-0 overflow-hidden">
+                <div class="table-wrap">
                     <div class="table-responsive">
                         <table class="table-custom mb-0">
                             <thead>
@@ -241,12 +238,13 @@
                 </div>
             </div>
 
+
             <!-- PACIENTES -->
             <div class="tab-pane fade" id="pacientes" role="tabpanel">
                 <div class="row">
                     <div class="col-lg-4">
-                        <div class="card-modern p-4">
-                            <h5 class="mb-4"><i class="bi bi-person-add me-2" style="color: var(--accent-primary);"></i>Cadastro de Paciente</h5>
+                        <div class="caixa-guanais card-accent">
+                            <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-person-add me-2"></i>Cadastro de Paciente</h5>
                             <form id="pacienteForm">
                                 <input type="hidden" id="pacId">
                                 <div class="mb-3">
@@ -277,15 +275,15 @@
                                 </div>
                                 
                                 <!-- Responsável (menores de 18) -->
-                                <div id="respSec" class="d-none mt-4 p-3" style="background: var(--bg-elevated); border-radius: var(--input-radius);">
-                                    <h6 class="mb-3"><i class="bi bi-person-badge me-2"></i>Responsável</h6>
+                                <div id="respSec" class="d-none mt-4 p-3" style="background: rgba(137,178,162,0.1); border-radius: var(--radius-sm); border: 1px dashed var(--verde);">
+                                    <h6 class="mb-3" style="color: var(--verde-escuro);"><i class="bi bi-person-badge me-2"></i>Responsável</h6>
                                     <input type="text" id="respNome" class="form-control mb-2" placeholder="Nome do responsável">
                                     <input type="text" id="respTel" class="form-control" placeholder="Telefone do responsável">
                                 </div>
                                 
                                 <!-- Emergência (maiores de 18) -->
-                                <div id="emergSec" class="mt-4 p-3" style="background: var(--bg-elevated); border-radius: var(--input-radius);">
-                                    <h6 class="mb-3"><i class="bi bi-heart-pulse me-2"></i>Contato de Emergência</h6>
+                                <div id="emergSec" class="mt-4 p-3" style="background: rgba(201,133,42,0.05); border-radius: var(--radius-sm); border: 1px dashed var(--ouro);">
+                                    <h6 class="mb-3" style="color: var(--ouro);"><i class="bi bi-heart-pulse me-2"></i>Contato de Emergência</h6>
                                     <div class="mb-3">
                                         <label class="form-label">Nome do contato</label>
                                         <input type="text" id="emergNome" class="form-control" placeholder="Nome completo">
@@ -315,10 +313,10 @@
                                 </div>
                                 
                                 <div class="d-grid gap-2 mt-4">
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-verde">
                                         <i class="bi bi-check-lg me-2"></i>Salvar Paciente
                                     </button>
-                                    <button type="button" class="btn btn-outline" onclick="resetPacienteForm()">
+                                    <button type="button" class="btn btn-light border" onclick="resetPacienteForm()">
                                         <i class="bi bi-x-lg me-2"></i>Cancelar
                                     </button>
                                 </div>
@@ -326,12 +324,14 @@
                         </div>
                     </div>
                     <div class="col-lg-8">
-                        <div class="card-modern p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-people me-2" style="color: var(--accent-primary);"></i>Lista de Pacientes</h5>
-                                <span class="badge bg-secondary" id="pacientesCount">0</span>
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-people me-2"></i>Lista de Pacientes</h5>
+                                <span class="badge-custom bg-verde text-white" id="pacientesCount">0</span>
                             </div>
-                            <input type="text" id="buscaPaciente" class="form-control mb-3" placeholder="🔍 Buscar paciente por nome, CPF ou telefone...">
+                            <div class="p-3 bg-light border-bottom">
+                                <input type="text" id="buscaPaciente" class="form-control" placeholder="🔍 Buscar paciente por nome, CPF ou telefone...">
+                            </div>
                             <div class="table-responsive">
                                 <table class="table-custom mb-0">
                                     <thead>
@@ -353,30 +353,31 @@
                 </div>
             </div>
 
+
             <!-- FINANCEIRO (COM INÍCIO DO PACOTE) -->
             <div class="tab-pane fade" id="financeiro" role="tabpanel">
                 <div class="row">
                     <div class="col-lg-4">
                         <!-- Resumo Financeiro -->
-                        <div class="card-modern p-4 mb-4 text-center financeiro-resumo">
-                            <h5 class="mb-3">📊 Resumo do Mês</h5>
-                            <h2 id="finTotalBruto">R$ 0,00</h2>
-                            <hr>
+                        <div class="fin-resumo mb-4 text-center">
+                            <h5 class="mb-3"><i class="bi bi-graph-up-arrow me-2"></i>Resumo do Mês</h5>
+                            <h2 id="finTotalBruto" style="font-family: var(--font-display); font-size: 2.5rem; color: #fff;">R$ 0,00</h2>
+                            <hr style="opacity: 0.3;">
                             <div class="row">
                                 <div class="col-6">
-                                    <p class="mb-1" style="font-size: 0.85rem;">Custos (25%)</p>
+                                    <p class="mb-1" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Custos (25%)</p>
                                     <strong id="finCusto" style="font-size: 1.1rem;">R$ 0,00</strong>
                                 </div>
                                 <div class="col-6">
-                                    <p class="mb-1" style="font-size: 0.85rem;">Líquido</p>
+                                    <p class="mb-1" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Líquido</p>
                                     <strong id="finLiquido" style="font-size: 1.25rem;">R$ 0,00</strong>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Formulário de Lançamento -->
-                        <div class="card-modern p-4">
-                            <h5 class="mb-4"><i class="bi bi-cash-coin me-2" style="color: var(--accent-success);"></i>Lançar Recebimento</h5>
+                        <div class="caixa-guanais card-accent-ouro">
+                            <h5 class="mb-4" style="color: var(--ouro); font-weight: 700;"><i class="bi bi-cash-coin me-2"></i>Lançar Recebimento</h5>
                             <form id="financeiroForm">
                                 <input type="hidden" id="finEditId" value="">
                                 <div class="mb-3">
@@ -433,7 +434,7 @@
                                         Nota Fiscal emitida
                                     </label>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">
+                                <button type="submit" class="btn btn-ouro w-100 py-2">
                                     <i class="bi bi-check-circle me-2"></i>Registrar Recebimento
                                 </button>
                             </form>
@@ -441,11 +442,11 @@
                     </div>
                     
                     <div class="col-lg-8">
-                        <div class="card-modern p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2" style="color: var(--accent-success);"></i>Lançamentos</h5>
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-graph-up-arrow me-2"></i>Lançamentos Financeiros</h5>
                             </div>
-                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                            <div class="p-3 bg-light border-bottom d-flex gap-2 flex-wrap">
                                 <input type="month" id="finMesFiltro" class="form-control" style="max-width: 180px;">
                                 <select id="finClinicaFiltro" class="form-select" style="max-width: 200px;">
                                     <option value="">Todas clínicas</option>
@@ -461,6 +462,7 @@
                                             <th>Paciente</th>
                                             <th>Clínica</th>
                                             <th>Valor</th>
+                                            <th>Custos</th>
                                             <th>Líquido</th>
                                             <th>Forma</th>
                                             <th>NF</th>
@@ -477,12 +479,13 @@
                 </div>
             </div>
 
+
             <!-- DESPESAS -->
             <div class="tab-pane fade" id="despesas" role="tabpanel">
                 <div class="row">
                     <div class="col-lg-4">
-                        <div class="card-modern p-4">
-                            <h5 class="mb-4"><i class="bi bi-receipt-cutoff me-2" style="color: var(--accent-danger);"></i>Cadastrar Despesa</h5>
+                        <div class="caixa-guanais" style="border-left: 5px solid #dc3545;">
+                            <h5 class="mb-4" style="color: #dc3545; font-weight: 700;"><i class="bi bi-receipt-cutoff me-2"></i>Cadastrar Despesa</h5>
                             <form id="despesaForm">
                                 <input type="hidden" id="despesaEditId" value="">
                                 <div class="mb-3">
@@ -520,15 +523,17 @@
                                         <input type="date" id="despDataInicio" class="form-control">
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">
+                                <button type="submit" class="btn btn-danger w-100 py-2">
                                     <i class="bi bi-check-lg me-2"></i>Salvar Despesa
                                 </button>
                             </form>
                         </div>
                     </div>
                     <div class="col-lg-8">
-                        <div class="card-modern p-4">
-                            <h5 class="mb-4"><i class="bi bi-list-check me-2" style="color: var(--accent-danger);"></i>Despesas Cadastradas</h5>
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom">
+                                <h5 class="mb-0" style="color: #dc3545; font-weight: 700;"><i class="bi bi-list-check me-2"></i>Despesas Cadastradas</h5>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table-custom mb-0">
                                     <thead>
@@ -551,15 +556,16 @@
                 </div>
             </div>
 
+
             <!-- NOVO ATENDIMENTO -->
             <div class="tab-pane fade" id="novoAtendimento" role="tabpanel">
-                <div class="card-modern p-5 mx-auto" style="max-width: 700px;">
+                <div class="caixa-guanais card-accent mx-auto" style="max-width: 700px; padding: 3rem !important;">
                     <div class="text-center mb-4">
-                        <div class="d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; margin: 0 auto; background: var(--accent-primary-bg); border-radius: 16px;">
-                            <i class="bi bi-calendar-plus fs-3" style="color: var(--accent-primary);"></i>
+                        <div class="dash-icon mx-auto mb-3" style="width: 64px; height: 64px; border-radius: 16px; font-size: 1.5rem;">
+                            <i class="bi bi-calendar-plus"></i>
                         </div>
-                        <h4>Registrar Nova Sessão</h4>
-                        <p class="text-muted">Preencha os dados abaixo para agendar um atendimento</p>
+                        <h4 style="color: var(--verde-escuro); font-weight: 700;">Registrar Nova Sessão</h4>
+                        <p class="text-muted" style="font-size: 0.85rem;">Preencha os dados abaixo para agendar um atendimento</p>
                     </div>
                     
                     <!-- Área de Informações do Paciente (preenchida automaticamente) -->
@@ -568,38 +574,36 @@
                     <form id="atendimentoForm">
                         <div class="mb-4">
                             <label class="form-label">Paciente *</label>
-                            <select id="atendPaciente" class="form-select form-select-lg" required>
+                            <select id="atendPaciente" class="form-select form-select-lg" style="font-size: 1rem;" required>
                                 <option value="">Selecione um paciente</option>
                             </select>
-                            <div class="form-text">Ao selecionar um paciente, os dados do pacote serão preenchidos automaticamente se existir um pacote ativo.</div>
+                            <div class="form-text" style="font-size: 0.75rem;">Ao selecionar um paciente, os dados do pacote serão preenchidos automaticamente se existir um pacote ativo.</div>
                         </div>
                         
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label">Data do Atendimento *</label>
-                                <input type="date" id="atendData" class="form-control form-control-lg" required>
+                                <input type="date" id="atendData" class="form-control" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Tipo de Pacote</label>
-                                <select id="atendPacoteTipo" class="form-select form-select-lg">
+                                <select id="atendPacoteTipo" class="form-select">
                                     <option>Quinzenal</option>
                                     <option>Mensal</option>
                                     <option>Avulso</option>
                                 </select>
-                                <div class="form-text">Preenchido automaticamente se houver pacote ativo.</div>
                             </div>
                         </div>
                         
                         <div class="mb-4">
                             <label class="form-label">Início do Pacote *</label>
-                            <input type="date" id="atendInicioPacote" class="form-control form-control-lg" required>
-                            <div class="form-text">Preenchido automaticamente se houver pacote ativo.</div>
+                            <input type="date" id="atendInicioPacote" class="form-control" required>
                         </div>
                         
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
-                                <select id="atendStatus" class="form-select form-select-lg">
+                                <select id="atendStatus" class="form-select">
                                     <option>Confirmado</option>
                                     <option>Falta</option>
                                     <option>Reagendado</option>
@@ -608,14 +612,14 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Unidade</label>
-                                <select id="atendUnidade" class="form-select form-select-lg">
+                                <select id="atendUnidade" class="form-select">
                                     <option>ANIMO</option>
                                     <option>ESPAÇO GUANAIS</option>
                                 </select>
                             </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3">
+                        <button type="submit" class="btn btn-verde w-100 py-3 fw-bold">
                             <i class="bi bi-calendar-check me-2"></i>Salvar Atendimento
                         </button>
                     </form>
@@ -627,8 +631,8 @@
                 <div class="row g-4">
                     <!-- Filtros de Relatório -->
                     <div class="col-12">
-                        <div class="card-modern p-4">
-                            <h5 class="mb-4"><i class="bi bi-funnel me-2"></i>Filtros de Relatórios</h5>
+                        <div class="caixa-guanais">
+                            <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-funnel me-2"></i>Filtros de Relatórios</h5>
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label class="form-label">Período (Mês)</label>
@@ -649,10 +653,10 @@
                                     </select>
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end gap-2">
-                                    <button class="btn btn-primary flex-fill" onclick="gerarRelatorios()">
+                                    <button class="btn btn-verde flex-fill" onclick="gerarRelatorios()">
                                         <i class="bi bi-search me-2"></i>Gerar Relatórios
                                     </button>
-                                    <button class="btn btn-outline" onclick="exportarRelatorioCSV()">
+                                    <button class="btn btn-ouro" onclick="exportarRelatorioCSV()" title="Exportar CSV">
                                         <i class="bi bi-download"></i>
                                     </button>
                                 </div>
@@ -662,32 +666,32 @@
 
                     <!-- Resumo Financeiro -->
                     <div class="col-md-4">
-                        <div class="card-modern p-4 text-center h-100">
-                            <h6 class="text-muted mb-3">Total Bruto</h6>
-                            <h2 id="relatorioTotalBruto" class="text-primary">R$ 0,00</h2>
+                        <div class="dash-card">
+                            <div class="dash-label">Total Bruto</div>
+                            <div class="dash-value" id="relatorioTotalBruto" style="color: var(--verde);">R$ 0,00</div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card-modern p-4 text-center h-100">
-                            <h6 class="text-muted mb-3">Despesas (25%)</h6>
-                            <h2 id="relatorioTotalDespesas" class="text-danger">R$ 0,00</h2>
+                        <div class="dash-card" style="border-left-color: #dc3545 !important;">
+                            <div class="dash-label">Despesas (25%)</div>
+                            <div class="dash-value" id="relatorioTotalDespesas" style="color: #dc3545;">R$ 0,00</div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card-modern p-4 text-center h-100">
-                            <h6 class="text-muted mb-3">Receita Disponível (75%)</h6>
-                            <h2 id="relatorioTotalDisponivel" class="text-success">R$ 0,00</h2>
+                        <div class="dash-card" style="border-left-color: #198754 !important;">
+                            <div class="dash-label">Receita Disponível (75%)</div>
+                            <div class="dash-value" id="relatorioTotalDisponivel" style="color: #198754;">R$ 0,00</div>
                         </div>
                     </div>
 
                     <!-- Relatório de Atendimentos -->
                     <div class="col-12">
-                        <div class="card-modern p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-0"><i class="bi bi-calendar-check me-2" style="color: var(--accent-primary);"></i>Relatório de Atendimentos</h5>
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-calendar-check me-2"></i>Relatório de Atendimentos</h5>
                                 <div>
-                                    <span class="badge bg-secondary me-2">Total: <span id="totalAtendimentos">0</span></span>
-                                    <span class="badge bg-danger">Faltas: <span id="totalFaltas">0</span></span>
+                                    <span class="badge-custom bg-secondary text-white me-2">Total: <span id="totalAtendimentos">0</span></span>
+                                    <span class="badge-custom bg-danger text-white">Faltas: <span id="totalFaltas">0</span></span>
                                 </div>
                             </div>
                             <div class="table-responsive">
@@ -715,9 +719,9 @@
 
                     <!-- Relatório Financeiro -->
                     <div class="col-12">
-                        <div class="card-modern p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-0"><i class="bi bi-cash-coin me-2" style="color: var(--accent-success);"></i>Relatório Financeiro</h5>
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom">
+                                <h5 class="mb-0" style="color: var(--ouro); font-weight: 700;"><i class="bi bi-cash-coin me-2"></i>Relatório Financeiro</h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table-custom mb-0" id="relatorioFinanceiroTable">
@@ -746,9 +750,9 @@
 
                     <!-- Relatório de Pacientes -->
                     <div class="col-12">
-                        <div class="card-modern p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-0"><i class="bi bi-people me-2" style="color: var(--accent-info);"></i>Relatório de Pacientes</h5>
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom">
+                                <h5 class="mb-0" style="color: #0dcaf0; font-weight: 700;"><i class="bi bi-people me-2"></i>Relatório de Pacientes</h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table-custom mb-0" id="relatorioPacientesTable">
@@ -777,8 +781,8 @@
             <div class="tab-pane fade" id="configuracoes" role="tabpanel">
                 <div class="row">
                     <div class="col-lg-4">
-                        <div class="card-modern p-4">
-                            <h5 class="mb-4"><i class="bi bi-person-plus me-2" style="color: var(--accent-primary);"></i>Novo Usuário</h5>
+                        <div class="caixa-guanais card-accent">
+                            <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-person-plus me-2"></i>Novo Usuário</h5>
                             <form id="usuarioForm">
                                 <div class="mb-3">
                                     <label class="form-label">Usuário *</label>
@@ -804,15 +808,17 @@
                                         <option value="admin">Administrador</option>
                                     </select>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">
+                                <button type="submit" class="btn btn-verde w-100 py-2">
                                     <i class="bi bi-check-lg me-2"></i>Criar Usuário
                                 </button>
                             </form>
                         </div>
                     </div>
                     <div class="col-lg-8">
-                        <div class="card-modern p-4">
-                            <h5 class="mb-4"><i class="bi bi-people-fill me-2" style="color: var(--accent-primary);"></i>Usuários do Sistema</h5>
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom">
+                                <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-people-fill me-2"></i>Usuários do Sistema</h5>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table-custom mb-0">
                                     <thead>
@@ -833,6 +839,7 @@
                         </div>
                     </div>
                 </div>
+
                 
                 <!-- Modal de Permissões -->
                 <div class="modal fade" id="modalPermissoes" tabindex="-1">
@@ -907,8 +914,8 @@
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-primary" onclick="atualizarUsuario()">
+                                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-verde" onclick="atualizarUsuario()">
                                     <i class="bi bi-check-lg me-2"></i>Atualizar
                                 </button>
                             </div>
@@ -919,10 +926,10 @@
 
             <!-- AJUDA -->
             <div class="tab-pane fade" id="ajuda" role="tabpanel">
-                <div class="card-modern p-5">
+                <div class="caixa-guanais p-5">
                     <div class="row">
                         <div class="col-lg-6">
-                            <h4 class="mb-4"><i class="bi bi-file-earmark-excel me-2" style="color: var(--accent-success);"></i>Importação e Exportação</h4>
+                            <h4 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-file-earmark-excel me-2"></i>Importação e Exportação</h4>
                             <p class="mb-3">Utilize os botões no cabeçalho para gerenciar backups dos seus dados:</p>
                             <ul class="list-unstyled">
                                 <li class="mb-2">
@@ -935,7 +942,7 @@
                                 </li>
                             </ul>
                             <hr class="my-4">
-                            <h5 class="mb-3"><i class="bi bi-database me-2" style="color: var(--accent-info);"></i>API Backend</h5>
+                            <h5 class="mb-3" style="color: #0dcaf0;"><i class="bi bi-database me-2"></i>API Backend</h5>
                             <p class="text-muted" style="font-size: 0.85rem;">
                                 Este sistema utiliza uma API PHP para persistência de dados em banco MySQL.
                                 Os endpoints disponíveis são:
@@ -949,22 +956,22 @@
                             </ul>
                         </div>
                         <div class="col-lg-6">
-                            <h4 class="mb-4"><i class="bi bi-palette me-2" style="color: var(--accent-secondary);"></i>Aparência</h4>
+                            <h4 class="mb-4" style="color: var(--ouro); font-weight: 700;"><i class="bi bi-palette me-2"></i>Aparência</h4>
                             <p class="mb-3">Personalize a aparência do sistema:</p>
-                            <div class="card-modern p-3 mb-3">
+                            <div class="caixa-guanais p-3 mb-3" style="background: var(--branco);">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <strong>Modo Escuro/Claro</strong>
                                         <p class="text-muted mb-0" style="font-size: 0.8rem;">Altere o tema do sistema</p>
                                     </div>
-                                    <button class="btn btn-outline" onclick="toggleTheme()">
+                                    <button class="btn btn-outline-secondary" onclick="toggleTheme()">
                                         <i class="bi bi-sun-fill"></i>
-                                        <i class="bi bi-moon-fill"></i>
+                                        <i class="bi bi-moon-fill" style="display:none;"></i>
                                     </button>
                                 </div>
                             </div>
                             <hr class="my-4">
-                            <h5 class="mb-3"><i class="bi bi-shield-check me-2" style="color: var(--accent-success);"></i>Segurança</h5>
+                            <h5 class="mb-3" style="color: #198754;"><i class="bi bi-shield-check me-2"></i>Segurança</h5>
                             <p class="text-muted" style="font-size: 0.85rem;">
                                 • Session management com validação no servidor<br>
                                 • API com CORS configurado<br>
@@ -975,13 +982,14 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 
+<div id="toast-container"></div>
 <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script src="js/script.js"></script>
 </body>

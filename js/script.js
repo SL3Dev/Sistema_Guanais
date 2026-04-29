@@ -30,6 +30,11 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
         if (!response.ok) {
             throw new Error(result.error || 'Erro na requisição');
         }
+
+        // Feedback visual para mutações
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method.toUpperCase())) {
+            mostrarSalvo();
+        }
         
         return result;
     } catch (error) {
@@ -482,12 +487,31 @@ function initUsuariosTab() {
 }
 
 // ====================== FUNÇÕES AUXILIARES ======================
-function mostrarToast(msg, tipo = 'success') {
-    let toastDiv = document.createElement('div');
-    toastDiv.className = 'toast-custom';
-    toastDiv.innerHTML = `<i class="bi bi-${tipo === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'}"></i> ${msg}`;
-    document.body.appendChild(toastDiv);
-    setTimeout(() => toastDiv.remove(), 3000);
+function mostrarToast(mensagem, tipo = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+        // Fallback se o container não existir
+        let toastDiv = document.createElement('div');
+        toastDiv.className = `toast-msg toast-${tipo}`;
+        toastDiv.innerHTML = `<i class="bi bi-info-circle"></i> ${mensagem}`;
+        document.body.appendChild(toastDiv);
+        setTimeout(() => toastDiv.remove(), 3000);
+        return;
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast-msg toast-${tipo}`;
+    const icones = { success: 'check-circle-fill', danger: 'x-circle-fill', warning: 'exclamation-triangle-fill' };
+    toast.innerHTML = `<i class="bi bi-${icones[tipo] || 'info-circle-fill'}"></i>${mensagem}`;
+    container.appendChild(toast);
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3200);
+}
+
+function mostrarSalvo() {
+    const ind = document.getElementById('status-salvo');
+    if (!ind) return;
+    ind.style.display = 'inline-flex';
+    clearTimeout(ind._timer);
+    ind._timer = setTimeout(() => { ind.style.display = 'none'; }, 2500);
 }
 
 function gerarId(prefixo) {
@@ -1450,13 +1474,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     let user = document.getElementById('loginUser').value;
     let pass = document.getElementById('loginPass').value;
     
-    const success = await login(user, pass);
+        const success = await login(user, pass);
     if (success) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('appScreen').style.display = 'block';
         await inicializarSistema();
+        mostrarToast('Bem-vindo ao sistema!');
     } else {
-        alert('Usuário ou senha inválidos');
+        mostrarToast('Usuário ou senha inválidos', 'danger');
     }
 });
 
