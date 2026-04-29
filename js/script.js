@@ -617,8 +617,157 @@ function calcularIdade(dataNasc) {
     return idade;
 }
 
+// ====================== DASHBOARD INTERACTIVITY ======================
+function initDashboardInteractivity() {
+    const cardAtivos = document.getElementById('cardAtivos');
+    const cardFaltas = document.getElementById('cardFaltas');
+    const cardExcecoes = document.getElementById('cardExcecoes');
+    const cardProximo = document.getElementById('cardProximo');
+
+    if (cardAtivos) {
+        cardAtivos.addEventListener('click', () => {
+            const tabTrigger = new bootstrap.Tab(document.querySelector('[data-bs-target="#pacientes"]'));
+            tabTrigger.show();
+            mostrarToast('Listando pacientes ativos', 'info');
+        });
+    }
+
+    if (cardFaltas) {
+        cardFaltas.addEventListener('click', () => {
+            limparFiltrosAgenda();
+            document.getElementById('filtroStatus').value = 'Falta';
+            renderAgenda();
+            mostrarToast('Filtrando faltas registradas no mês', 'info');
+        });
+    }
+
+    if (cardExcecoes) {
+        cardExcecoes.addEventListener('click', () => {
+            limparFiltrosAgenda();
+            document.getElementById('filtroStatus').value = 'Exceção Justificada';
+            renderAgenda();
+            mostrarToast('Filtrando exceções justificadas', 'info');
+        });
+    }
+
+    if (cardProximo) {
+        cardProximo.addEventListener('click', () => {
+            limparFiltrosAgenda();
+            const hojeStr = new Date().toISOString().slice(0, 10);
+            let proximos = dados.atendimentos.filter(a => formataDataISO(a.data_atendimento) >= hojeStr);
+            
+            if (proximos.length > 0) {
+                // Ordenar para garantir que o mais próximo apareça primeiro
+                proximos.sort((a, b) => new Date(formataDataISO(a.data_atendimento)) - new Date(formataDataISO(b.data_atendimento)));
+                const proximo = proximos[0];
+                
+                // Mostrar apenas os próximos e destacar o primeiro
+                renderAgenda(proximos);
+                mostrarToast(`Localizado próximo atendimento: ${proximo.paciente_nome} em ${proximo.data_atendimento}`, 'info');
+            } else {
+                mostrarToast('Nenhum atendimento futuro encontrado', 'warning');
+            }
+        });
+    }
+}
+
+// ====================== CONFIGURAÇÕES E LOGOS ======================
+async function carregarConfiguracoes() {
+    try {
+        const result = await apiRequest('configuracoes.php');
+        if (result.success && result.data) {
+            result.data.forEach(config => {
+                if (config.chave === 'logo_path') {
+                    atualizarLogoUI('header', config.valor);
+                } else if (config.chave === 'logo_login') {
+                    atualizarLogoUI('login', config.valor);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+    }
+}
+
+function atualizarLogoUI(tipo, path) {
+    if (!path) return;
+    
+    // Adicionar timestamp para evitar cache
+    const timestampedPath = path + '?t=' + new Date().getTime();
+    
+    if (tipo === 'header') {
+        const img = document.getElementById('headerLogoImg');
+        const icon = document.getElementById('headerLogoIcon');
+        const preview = document.getElementById('previewHeaderLogo');
+        
+        if (img) {
+            img.src = timestampedPath;
+            img.style.display = 'block';
+            if (icon) icon.style.display = 'none';
+        }
+        if (preview) preview.src = timestampedPath;
+    } else if (tipo === 'login') {
+        const preview = document.getElementById('previewLoginLogo');
+        if (preview) preview.src = timestampedPath;
+        
+        // Se quisermos mostrar a logo na tela de login também
+        const loginHeader = document.querySelector('.login-header-group');
+        let loginLogoImg = document.getElementById('loginLogoImg');
+        
+        if (loginHeader) {
+            if (!loginLogoImg) {
+                loginLogoImg = document.createElement('img');
+                loginLogoImg.id = 'loginLogoImg';
+                loginLogoImg.style.maxWidth = '200px';
+                loginLogoImg.style.marginBottom = '1.5rem';
+                loginHeader.prepend(loginLogoImg);
+            }
+            loginLogoImg.src = timestampedPath;
+            // Ocultar títulos se houver logo? O usuário pediu para mexer no nome...
+            // Vamos manter os títulos por enquanto.
+        }
+    }
+}
+
+async function uploadLogo(tipo) {
+    const inputId = tipo === 'login' ? 'inputLoginLogo' : 'inputHeaderLogo';
+    const fileInput = document.getElementById(inputId);
+    
+    if (!fileInput || !fileInput.files[0]) {
+        mostrarToast('Selecione um arquivo primeiro', 'warning');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('logo', fileInput.files[0]);
+    formData.append('type', tipo);
+    
+    try {
+        const response = await fetch('api/configuracoes.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            mostrarToast('Logo atualizada com sucesso!');
+            atualizarLogoUI(tipo, result.data.path);
+            fileInput.value = '';
+        } else {
+            mostrarToast(result.error || 'Erro no upload', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro no upload:', error);
+        mostrarToast('Erro de conexão ao enviar logo', 'danger');
+    }
+}
+
 // ====================== INICIALIZAÇÃO ======================
 async function inicializarSistema() {
+    // Carregar configurações primeiro para as logos
+    await carregarConfiguracoes();
+    
     // Carregar todos os dados da API
     await Promise.all([
         carregarPacientes(),
@@ -629,6 +778,8 @@ async function inicializarSistema() {
     
     // Aplicar restrições de permissão na UI
     aplicarPermissoesUI();
+
+    initDashboardInteractivity();
 
     renderPacientes();
     renderAgenda();
@@ -797,22 +948,39 @@ function aplicarRegraExcecao() {
     });
 }
 
-function renderAgenda() {
+function filtrarHoje() {
+    limparFiltrosAgenda();
+    const hoje = new Date().toISOString().slice(0, 10);
+    const filtroData = document.getElementById('filtroData');
+    if (filtroData) filtroData.value = hoje;
+    
+    // Agora o renderAgenda filtrará pela data do picker
+    renderAgenda();
+    mostrarToast('Exibindo atendimentos de hoje', 'info');
+}
+
+// Modificar renderAgenda para aceitar dados opcionais
+function renderAgenda(dadosCustom = null) {
     let nome = document.getElementById('filtroNome')?.value.toLowerCase() || '';
     let pacote = document.getElementById('filtroPacote')?.value || '';
     let status = document.getElementById('filtroStatus')?.value || '';
     let unidade = document.getElementById('filtroUnidade')?.value || '';
+    let dataFiltro = document.getElementById('filtroData')?.value || '';
     
-    let filtrados = dados.atendimentos.filter(a => {
+    let base = dadosCustom || dados.atendimentos;
+    
+    let filtrados = base.filter(a => {
         let nomePaciente = (a.paciente_nome || '').toLowerCase();
         let tipoPacote = a.tipo_pacote || '';
         let statusAtend = a.status || '';
         let unidadeAtend = a.unidade || '';
+        let dataAtend = formataDataISO(a.data_atendimento);
         
         return nomePaciente.includes(nome) &&
             (!pacote || tipoPacote === pacote) &&
             (!status || statusAtend === status) &&
-            (!unidade || unidadeAtend === unidade);
+            (!unidade || unidadeAtend === unidade) &&
+            (!dataFiltro || dataAtend === dataFiltro);
     });
     
     // Ordenar por data decrescente

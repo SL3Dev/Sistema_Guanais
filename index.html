@@ -28,8 +28,10 @@
     <div class="petal petal-3"></div>
     <div class="petal petal-4"></div>
     <div class="login-card text-center">
-        <h2 style="font-family: var(--font-display); font-size: 2.2rem; color: var(--cinza-txt);">Espaço Guanais</h2>
-        <p class="text-muted mb-4" style="letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase;">Sistema de Gestão Clínica</p>
+        <div class="login-header-group">
+            <h2 class="login-title">Espaço Guanais</h2>
+            <p class="login-subtitle">Sistema de Gestão Clínica</p>
+        </div>
         <form id="loginForm">
             <div class="mb-3 text-start">
                 <label class="form-label" for="loginUser">Usuário</label>
@@ -64,8 +66,9 @@
     <!-- Header -->
     <header class="app-header d-flex justify-content-between align-items-center flex-wrap">
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: var(--verde-pale); border-radius: 12px;">
-                <i class="bi bi-heart-pulse" style="font-size: 1.25rem; color: var(--verde);"></i>
+            <div id="headerLogoContainer" class="d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: var(--verde-pale); border-radius: 12px; overflow: hidden;">
+                <i id="headerLogoIcon" class="bi bi-heart-pulse" style="font-size: 1.25rem; color: var(--verde);"></i>
+                <img id="headerLogoImg" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
                 <h5 class="mb-0 fw-semibold" style="font-family: var(--font-display); color: var(--cinza-txt);">Espaço Guanais</h5>
@@ -146,28 +149,28 @@
                 <!-- Dashboard Cards -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
-                        <div class="dash-card">
+                        <div class="dash-card clickable" id="cardAtivos">
                             <div class="dash-icon"><i class="bi bi-person-check"></i></div>
                             <div class="dash-label">Pacientes Ativos</div>
                             <div class="dash-value" id="dashAtivos">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card" style="border-left-color: #dc3545 !important;">
+                        <div class="dash-card clickable" id="cardFaltas" style="border-left-color: #dc3545 !important;">
                             <div class="dash-icon" style="background: #ffeaea; color: #dc3545;"><i class="bi bi-calendar-x"></i></div>
                             <div class="dash-label">Faltas no Mês</div>
                             <div class="dash-value" id="dashFaltas" style="color: #dc3545;">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card" style="border-left-color: var(--ouro) !important;">
+                        <div class="dash-card clickable" id="cardExcecoes" style="border-left-color: var(--ouro) !important;">
                             <div class="dash-icon" style="background: var(--ouro-pale); color: var(--ouro);"><i class="bi bi-exclamation-triangle"></i></div>
                             <div class="dash-label">Exceções</div>
                             <div class="dash-value" id="dashExcecoes" style="color: var(--ouro);">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card" style="border-left-color: #0dcaf0 !important;">
+                        <div class="dash-card clickable" id="cardProximo" style="border-left-color: #0dcaf0 !important;">
                             <div class="dash-icon" style="background: rgba(13, 202, 240, 0.1); color: #0dcaf0;"><i class="bi bi-clock-history"></i></div>
                             <div class="dash-label">Próximo Atend.</div>
                             <div class="dash-value" id="dashProximo" style="font-size: 1.1rem; font-family: var(--font-body) !important;">—</div>
@@ -206,9 +209,15 @@
                                 <option>ESPAÇO GUANAIS</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-secondary w-100" onclick="limparFiltrosAgenda()">
-                                <i class="bi bi-eraser"></i> Limpar filtros
+                        <div class="col-md-2">
+                            <input type="date" id="filtroData" class="form-control" onchange="renderAgenda()">
+                        </div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button class="btn btn-verde flex-grow-1" onclick="filtrarHoje()">
+                                <i class="bi bi-calendar-event me-2"></i>Hoje
+                            </button>
+                            <button class="btn btn-outline-secondary flex-grow-1" onclick="limparFiltrosAgenda()">
+                                <i class="bi bi-eraser me-2"></i>Limpar
                             </button>
                         </div>
                     </div>
@@ -835,6 +844,51 @@
                                         <!-- Dados carregados via JavaScript -->
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestão de Logos -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="caixa-guanais">
+                            <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-image me-2"></i>Personalização de Logotipos</h5>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-3">Logo do Cabeçalho (Menu)</h6>
+                                            <div class="logo-preview-container">
+                                                <img id="previewHeaderLogo" src="logo/logo.png" class="logo-preview-img" onerror="this.src='https://placehold.co/100x40?text=Logo'">
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="file" id="inputHeaderLogo" class="form-control" accept="image/*">
+                                                <button class="btn btn-verde" onclick="uploadLogo('header')">
+                                                    <i class="bi bi-upload"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted mt-2 d-block">Recomendado: 120x120px ou 200x60px (PNG Transparente)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-3">Logo da Tela de Login</h6>
+                                            <div class="logo-preview-container">
+                                                <img id="previewLoginLogo" src="logo/logo.png" class="logo-preview-img" onerror="this.src='https://placehold.co/200x80?text=Logo+Login'">
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="file" id="inputLoginLogo" class="form-control" accept="image/*">
+                                                <button class="btn btn-verde" onclick="uploadLogo('login')">
+                                                    <i class="bi bi-upload"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted mt-2 d-block">Recomendado: 300x120px (PNG Transparente)</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

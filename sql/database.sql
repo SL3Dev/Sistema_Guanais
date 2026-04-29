@@ -1,8 +1,7 @@
--- =====================================================
 -- SISTEMA DE GESTÃO CLÍNICA ESPAÇO GUANAIS
 -- Script completo de criação do banco de dados
 -- Compatível com MySQL 5.7+ / MariaDB 10.2+
--- Versão atualizada: 2026-04-21
+-- Versão atualizada: 2026-04-29 (Otimizações de Dashboard e Agenda)
 -- =====================================================
 
 -- Dropar banco de dados se existir (para recriação limpa)

@@ -36,12 +36,47 @@ switch ($method) {
         break;
         
     case 'POST':
+        // Handle file upload for logos
+        if (isset($_FILES['logo'])) {
+            $type = isset($_POST['type']) ? $_POST['type'] : 'header';
+            $chave = ($type === 'login') ? 'logo_login' : 'logo_path';
+
+            $uploadDir = '../logo/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            $fileExtension = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
+            $fileName = $chave . '_' . time() . '.' . $fileExtension; // Add timestamp to avoid cache issues
+            $targetPath = $uploadDir . $fileName;
+
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], $targetPath)) {
+                $dbValue = 'logo/' . $fileName;
+
+                // Atualizar no banco
+                $stmt = $db->prepare("SELECT id FROM configuracoes WHERE chave = ?");
+                $stmt->execute([$chave]);
+                if ($stmt->fetch()) {
+                    $stmt = $db->prepare("UPDATE configuracoes SET valor = ? WHERE chave = ?");
+                    $stmt->execute([$dbValue, $chave]);
+                } else {
+                    $stmt = $db->prepare("INSERT INTO configuracoes (id, chave, valor, tipo) VALUES (?, ?, ?, 'arquivo')");
+                    $stmt->execute([generateId('CFG'), $chave, $dbValue]);
+                }
+
+                successResponse(['path' => $dbValue], 'Logo atualizada com sucesso');
+            } else {
+                errorResponse('Erro ao fazer upload do arquivo', 500);
+            }
+            break;
+        }
+
         // Criar nova configuração
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
         
         $errors = [];
-        if (empty($input['chave'])) $errors[] = validateField($input, 'chave', 'Chave');
+        if (empty($input['chave'])) $errors[] = 'Chave é obrigatória';
         if (!isset($input['valor'])) $errors[] = 'Valor é obrigatório';
         
         if (!empty($errors)) {
@@ -53,7 +88,6 @@ switch ($method) {
             $tipo = isset($input['tipo']) ? $input['tipo'] : 'texto';
             
             $stmt = $db->prepare("INSERT INTO configuracoes (id, chave, valor, tipo, descricao) VALUES (?, ?, ?, ?, ?)");
-            
             $result = $stmt->execute([
                 $id,
                 sanitize($input['chave']),
@@ -66,7 +100,6 @@ switch ($method) {
                 $stmt = $db->prepare("SELECT * FROM configuracoes WHERE id = ?");
                 $stmt->execute([$id]);
                 $config = $stmt->fetch();
-                
                 successResponse($config, 'Configuração criada com sucesso', 201);
             } else {
                 errorResponse('Erro ao criar configuração', 500);
@@ -92,21 +125,24 @@ switch ($method) {
             $stmt = $db->prepare("SELECT id FROM configuracoes WHERE chave = ?");
             $stmt->execute([$input['chave']]);
             if (!$stmt->fetch()) {
-                errorResponse('Configuração não encontrada', 404);
+                if (strpos($input['chave'], 'logo_') === 0) {
+                    $stmt = $db->prepare("INSERT INTO configuracoes (id, chave, valor, tipo) VALUES (?, ?, ?, 'arquivo')");
+                    $stmt->execute([generateId('CFG'), $input['chave'], $input['valor']]);
+                } else {
+                    errorResponse('Configuração não encontrada', 404);
+                }
             }
-            
+
             $stmt = $db->prepare("UPDATE configuracoes SET valor = ? WHERE chave = ?");
-            
             $result = $stmt->execute([
-                sanitize($input['valor']),
+                $input['valor'],
                 $input['chave']
             ]);
-            
+
             if ($result) {
                 $stmt = $db->prepare("SELECT * FROM configuracoes WHERE chave = ?");
                 $stmt->execute([$input['chave']]);
                 $config = $stmt->fetch();
-                
                 successResponse($config, 'Configuração atualizada com sucesso');
             } else {
                 errorResponse('Erro ao atualizar configuração', 500);
@@ -118,7 +154,6 @@ switch ($method) {
         
     case 'DELETE':
         $chave = isset($_GET['chave']) ? $_GET['chave'] : null;
-        
         if (empty($chave)) {
             errorResponse('Chave da configuração é obrigatória', 400);
         }
@@ -132,7 +167,6 @@ switch ($method) {
             
             $stmt = $db->prepare("DELETE FROM configuracoes WHERE chave = ?");
             $result = $stmt->execute([$chave]);
-            
             if ($result) {
                 successResponse([], 'Configuração removida com sucesso');
             } else {
