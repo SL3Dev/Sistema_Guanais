@@ -43,6 +43,7 @@ function aplicarRegraExcecao($db) {
 
 switch ($method) {
     case 'GET':
+        requirePermission('atendimentos', 'visualizar');
         // Listar atendimentos com filtros opcionais
         try {
             $nome = isset($_GET['nome']) ? trim($_GET['nome']) : '';
@@ -124,6 +125,7 @@ switch ($method) {
         break;
         
     case 'POST':
+        requirePermission('atendimentos', 'criar');
         // Criar novo atendimento
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -184,6 +186,7 @@ switch ($method) {
         break;
         
     case 'PUT':
+        requirePermission('atendimentos', 'editar');
         // Atualizar atendimento
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -237,6 +240,7 @@ switch ($method) {
         break;
         
     case 'DELETE':
+        requirePermission('atendimentos', 'excluir');
         // Excluir atendimento
         $id = isset($_GET['id']) ? $_GET['id'] : null;
         

@@ -72,6 +72,11 @@ switch ($method) {
             $_SESSION['nome'] = $user['nome'];
             $_SESSION['logged_in'] = true;
             
+            // Buscar permissões
+            $stmt = $db->prepare("SELECT modulo, acao, permitido FROM permissoes WHERE usuario_id = ?");
+            $stmt->execute([$user['id']]);
+            $permissoes = $stmt->fetchAll();
+            
             // Gerar token (opcional, para autenticação via API)
             $token = bin2hex(random_bytes(32));
             $_SESSION['api_token'] = $token;
@@ -81,7 +86,8 @@ switch ($method) {
                 'user' => [
                     'id' => $user['id'],
                     'usuario' => $user['usuario'],
-                    'nome' => $user['nome']
+                    'nome' => $user['nome'],
+                    'permissoes' => $permissoes
                 ],
                 'token' => $token
             ], 'Login realizado com sucesso');
@@ -94,12 +100,18 @@ switch ($method) {
     case 'GET':
         // Verificar se está autenticado
         if (isAuthenticated()) {
+            // Buscar permissões
+            $stmt = $db->prepare("SELECT modulo, acao, permitido FROM permissoes WHERE usuario_id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $permissoes = $stmt->fetchAll();
+
             successResponse([
                 'success' => true,
                 'user' => [
                     'id' => $_SESSION['user_id'],
                     'usuario' => $_SESSION['usuario'],
-                    'nome' => $_SESSION['nome']
+                    'nome' => $_SESSION['nome'],
+                    'permissoes' => $permissoes
                 ],
                 'logged' => true
             ], 'Usuário autenticado');

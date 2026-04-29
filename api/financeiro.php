@@ -12,6 +12,7 @@ $db = Database::getInstance()->getConnection();
 
 switch ($method) {
     case 'GET':
+        requirePermission('financeiro', 'visualizar');
         // Listar lançamentos financeiros com filtros
         try {
             $mes = isset($_GET['mes']) ? trim($_GET['mes']) : '';
@@ -85,6 +86,7 @@ switch ($method) {
         break;
         
     case 'POST':
+        requirePermission('financeiro', 'criar');
         // Criar novo lançamento financeiro
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -151,6 +153,7 @@ switch ($method) {
         break;
         
     case 'PUT':
+        requirePermission('financeiro', 'editar');
         // Atualizar lançamento financeiro
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -203,6 +206,7 @@ switch ($method) {
         break;
         
     case 'DELETE':
+        requirePermission('financeiro', 'excluir');
         // Excluir lançamento financeiro
         $id = isset($_GET['id']) ? $_GET['id'] : null;
         

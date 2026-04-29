@@ -12,6 +12,7 @@ $db = Database::getInstance()->getConnection();
 
 switch ($method) {
     case 'GET':
+        requirePermission('despesas', 'visualizar');
         // Listar despesas com filtros
         try {
             $categoria = isset($_GET['categoria']) ? trim($_GET['categoria']) : '';
@@ -80,6 +81,7 @@ switch ($method) {
         break;
         
     case 'POST':
+        requirePermission('despesas', 'criar');
         // Criar nova despesa
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -145,12 +147,13 @@ switch ($method) {
         break;
         
     case 'PUT':
+        requirePermission('despesas', 'editar');
         // Atualizar despesa
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
         
         if (empty($input['id'])) {
-            errorResponse('ID da despesa é obrigatório', 400);
+            errorResponse('ID do despesa é obrigatório', 400);
         }
         
         try {
@@ -207,11 +210,12 @@ switch ($method) {
         break;
         
     case 'DELETE':
+        requirePermission('despesas', 'excluir');
         // Excluir despesa
         $id = isset($_GET['id']) ? $_GET['id'] : null;
         
         if (empty($id)) {
-            errorResponse('ID da despesa é obrigatório', 400);
+            errorResponse('ID do despesa é obrigatório', 400);
         }
         
         try {
@@ -236,12 +240,13 @@ switch ($method) {
         break;
         
     case 'PATCH':
+        requirePermission('despesas', 'editar');
         // Pagar parcela (endpoint específico)
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
         
         if (empty($input['id'])) {
-            errorResponse('ID da despesa é obrigatório', 400);
+            errorResponse('ID do despesa é obrigatório', 400);
         }
         
         try {

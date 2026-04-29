@@ -12,6 +12,7 @@ $db = Database::getInstance()->getConnection();
 
 switch ($method) {
     case 'GET':
+        requirePermission('pacientes', 'visualizar');
         // Listar todos os pacientes ou buscar por ID
         try {
             if (isset($_GET['id'])) {
@@ -79,6 +80,19 @@ switch ($method) {
                     $faltas = $stmt->fetch();
                     $paciente['total_faltas'] = intval($faltas['total']);
                     
+                    // Buscar último atendimento para preenchimento automático
+                    $stmt = $db->prepare("SELECT tipo_pacote, data_atendimento, data_inicio_pacote, unidade FROM atendimentos WHERE paciente_id = ? ORDER BY data_atendimento DESC, criado_em DESC LIMIT 1");
+                    $stmt->execute([$_GET['id']]);
+                    $ultimoAtendimento = $stmt->fetch();
+                    
+                    if ($ultimoAtendimento) {
+                        $ultimoAtendimento['data_atendimento'] = formatDateToBR($ultimoAtendimento['data_atendimento']);
+                        $ultimoAtendimento['data_inicio_pacote'] = formatDateToBR($ultimoAtendimento['data_inicio_pacote']);
+                        $paciente['ultimo_atendimento'] = $ultimoAtendimento;
+                    } else {
+                        $paciente['ultimo_atendimento'] = null;
+                    }
+                    
                     successResponse($paciente, 'Paciente encontrado com informações completas');
                 } else {
                     // Busca simples (comportamento original)
@@ -122,6 +136,7 @@ switch ($method) {
         break;
         
     case 'POST':
+        requirePermission('pacientes', 'criar');
         // Criar novo paciente
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -182,6 +197,7 @@ switch ($method) {
         break;
         
     case 'PUT':
+        requirePermission('pacientes', 'editar');
         // Atualizar paciente
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -246,6 +262,7 @@ switch ($method) {
         break;
         
     case 'DELETE':
+        requirePermission('pacientes', 'excluir');
         // Excluir paciente (soft delete)
         $id = isset($_GET['id']) ? $_GET['id'] : (isset($input['id']) ? $input['id'] : null);
         

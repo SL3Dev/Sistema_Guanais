@@ -63,9 +63,78 @@ async function login(usuario, senha) {
 async function verificarAuth() {
     try {
         const result = await apiRequest('auth.php', 'GET');
-        return result.data && result.data.logged;
+        if (result.data && result.data.logged) {
+            usuarioLogado = result.data.user;
+            sessionStorage.setItem('usuario', JSON.stringify(usuarioLogado));
+            return true;
+        }
+        return false;
     } catch (error) {
         return false;
+    }
+}
+
+function userHasPermission(modulo, acao) {
+    if (!usuarioLogado) return false;
+    
+    // Admin tem acesso total
+    if (usuarioLogado.usuario === 'admin') return true;
+    
+    if (!usuarioLogado.permissoes) return false;
+    
+    return usuarioLogado.permissoes.some(p => 
+        p.modulo === modulo && p.acao === acao && parseInt(p.permitido) === 1
+    );
+}
+
+function aplicarPermissoesUI() {
+    if (!usuarioLogado) return;
+
+    // 1. Abas principais
+    const abas = {
+        '#agenda': 'atendimentos',
+        '#pacientes': 'pacientes',
+        '#financeiro': 'financeiro',
+        '#despesas': 'despesas',
+        '#configuracoes': 'configuracoes',
+        '#relatorios': 'financeiro' // Relatórios dependem de permissão financeira/atendimentos
+    };
+
+    Object.keys(abas).forEach(id => {
+        const tabBtn = document.querySelector(`[data-bs-target="${id}"]`);
+        if (tabBtn) {
+            if (!userHasPermission(abas[id], 'visualizar')) {
+                tabBtn.parentElement.style.display = 'none';
+            } else {
+                tabBtn.parentElement.style.display = 'block';
+            }
+        }
+    });
+
+    // 2. Botões de ação globais (Criar)
+    if (!userHasPermission('pacientes', 'criar')) {
+        const pacForm = document.getElementById('pacienteForm');
+        if (pacForm) pacForm.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    if (!userHasPermission('atendimentos', 'criar')) {
+        const atendForm = document.getElementById('atendimentoForm');
+        if (atendForm) atendForm.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    if (!userHasPermission('financeiro', 'criar')) {
+        const finForm = document.getElementById('financeiroForm');
+        if (finForm) finForm.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    if (!userHasPermission('despesas', 'criar')) {
+        const despForm = document.getElementById('despesaForm');
+        if (despForm) despForm.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    if (!userHasPermission('configuracoes', 'criar')) {
+        const usuForm = document.getElementById('usuarioForm');
+        if (usuForm) usuForm.querySelector('button[type="submit"]').disabled = true;
     }
 }
 
@@ -270,6 +339,10 @@ async function carregarUsuarios() {
 
 function renderUsuarios() {
     let html = '';
+    
+    const podeEditar = userHasPermission('configuracoes', 'editar');
+    const podeExcluir = userHasPermission('configuracoes', 'excluir');
+
     usuariosData.forEach(u => {
         const tipoLabel = u.tipo === 'admin' ? 'Administrador' : u.tipo === 'terapeuta' ? 'Terapeuta' : 'Secretaria';
         const statusClass = u.ativo ? 'badge-success' : 'badge-danger';
@@ -282,15 +355,19 @@ function renderUsuarios() {
             <td><span class="badge-custom ${u.tipo === 'admin' ? 'badge-warning' : 'badge-info'}">${tipoLabel}</span></td>
             <td><span class="badge-custom ${statusClass}">${statusLabel}</span></td>
             <td class="text-center">
-                <button class="btn btn-sm btn-outline" onclick="gerenciarPermissoes(${u.id})" title="Permissões">
-                    <i class="bi bi-shield-lock"></i>
-                </button>
-                <button class="btn btn-sm btn-outline" onclick="editarUsuario(${u.id})" title="Editar">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline text-danger" onclick="excluirUsuario(${u.id})" title="Excluir" ${u.id === 1 ? 'disabled' : ''}>
-                    <i class="bi bi-trash"></i>
-                </button>
+                ${podeEditar ? `
+                    <button class="btn btn-sm btn-outline" onclick="gerenciarPermissoes(${u.id})" title="Permissões">
+                        <i class="bi bi-shield-lock"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="editarUsuario(${u.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                ` : ''}
+                ${podeExcluir ? `
+                    <button class="btn btn-sm btn-outline text-danger" onclick="excluirUsuario(${u.id})" title="Excluir" ${u.id === 1 ? 'disabled' : ''}>
+                        <i class="bi bi-trash"></i>
+                    </button>
+                ` : ''}
             </td>
         </tr>`;
     });
@@ -550,6 +627,9 @@ async function inicializarSistema() {
         carregarDespesas()
     ]);
     
+    // Aplicar restrições de permissão na UI
+    aplicarPermissoesUI();
+
     renderPacientes();
     renderAgenda();
     renderFinanceiro();
@@ -604,8 +684,21 @@ function renderPacientes() {
     let busca = document.getElementById('buscaPaciente')?.value.toLowerCase() || '';
     let filtered = dados.pacientes.filter(p => p.nome.toLowerCase().includes(busca));
     let html = '';
+    
+    const podeEditar = userHasPermission('pacientes', 'editar');
+    const podeExcluir = userHasPermission('pacientes', 'excluir');
+
     filtered.forEach(p => {
-        html += `<tr><td>${p.id}</td><td>${p.nome}</td><td>${p.telefone}</td><td>${calcularIdade(p.data_nascimento)}</td><td><button class="btn btn-sm btn-outline" onclick="editarPaciente('${p.id}')"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline text-danger" onclick="excluirPaciente('${p.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
+        html += `<tr>
+            <td>${p.id}</td>
+            <td>${p.nome}</td>
+            <td>${p.telefone}</td>
+            <td>${calcularIdade(p.data_nascimento)}</td>
+            <td>
+                ${podeEditar ? `<button class="btn btn-sm btn-outline" onclick="editarPaciente('${p.id}')"><i class="bi bi-pencil"></i></button>` : ''}
+                ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirPaciente('${p.id}')"><i class="bi bi-trash"></i></button>` : ''}
+            </td>
+        </tr>`;
     });
     document.getElementById('pacientesTbody').innerHTML = html || '<tr><td colspan="5" class="text-center py-3 text-muted">Nenhum paciente encontrado</td></tr>';
     document.getElementById('pacientesCount').innerText = filtered.length;
@@ -746,6 +839,8 @@ function renderAgenda() {
     document.getElementById('dashProximo').innerHTML = proxData ? `${formataDataBR(proxData.toISOString().slice(0, 10))}<br><small>${proxNome}</small>` : '—';
     
     let html = '';
+    const podeExcluir = userHasPermission('atendimentos', 'excluir');
+
     filtrados.forEach(a => {
         let idAtend = a.id_atendimento || '';
         let nomePaciente = a.paciente_nome || '';
@@ -759,7 +854,18 @@ function renderAgenda() {
             statusAtend === 'Falta' ? 'badge-danger' :
                 statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada' ? 'badge-warning' : 'badge-info';
         
-        html += `<tr><td>${idAtend}</td><td>${nomePaciente}</td><td>${unidadeAtend}</td><td>${dataAtend}</td><td>${tipoPacote}</td><td>${dataInicioPacote}</td><td><span class="badge-custom ${badgeClass}">${statusAtend}</span></td><td><button class="btn btn-sm btn-outline" onclick="excluirAtendimento('${idAtend}')"><i class="bi bi-trash"></i></button></td></tr>`;
+        html += `<tr>
+            <td>${idAtend}</td>
+            <td>${nomePaciente}</td>
+            <td>${unidadeAtend}</td>
+            <td>${dataAtend}</td>
+            <td>${tipoPacote}</td>
+            <td>${dataInicioPacote}</td>
+            <td><span class="badge-custom ${badgeClass}">${statusAtend}</span></td>
+            <td>
+                ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirAtendimento('${idAtend}')"><i class="bi bi-trash"></i></button>` : ''}
+            </td>
+        </tr>`;
     });
     document.getElementById('agendaTbody').innerHTML = html || '<tr><td colspan="8" class="text-center py-3 text-muted">Nenhum atendimento encontrado</td></tr>';
 }
@@ -837,6 +943,9 @@ async function renderFinanceiro() {
     let totalCusto = 0;
     let totalLiquido = 0;
     
+    const podeEditar = userHasPermission('financeiro', 'editar');
+    const podeExcluir = userHasPermission('financeiro', 'excluir');
+
     dados.financeiro.forEach(f => {
         let valor = parseFloat(f.valor) || 0;
         let despesa = parseFloat(f.despesa_automatica) || (valor * 0.25);
@@ -857,12 +966,8 @@ async function renderFinanceiro() {
             <td>${f.forma_pagamento || ''}</td>
             <td>${f.nf_emitida == 1 || f.nf_emitida === true ? 'Sim' : 'Não'}</td>
             <td class="text-center">
-                <button class="btn btn-sm btn-outline" onclick="editarFinanceiro('${f.id}')" title="Editar">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline text-danger" onclick="excluirFinanceiro('${f.id}')" title="Excluir">
-                    <i class="bi bi-trash"></i>
-                </button>
+                ${podeEditar ? `<button class="btn btn-sm btn-outline" onclick="editarFinanceiro('${f.id}')" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirFinanceiro('${f.id}')" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
             </td>
         </tr>`;
     });
@@ -960,6 +1065,10 @@ async function atualizarFinanceiro(lancamento) {
 // ========== DESPESAS ==========
 function renderDespesas() {
     let html = '';
+    
+    const podeEditar = userHasPermission('despesas', 'editar');
+    const podeExcluir = userHasPermission('despesas', 'excluir');
+
     dados.despesas.forEach(d => {
         let status = d.parcelas_pagas >= d.num_parcelas ? 'Paga' : (d.parcelas_pagas > 0 ? 'Parcial' : 'Pendente');
         let valor = d.valor_total || 0;
@@ -974,15 +1083,19 @@ function renderDespesas() {
             <td>${d.parcelas_pagas}/${numParcelas}</td>
             <td><span class="badge-custom ${badgeClass}">${status}</span></td>
             <td class="text-center">
-                <button class="btn btn-sm btn-outline" onclick="editarDespesa('${d.id}')" title="Editar">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline" onclick="pagarParcela('${d.id}')" ${status === 'Paga' ? 'disabled' : ''} title="Pagar parcela">
-                    <i class="bi bi-check2"></i>
-                </button>
-                <button class="btn btn-sm btn-outline text-danger" onclick="excluirDespesa('${d.id}')" title="Excluir">
-                    <i class="bi bi-trash"></i>
-                </button>
+                ${podeEditar ? `
+                    <button class="btn btn-sm btn-outline" onclick="editarDespesa('${d.id}')" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="pagarParcela('${d.id}')" ${status === 'Paga' ? 'disabled' : ''} title="Pagar parcela">
+                        <i class="bi bi-check2"></i>
+                    </button>
+                ` : ''}
+                ${podeExcluir ? `
+                    <button class="btn btn-sm btn-outline text-danger" onclick="excluirDespesa('${d.id}')" title="Excluir">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                ` : ''}
             </td>
         </tr>`;
     });
@@ -1112,148 +1225,134 @@ async function preencherPacoteAutomatico(pacienteId) {
     
     const tipoPacoteField = document.getElementById('atendPacoteTipo');
     const dataInicioField = document.getElementById('atendInicioPacote');
+    const atendUnidadeField = document.getElementById('atendUnidade');
     const infoPacienteDiv = document.getElementById('infoPacienteSelecionado');
     
     const finTipoPacote = document.getElementById('finTipoPacote');
     const finDataInicio = document.getElementById('finDataInicio');
     
+    // Prioridade 1: Pacote Ativo formally registered
     if (pacienteInfo.pacote) {
         const pacote = pacienteInfo.pacote;
-        
-        const dataInicioISO = pacote.data_inicio.includes('-') ? pacote.data_inicio : pacote.data_inicio.split('/').reverse().join('-');
+        const dataInicioISO = formataDataISO(pacote.data_inicio);
         
         if (tipoPacoteField) tipoPacoteField.value = pacote.tipo_pacote;
         if (dataInicioField) dataInicioField.value = dataInicioISO;
-        
         if (finTipoPacote) finTipoPacote.value = pacote.tipo_pacote;
         if (finDataInicio) finDataInicio.value = dataInicioISO;
         
-        if (infoPacienteDiv) {
-            const sessoesRealizadas = pacote.sessoes_realizadas || 0;
-            const sessoesRestantes = pacote.sessoes_restantes || 0;
-            const totalAtendimentos = pacienteInfo.total_atendimentos || 0;
-            const totalFaltas = pacienteInfo.total_faltas || 0;
-            
-            let statusPacote = 'Ativo';
-            if (sessoesRestantes === 0) {
-                statusPacote = 'Pacote concluído';
-            } else if (sessoesRestantes > 0) {
-                statusPacote = `${sessoesRestantes} sessão(ões) restante(s)`;
-            }
-            
-            infoPacienteDiv.innerHTML = `
-                <div class="alert alert-info mb-0">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-person-circle me-2 text-primary"></i>
-                                <div>
-                                    <strong>Paciente:</strong><br>
-                                    <span class="text-muted">${pacienteInfo.nome}</span>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-telephone me-2 text-muted"></i>
-                                <span class="text-muted">${pacienteInfo.telefone || '—'}</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-box-seam me-2 text-success"></i>
-                                <div>
-                                    <strong>Pacote ${pacote.tipo_pacote}</strong><br>
-                                    <span class="text-muted">Início: ${pacote.data_inicio}</span>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-clock me-2 text-muted"></i>
-                                <span class="text-muted">${statusPacote}</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
-                                        <small class="text-muted d-block">Atendimentos</small>
-                                        <strong class="text-primary">${totalAtendimentos}</strong>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
-                                        <small class="text-muted d-block">Sessões no Pacote</small>
-                                        <strong class="text-success">${sessoesRealizadas}/${pacote.sessoes_estimadas || 0}</strong>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
-                                        <small class="text-muted d-block">Faltas</small>
-                                        <strong class="text-danger">${totalFaltas}</strong>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
-                                        <small class="text-muted d-block">Restantes</small>
-                                        <strong class="text-warning">${sessoesRestantes}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+        mostrarToast(`Pacote ${pacote.tipo_pacote} ativo encontrado!`, 'success');
+    } 
+    // Prioridade 2: Histórico do último atendimento (Solicitação do Usuário)
+    else if (pacienteInfo.ultimo_atendimento) {
+        const ultimo = pacienteInfo.ultimo_atendimento;
+        const dataInicioISO = formataDataISO(ultimo.data_inicio_pacote);
         
-        mostrarToast(`Pacote ${pacote.tipo_pacote} encontrado! Dados preenchidos automaticamente.`, 'success');
+        if (tipoPacoteField) tipoPacoteField.value = ultimo.tipo_pacote;
+        if (dataInicioField) dataInicioField.value = dataInicioISO;
+        if (atendUnidadeField) atendUnidadeField.value = ultimo.unidade || 'ESPAÇO GUANAIS';
+        
+        if (finTipoPacote) finTipoPacote.value = ultimo.tipo_pacote;
+        if (finDataInicio) finDataInicio.value = dataInicioISO;
+        
+        mostrarToast(`Histórico encontrado: Pacote ${ultimo.tipo_pacote} (Início: ${ultimo.data_inicio_pacote})`, 'info');
     } else {
-        if (infoPacienteDiv) {
-            const totalAtendimentos = pacienteInfo.total_atendimentos || 0;
-            const totalFaltas = pacienteInfo.total_faltas || 0;
-            
-            infoPacienteDiv.innerHTML = `
-                <div class="alert alert-warning mb-0">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-person-circle me-2 text-primary"></i>
-                                <div>
-                                    <strong>Paciente:</strong><br>
-                                    <span class="text-muted">${pacienteInfo.nome}</span>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-telephone me-2 text-muted"></i>
-                                <span class="text-muted">${pacienteInfo.telefone || '—'}</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
-                                        <small class="text-muted d-block">Atendimentos</small>
-                                        <strong class="text-primary">${totalAtendimentos}</strong>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-2" style="background: var(--bg-elevated); border-radius: 8px;">
-                                        <small class="text-muted d-block">Faltas</small>
-                                        <strong class="text-danger">${totalFaltas}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <em class="text-muted">Nenhum pacote ativo encontrado. Preencha os dados do atendimento manualmente.</em>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
         if (tipoPacoteField) tipoPacoteField.value = 'Avulso';
         if (dataInicioField) dataInicioField.value = '';
-        
         if (finTipoPacote) finTipoPacote.value = 'Avulso';
         if (finDataInicio) finDataInicio.value = '';
+    }
+
+    // Atualizar visualização do resumo
+    if (infoPacienteDiv) {
+        const totalAtendimentos = pacienteInfo.total_atendimentos || 0;
+        const totalFaltas = pacienteInfo.total_faltas || 0;
+        const ultimoAtend = pacienteInfo.ultimo_atendimento;
+        
+        let htmlInfo = `
+            <div class="alert alert-info mb-0">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-person-circle me-2 text-primary"></i>
+                            <div>
+                                <strong>Paciente:</strong><br>
+                                <span class="text-muted">${pacienteInfo.nome}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clock-history me-2 text-muted"></i>
+                            <span class="text-muted">Último: ${ultimoAtend ? ultimoAtend.data_atendimento : 'Nunca'}</span>
+                        </div>
+                    </div>`;
+
+        if (pacienteInfo.pacote) {
+            const pacote = pacienteInfo.pacote;
+            const sessoesRealizadas = pacote.sessoes_realizadas || 0;
+            const sessoesRestantes = pacote.sessoes_restantes || 0;
+            
+            htmlInfo += `
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-box-seam me-2 text-success"></i>
+                            <div>
+                                <strong>Pacote ${pacote.tipo_pacote} (Ativo)</strong><br>
+                                <span class="text-muted">Início: ${pacote.data_inicio}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="p-2 bg-white rounded shadow-sm text-center">
+                                    <small class="text-muted d-block">Sessões</small>
+                                    <strong class="text-success">${sessoesRealizadas}/${pacote.sessoes_estimadas || 0}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 bg-white rounded shadow-sm text-center">
+                                    <small class="text-muted d-block">Restantes</small>
+                                    <strong class="text-warning">${sessoesRestantes}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+        } else if (ultimoAtend) {
+            htmlInfo += `
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-arrow-repeat me-2 text-info"></i>
+                            <div>
+                                <strong>Último Pacote: ${ultimoAtend.tipo_pacote}</strong><br>
+                                <span class="text-muted">Início Ref: ${ultimoAtend.data_inicio_pacote}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="p-2 bg-white rounded shadow-sm text-center">
+                                    <small class="text-muted d-block">Total Atend.</small>
+                                    <strong class="text-primary">${totalAtendimentos}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 bg-white rounded shadow-sm text-center">
+                                    <small class="text-muted d-block">Faltas</small>
+                                    <strong class="text-danger">${totalFaltas}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+        } else {
+            htmlInfo += `
+                    <div class="col-md-8 text-center py-2">
+                        <em class="text-muted">Nenhum histórico de pacotes ou atendimentos encontrado.</em>
+                    </div>`;
+        }
+        
+        htmlInfo += `</div></div>`;
+        infoPacienteDiv.innerHTML = htmlInfo;
     }
 }
 
