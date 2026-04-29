@@ -146,10 +146,10 @@ switch ($method) {
                 
                 successResponse($lancamento, 'Recebimento registrado com sucesso', 201);
             } else {
-                errorResponse('Erro ao registrar recebimento', 500);
+                errorResponse('Erro ao registrar recebimento no banco de dados', 500);
             }
         } catch (PDOException $e) {
-            errorResponse('Erro ao registrar recebimento', 500);
+            errorResponse('Erro no banco de dados: ' . $e->getMessage(), 500);
         }
         break;
         

@@ -185,6 +185,11 @@ function selectModule(moduleId) {
     mostrarToast(`Módulo ${moduleId.charAt(0).toUpperCase() + moduleId.slice(1)} selecionado!`, 'info');
 }
 
+function voltarAosModulos() {
+    document.getElementById('appScreen').style.display = 'none';
+    document.getElementById('moduleSelectionScreen').style.display = 'flex';
+}
+
 // ====================== PACIENTES ======================
 async function carregarPacientes() {
     try {
@@ -718,11 +723,78 @@ async function carregarConfiguracoes() {
                     atualizarLogoUI('header', config.valor);
                 } else if (config.chave === 'logo_login') {
                     atualizarLogoUI('login', config.valor);
+                } else if (config.chave === 'nome_sistema') {
+                    aplicarNomeSistema(config.valor);
+                } else if (config.chave === 'subtitulo_sistema') {
+                    aplicarSubtituloSistema(config.valor);
                 }
             });
         }
     } catch (error) {
         console.error('Erro ao carregar configurações:', error);
+    }
+}
+
+function aplicarNomeSistema(nome) {
+    if (!nome) return;
+    
+    // Atualizar no Login
+    const loginTitle = document.getElementById('loginSystemName');
+    if (loginTitle) loginTitle.textContent = nome;
+    
+    // Atualizar na Seleção de Módulos
+    const selectionTitle = document.getElementById('selectionSystemName');
+    if (selectionTitle) selectionTitle.textContent = nome;
+    
+    // Atualizar no Cabeçalho
+    const headerTitle = document.getElementById('headerSystemName');
+    if (headerTitle) headerTitle.textContent = nome;
+    
+    // Atualizar no input das configurações
+    const configInput = document.getElementById('configNomeSistema');
+    if (configInput) configInput.value = nome;
+    
+    // Título da aba do navegador
+    document.title = `${nome} — Sistema de Gestão Clínica`;
+}
+
+function aplicarSubtituloSistema(subtitulo) {
+    if (!subtitulo) return;
+    
+    // Atualizar no Login
+    const loginSub = document.getElementById('loginSystemSubtitle');
+    if (loginSub) loginSub.textContent = subtitulo;
+    
+    // Atualizar no Cabeçalho
+    const headerSub = document.getElementById('headerSystemSubtitle');
+    if (headerSub) headerSub.textContent = subtitulo;
+    
+    // Atualizar no input das configurações
+    const configInput = document.getElementById('configSubtituloSistema');
+    if (configInput) configInput.value = subtitulo;
+}
+
+async function salvarIdentidadeSistema() {
+    const nome = document.getElementById('configNomeSistema').value.trim();
+    const subtitulo = document.getElementById('configSubtituloSistema').value.trim();
+    
+    if (!nome) {
+        mostrarToast('O nome do sistema não pode ficar vazio', 'warning');
+        return;
+    }
+    
+    try {
+        // Salvar nome
+        await apiRequest('configuracoes.php', 'PUT', { chave: 'nome_sistema', valor: nome });
+        aplicarNomeSistema(nome);
+        
+        // Salvar subtitulo
+        await apiRequest('configuracoes.php', 'PUT', { chave: 'subtitulo_sistema', valor: subtitulo });
+        aplicarSubtituloSistema(subtitulo);
+        
+        mostrarToast('Identidade visual atualizada com sucesso!');
+    } catch (error) {
+        mostrarToast('Erro ao salvar configurações: ' + error.message, 'danger');
     }
 }
 
@@ -1785,29 +1857,113 @@ document.addEventListener('DOMContentLoaded', function() {
 // ====================== EXPORTAR / IMPORTAR ======================
 function exportarExcel() {
     if (typeof XLSX === 'undefined') {
-        mostrarToast('Erro ao exportar', 'danger');
+        mostrarToast('Erro ao exportar: Biblioteca XLSX não encontrada', 'danger');
         return;
     }
+    
+    // Criar um novo workbook
     let wb = XLSX.utils.book_new();
     
-    if (dados.atendimentos.length) {
+    // 1. Aba de Atendimentos/Agenda
+    if (dados.atendimentos && dados.atendimentos.length) {
         let agendaData = dados.atendimentos.map(a => ({
-            ID: a.id_atendimento,
-            Paciente: a.paciente_nome,
-            Data: a.data_atendimento,
-            TipoPacote: a.tipo_pacote,
-            InicioPacote: a.data_inicio_pacote,
-            Status: a.status,
-            Unidade: a.unidade
+            'ID': a.id_atendimento,
+            'Paciente ID': a.paciente_id,
+            'Paciente': a.paciente_nome,
+            'Data': a.data_atendimento,
+            'Tipo Pacote': a.tipo_pacote,
+            'Início Pacote': a.data_inicio_pacote,
+            'Status': a.status,
+            'Unidade': a.unidade,
+            'Observação': a.observacoes || ''
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(agendaData), 'Agenda');
     }
-    if (dados.pacientes.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.pacientes), 'Pacientes');
-    if (dados.financeiro.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.financeiro), 'Financeiro');
-    if (dados.despesas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.despesas), 'Despesas');
     
-    XLSX.writeFile(wb, `backup_guanais_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    mostrarToast('Backup exportado');
+    // 2. Aba de Pacientes
+    if (dados.pacientes && dados.pacientes.length) {
+        let pacientesData = dados.pacientes.map(p => ({
+            'ID': p.id,
+            'Nome': p.nome,
+            'CPF': p.cpf || '',
+            'Nascimento': p.data_nascimento,
+            'Telefone': p.telefone,
+            'Email': p.email || '',
+            'Endereço': p.endereco || '',
+            'Responsável': p.responsavel_nome || '',
+            'Tel Responsável': p.responsavel_telefone || '',
+            'Ativo': p.ativo ? 'Sim' : 'Não'
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pacientesData), 'Pacientes');
+    }
+    
+    // 3. Aba Financeiro
+    if (dados.financeiro && dados.financeiro.length) {
+        let financeiroData = dados.financeiro.map(f => ({
+            'ID': f.id,
+            'Paciente ID': f.paciente_id,
+            'Paciente': f.paciente_nome,
+            'Clínica': f.clinica,
+            'Tipo Pacote': f.tipo_pacote || '',
+            'Início Pacote': f.data_inicio_pacote || '',
+            'Data': f.data,
+            'Valor Bruto': parseFloat(f.valor) || 0,
+            'Forma Pagamento': f.forma_pagamento,
+            'NF Emitida': f.nf_emitida == 1 ? 'Sim' : 'Não',
+            'Observação': f.observacoes || ''
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(financeiroData), 'Financeiro');
+    }
+    
+    // 4. Aba Despesas
+    if (dados.despesas && dados.despesas.length) {
+        let despesasData = dados.despesas.map(d => ({
+            'ID': d.id,
+            'Descrição': d.descricao,
+            'Categoria': d.categoria,
+            'Valor Total': parseFloat(d.valor_total) || 0,
+            'Num Parcelas': d.num_parcelas,
+            'Parcelas Pagas': d.parcelas_pagas,
+            'Dia Vencimento': d.dia_vencimento || '',
+            'Data Início': d.data_inicio || ''
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(despesasData), 'Despesas');
+    }
+    
+    // Gerar o arquivo
+    const dataHora = new Date().toISOString().replace(/T/, '_').replace(/:/g, '-').slice(0, 19);
+    XLSX.writeFile(wb, `Backup_Espaco_Guanais_${dataHora}.xlsx`);
+    
+    mostrarToast('Backup exportado com sucesso');
+}
+
+// Funções de Normalização para Importação
+function normalizarClinica(valor) {
+    if (!valor) return 'ANIMO';
+    const v = valor.toString().toUpperCase().trim();
+    if (v.includes('ANIMO')) return 'ANIMO';
+    if (v.includes('GUANAIS')) return 'ESPAÇO GUANAIS';
+    return 'ANIMO';
+}
+
+function normalizarFormaPagamento(valor) {
+    if (!valor) return 'Pix';
+    const v = valor.toString().toLowerCase().trim();
+    if (v.includes('pix')) return 'Pix';
+    if (v.includes('dinheiro')) return 'Dinheiro';
+    if (v.includes('crédito') || v.includes('credito')) return 'Cartão Crédito';
+    if (v.includes('débito') || v.includes('debito')) return 'Cartão Débito';
+    return 'Pix';
+}
+
+function normalizarStatusAtendimento(valor) {
+    if (!valor) return 'Confirmado';
+    const v = valor.toString().toLowerCase().trim();
+    if (v.includes('confirmado')) return 'Confirmado';
+    if (v.includes('falta')) return 'Falta';
+    if (v.includes('reagendado')) return 'Reagendado';
+    if (v.includes('exceção') || v.includes('excecao')) return 'Exceção Justificada';
+    return 'Confirmado';
 }
 
 // Função para importar dados e salvar no banco de dados
@@ -1827,10 +1983,10 @@ async function importarExcel(event, restaurar) {
             
             if (nome.toLowerCase().includes('paciente')) {
                 novosPacientes = data.map(p => ({
-                    id: p['ID'] || gerarId('P'),
+                    id: p['ID'] || p['id'] || gerarId('P'),
                     nome: p['Nome'] || p['nome'] || '',
                     cpf: p['CPF'] || p['cpf'] || '',
-                    data_nascimento: converterDataBR(p['Nascimento'] || p['data_nascimento'] || ''),
+                    data_nascimento: converterDataBR(p['Nascimento'] || p['data_nascimento'] || p['data_nasc'] || ''),
                     telefone: p['Telefone'] || p['telefone'] || '',
                     email: p['Email'] || p['email'] || '',
                     endereco: p['Endereço'] || p['endereco'] || '',
@@ -1840,32 +1996,31 @@ async function importarExcel(event, restaurar) {
             else if (nome.toLowerCase().includes('agenda')) {
                 novosAtendimentos = data.map(a => ({
                     id_atendimento: a['ID'] || a['id'] || gerarId('A'),
-                    paciente_id: a['Paciente ID'] || '',
+                    paciente_id: a['Paciente ID'] || a['paciente_id'] || '',
                     paciente_nome: a['Paciente'] || a['paciente_nome'] || '',
                     data_atendimento: converterDataBR(a['Data'] || a['data_atendimento'] || ''),
                     tipo_pacote: a['Tipo Pacote'] || a['tipo_pacote'] || 'Avulso',
-                    data_inicio_pacote: converterDataBR(a['Início Pacote'] || a['data_inicio_pacote'] || ''),
-                    status: a['Status'] || a['status'] || 'Confirmado',
-                    unidade: a['Unidade'] || a['unidade'] || 'ANIMO',
+                    data_inicio_pacote: converterDataBR(a['Início Pacote'] || a['data_inicio_pacote'] || a['Data'] || ''),
+                    status: normalizarStatusAtendimento(a['Status'] || a['status']),
+                    unidade: normalizarClinica(a['Unidade'] || a['unidade']),
                     observacoes: a['Observação'] || a['observacoes'] || ''
                 }));
             }
             else if (nome.toLowerCase().includes('financeiro')) {
                 novosFinanceiro = data.map(f => ({
-                    id: 'fin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                    paciente_id: f['Paciente ID'] || '',
+                    paciente_id: f['Paciente ID'] || f['paciente_id'] || '',
                     paciente_nome: f['Paciente'] || f['paciente_nome'] || '',
-                    clinica: f['Clínica'] || f['clinica'] || 'ANIMO',
-                    tipo_pacote: f['Tipo Pacote'] || '',
+                    clinica: normalizarClinica(f['Clínica'] || f['clinica']),
+                    tipo_pacote: f['Tipo Pacote'] || f['tipo_pacote'] || '',
                     data: converterDataBR(f['Data'] || f['data'] || ''),
-                    valor: parseFloat(f['Valor Bruto'] || f['valor'] || 0),
-                    forma_pagamento: f['Forma Pagamento'] || f['forma_pagamento'] || 'Pix',
-                    nf_emitida: (f['NF Emitida'] === 'Sim') ? 1 : 0,
-                    observacoes: f['Observação'] || '',
-                    despesa_automatica: parseFloat(f['Valor Bruto'] || 0) * 0.25,
-                    receita_disponivel: parseFloat(f['Valor Líquido'] || f['Valor Bruto'] || 0)
+                    valor: parseFloat(f['Valor Bruto'] || f['valor'] || f['Valor'] || 0),
+                    forma_pagamento: normalizarFormaPagamento(f['Forma Pagamento'] || f['forma_pagamento']),
+                    nf_emitida: (f['NF Emitida'] === 'Sim' || f['nf_emitida'] == 1) ? 1 : 0,
+                    observacoes: f['Observação'] || f['observacoes'] || '',
+                    data_inicio_pacote: converterDataBR(f['Início Pacote'] || f['data_inicio_pacote'] || f['Data'] || '')
                 }));
             }
+            // ... resto igual ...
             else if (nome.toLowerCase().includes('despesa')) {
                 novosDespesas = data.map(d => ({
                     id: 'desp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
@@ -1881,22 +2036,46 @@ async function importarExcel(event, restaurar) {
         });
         
         try {
+            // 1. Criar Mapa de Pacientes (Nome -> ID)
+            const pacienteMapa = new Map();
+            
             // Salvar pacientes no banco
             for (const paciente of novosPacientes) {
-                await apiRequest('pacientes.php', 'POST', paciente);
+                try {
+                    const result = await apiRequest('pacientes.php', 'POST', paciente);
+                    if (result.success) {
+                        pacienteMapa.set(paciente.nome, result.data.id);
+                    }
+                } catch (err) {
+                    // Se falhar (ex: CPF duplicado), tentar buscar o ID existente
+                    if (err.message.includes('já cadastrado')) {
+                        // O ID já deve estar no 'paciente' se for um backup completo
+                        pacienteMapa.set(paciente.nome, paciente.id);
+                    }
+                }
             }
             
-            // Salvar atendimentos no banco
+            // 2. Corrigir IDs nos Atendimentos e Salvar
             for (const atendimento of novosAtendimentos) {
-                await apiRequest('atendimentos.php', 'POST', atendimento);
+                if (!atendimento.paciente_id && pacienteMapa.has(atendimento.paciente_nome)) {
+                    atendimento.paciente_id = pacienteMapa.get(atendimento.paciente_nome);
+                }
+                if (atendimento.paciente_id) {
+                    await apiRequest('atendimentos.php', 'POST', atendimento);
+                }
             }
             
-            // Salvar lançamentos financeiros no banco
+            // 3. Corrigir IDs no Financeiro e Salvar
             for (const lancamento of novosFinanceiro) {
-                await apiRequest('financeiro.php', 'POST', lancamento);
+                if (!lancamento.paciente_id && pacienteMapa.has(lancamento.paciente_nome)) {
+                    lancamento.paciente_id = pacienteMapa.get(lancamento.paciente_nome);
+                }
+                if (lancamento.paciente_id) {
+                    await apiRequest('financeiro.php', 'POST', lancamento);
+                }
             }
             
-            // Salvar despesas no banco
+            // 4. Salvar despesas
             for (const despesa of novosDespesas) {
                 await apiRequest('despesas.php', 'POST', despesa);
             }
@@ -2189,7 +2368,7 @@ function exportarRelatorioCSV() {
 function exportarRelatorio(tipo) {
     let dadosExport = [];
     let nomeArquivo = '';
-    
+
     if (tipo === 'atendimentos') {
         dadosExport = dados.atendimentos.map(a => ({
             Paciente: a.paciente_nome,
@@ -2198,7 +2377,7 @@ function exportarRelatorio(tipo) {
             Status: a.status,
             Unidade: a.unidade
         }));
-        nomeArquivo = 'relatorio_atendimentos.csv';
+        nomeArquivo = `relatorio_atendimentos_${new Date().toISOString().slice(0, 10)}.csv`;
     } else if (tipo === 'financeiro') {
         dadosExport = dados.financeiro.map(f => ({
             Paciente: f.paciente_nome,
@@ -2208,7 +2387,7 @@ function exportarRelatorio(tipo) {
             Despesa: f.despesa_automatica,
             Disponivel: f.receita_disponivel
         }));
-        nomeArquivo = 'relatorio_financeiro.csv';
+        nomeArquivo = `relatorio_financeiro_${new Date().toISOString().slice(0, 10)}.csv`;
     } else if (tipo === 'pacientes') {
         dadosExport = dados.pacientes.map(p => ({
             ID: p.id,
@@ -2217,19 +2396,25 @@ function exportarRelatorio(tipo) {
             Email: p.email,
             Ativo: p.ativo ? 'Sim' : 'Não'
         }));
-        nomeArquivo = 'relatorio_pacientes.csv';
+        nomeArquivo = `relatorio_pacientes_${new Date().toISOString().slice(0, 10)}.csv`;
     }
-    
+
     if (dadosExport.length === 0) {
         mostrarToast('Não há dados para exportar', 'danger');
         return;
     }
-    
-    let csv = Object.keys(dadosExport[0]).join(',') + '\n';
+
+    // Usar ponto e vírgula como delimitador e adicionar BOM para o Excel identificar como UTF-8
+    const BOM = '\uFEFF';
+    let csv = BOM + Object.keys(dadosExport[0]).join(';') + '\n';
     dadosExport.forEach(d => {
-        csv += Object.values(d).map(v => `"${v}"`).join(',') + '\n';
+        csv += Object.values(d).map(v => {
+            if (v === null || v === undefined) return '""';
+            let str = String(v).replace(/"/g, '""'); // Escapar aspas
+            return `"${str}"`;
+        }).join(';') + '\n';
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -2239,10 +2424,9 @@ function exportarRelatorio(tipo) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     mostrarToast('Relatório exportado com sucesso');
 }
-
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', function() {
     initUsuariosTab();

@@ -144,7 +144,7 @@ switch ($method) {
         // Validações
         $errors = [];
         if (empty($input['nome'])) $errors[] = validateField($input, 'nome', 'Nome');
-        if (empty($input['data_nascimento'])) $errors[] = validateField($input, 'data_nascimento', 'Data de nascimento');
+        if (empty($input['data_nascimento']) && empty($input['data_nasc'])) $errors[] = validateField($input, 'data_nascimento', 'Data de nascimento');
         if (empty($input['telefone'])) $errors[] = validateField($input, 'telefone', 'Telefone');
         
         if (!empty($errors)) {
@@ -152,8 +152,11 @@ switch ($method) {
         }
         
         try {
-            // Gerar ID
-            $id = generateId('P');
+            // Usar ID fornecido ou gerar um novo
+            $id = !empty($input['id']) ? sanitize($input['id']) : generateId('P');
+            
+            // Aceitar data_nascimento ou data_nasc (legado)
+            $dataNasc = !empty($input['data_nascimento']) ? $input['data_nascimento'] : $input['data_nasc'];
             
             $stmt = $db->prepare("INSERT INTO pacientes (
                 id, nome, cpf, data_nascimento, telefone, email, endereco,
@@ -165,7 +168,7 @@ switch ($method) {
                 $id,
                 sanitize($input['nome']),
                 isset($input['cpf']) ? sanitize($input['cpf']) : null,
-                formatDateToISO($input['data_nascimento']),
+                formatDateToISO($dataNasc),
                 sanitize($input['telefone']),
                 isset($input['email']) ? sanitize($input['email']) : null,
                 isset($input['endereco']) ? sanitize($input['endereco']) : null,
@@ -190,9 +193,11 @@ switch ($method) {
             }
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
-                errorResponse('Já existe um paciente com este CPF', 409);
+                // Se já existir, talvez seja um update disfarçado de importação
+                errorResponse('Paciente já cadastrado (ID ou CPF duplicado)', 409);
+            } else {
+                errorResponse('Erro ao cadastrar paciente: ' . $e->getMessage(), 500);
             }
-            errorResponse('Erro ao cadastrar paciente', 500);
         }
         break;
         

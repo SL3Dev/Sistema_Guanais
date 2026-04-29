@@ -21,7 +21,14 @@ try {
 
     $updates = [];
 
-    // 1. Adicionar campos de emergência à tabela pacientes (se não existirem)
+    // 1. Corrigir campo data_nascimento na tabela pacientes
+    $stmt = $db->query("SHOW COLUMNS FROM pacientes LIKE 'data_nasc'");
+    if ($stmt->rowCount() > 0) {
+        $db->exec("ALTER TABLE pacientes CHANGE COLUMN data_nasc data_nascimento DATE NOT NULL");
+        $updates[] = "Renomeado campo 'data_nasc' para 'data_nascimento' na tabela 'pacientes'.";
+    }
+
+    // 2. Adicionar campos de emergência à tabela pacientes (se não existirem)
     $stmt = $db->query("SHOW COLUMNS FROM pacientes LIKE 'emergencia_parentesco'");
     if ($stmt->rowCount() == 0) {
         $db->exec("ALTER TABLE pacientes ADD COLUMN emergencia_parentesco VARCHAR(50) AFTER emergencia_telefone");
@@ -203,6 +210,25 @@ try {
         ORDER BY p.nome;
     ");
     $updates[] = "View 'vw_pacientes_pacotes' criada/atualizada.";
+
+    // 3. Inserir novas configurações se não existirem
+    $configs = [
+        ['nome_sistema', 'Espaço Guanais', 'texto', 'Nome do sistema'],
+        ['subtitulo_sistema', 'Gestão Integrada', 'texto', 'Subtítulo do sistema'],
+        ['tema_padrao', 'light', 'texto', 'Tema padrão'],
+        ['logo_path', 'logo/logo.png', 'arquivo', 'Logo do cabeçalho'],
+        ['logo_login', 'logo/logo.png', 'arquivo', 'Logo do login']
+    ];
+
+    foreach ($configs as $c) {
+        $stmt = $db->prepare("SELECT id FROM configuracoes WHERE chave = ?");
+        $stmt->execute([$c[0]]);
+        if ($stmt->rowCount() == 0) {
+            $stmtInsert = $db->prepare("INSERT INTO configuracoes (chave, valor, tipo, descricao) VALUES (?, ?, ?, ?)");
+            $stmtInsert->execute($c);
+            $updates[] = "Adicionada configuração: {$c[0]}";
+        }
+    }
 
     $db->commit();
     successResponse(['updates' => $updates], 'Banco de dados atualizado com sucesso!');

@@ -145,8 +145,8 @@ switch ($method) {
         }
         
         try {
-            // Gerar ID
-            $id = generateId('A');
+            // Usar ID fornecido ou gerar um novo
+            $id = !empty($input['id_atendimento']) ? sanitize($input['id_atendimento']) : generateId('A');
             
             $stmt = $db->prepare("INSERT INTO atendimentos (
                 id_atendimento, paciente_id, paciente_nome, data_atendimento, 
@@ -181,7 +181,7 @@ switch ($method) {
                 errorResponse('Erro ao registrar atendimento', 500);
             }
         } catch (PDOException $e) {
-            errorResponse('Erro ao registrar atendimento', 500);
+            errorResponse('Erro ao registrar atendimento: ' . $e->getMessage(), 500);
         }
         break;
         

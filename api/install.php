@@ -92,7 +92,7 @@ header('Content-Type: text/html; charset=utf-8');
                     id VARCHAR(20) PRIMARY KEY,
                     nome VARCHAR(200) NOT NULL,
                     cpf VARCHAR(14),
-                    data_nasc DATE NOT NULL,
+                    data_nascimento DATE NOT NULL,
                     telefone VARCHAR(20) NOT NULL,
                     email VARCHAR(100),
                     endereco TEXT,
@@ -100,13 +100,41 @@ header('Content-Type: text/html; charset=utf-8');
                     responsavel_telefone VARCHAR(20),
                     emergencia_nome VARCHAR(200),
                     emergencia_telefone VARCHAR(20),
+                    emergencia_parentesco VARCHAR(50),
+                    emergencia_info_adicionais TEXT,
                     ativo BOOLEAN DEFAULT TRUE,
                     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     INDEX idx_pacientes_nome (nome)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ");
-            echo "<div class='alert alert-success'>✅ Tabela 'pacientes' criada.</div>";
+            echo "<div class='alert alert-success'>✅ Tabela 'pacientes' criada/atualizada.</div>";
+            
+            // Tabela de configurações
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS configuracoes (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    chave VARCHAR(100) UNIQUE NOT NULL,
+                    valor TEXT,
+                    tipo ENUM('texto', 'numero', 'booleano', 'arquivo') DEFAULT 'texto',
+                    descricao VARCHAR(255),
+                    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+            echo "<div class='alert alert-success'>✅ Tabela 'configuracoes' criada.</div>";
+
+            // Inserir configurações padrão
+            $pdo->exec("
+                INSERT IGNORE INTO configuracoes (chave, valor, tipo, descricao) VALUES
+                ('nome_sistema', 'Espaço Guanais', 'texto', 'Nome do sistema exibido no cabeçalho'),
+                ('subtitulo_sistema', 'Gestão Integrada', 'texto', 'Subtítulo exibido abaixo do nome'),
+                ('logo_path', 'logo/logo.png', 'arquivo', 'Caminho da logo do sistema'),
+                ('logo_login', 'logo/logo.png', 'arquivo', 'Caminho da logo na tela de login'),
+                ('tema_padrao', 'light', 'texto', 'Tema padrão do sistema (light/dark)'),
+                ('permite_cadastro_online', '0', 'booleano', 'Permitir cadastro online de pacientes')
+            ");
+            echo "<div class='alert alert-success'>✅ Configurações padrão inseridas.</div>";
             
             // Tabela de pacotes
             $pdo->exec("
