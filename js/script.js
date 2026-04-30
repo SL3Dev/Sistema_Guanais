@@ -8,7 +8,274 @@ const API_BASE_URL = 'api/';
 let dados = { pacientes: [], atendimentos: [], financeiro: [], despesas: [] };
 let usuarioLogado = null;
 
-// ====================== FUNÇÕES DE API ======================
+// ====================== GRÁFICOS E UI ======================
+let chartFaturamento = null;
+let chartStatus = null;
+let chartUnidade = null;
+
+function initCharts() {
+    // 1. Gráfico de Faturamento
+    const ctxFaturamento = document.getElementById('chartFaturamento');
+    if (ctxFaturamento) {
+        if (chartFaturamento) chartFaturamento.destroy();
+        chartFaturamento = new Chart(ctxFaturamento, {
+            type: 'bar',
+            data: {
+                labels: ['Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr'],
+                datasets: [{
+                    label: 'Faturamento',
+                    data: [4500, 5200, 4800, 6100, 5900, 7200],
+                    backgroundColor: 'rgba(56, 118, 59, 0.7)',
+                    borderColor: 'rgb(56, 118, 59)',
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    // 2. Gráfico de Status
+    const ctxStatus = document.getElementById('chartStatus');
+    if (ctxStatus) {
+        if (chartStatus) chartStatus.destroy();
+        chartStatus = new Chart(ctxStatus, {
+            type: 'pie',
+            data: {
+                labels: ['Confirmado', 'Falta', 'Exceção'],
+                datasets: [{
+                    data: [85, 10, 5],
+                    backgroundColor: ['#38763b', '#dc3545', '#b6922e']
+                }]
+            },
+            options: { responsive: true }
+        });
+    }
+
+    // 3. Gráfico de Unidades
+    const ctxUnidade = document.getElementById('chartUnidade');
+    if (ctxUnidade) {
+        if (chartUnidade) chartUnidade.destroy();
+        chartUnidade = new Chart(ctxUnidade, {
+            type: 'doughnut',
+            data: {
+                labels: ['ANIMO', 'ESPAÇO GUANAIS'],
+                datasets: [{
+                    data: [60, 40],
+                    backgroundColor: ['#0dcaf0', '#38763b']
+                }]
+            },
+            options: { responsive: true }
+        });
+    }
+}
+
+// Funções do Prontuário
+async function abrirProntuario(id) {
+    try {
+        const result = await apiRequest(`atendimentos.php?id=${id}`);
+        if (result.success) {
+            const aten = result.data.atendimento;
+            document.getElementById('prontPaciente').textContent = aten.paciente_nome;
+            document.getElementById('prontData').textContent = aten.data_atendimento;
+            document.getElementById('prontEvolucao').value = aten.evolucao || '';
+            
+            const saveBtn = document.querySelector('#modalProntuario .btn-verde');
+            saveBtn.onclick = () => salvarEvolucaoProntuario(id);
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalProntuario'));
+            modal.show();
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+async function salvarEvolucaoProntuario(id) {
+    const evolucao = document.getElementById('prontEvolucao').value;
+    const feedback = document.getElementById('prontFeedback');
+    
+    try {
+        const result = await apiRequest('atendimentos.php', 'PATCH', {
+            id_atendimento: id,
+            evolucao: evolucao
+        });
+        
+        if (result.success) {
+            feedback.classList.remove('d-none');
+            setTimeout(() => {
+                feedback.classList.add('d-none');
+                bootstrap.Modal.getInstance(document.getElementById('modalProntuario')).hide();
+                renderAgenda();
+            }, 1500);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// ====================== BUSCA GLOBAL ======================
+function handleGlobalSearch() {
+    const term = document.getElementById('globalSearch').value.toLowerCase();
+    const resultsDiv = document.getElementById('globalSearchResults');
+    
+    if (term.length < 2) {
+        resultsDiv.classList.add('d-none');
+        return;
+    }
+    
+    const filtered = dados.pacientes.filter(p => 
+        p.nome.toLowerCase().includes(term) || 
+        (p.cpf && p.cpf.includes(term))
+    ).slice(0, 5);
+    
+    if (filtered.length > 0) {
+        resultsDiv.innerHTML = filtered.map(p => `
+            <div class="p-3 border-bottom result-item" onclick="navigateBySearch('${p.id}')" style="cursor: pointer;">
+                <div class="fw-bold">${p.nome}</div>
+                <small class="text-muted">${p.telefone || 'Sem telefone'}</small>
+            </div>
+        `).join('');
+        resultsDiv.classList.remove('d-none');
+    } else {
+        resultsDiv.innerHTML = '<div class="p-3 text-muted">Nenhum paciente encontrado.</div>';
+        resultsDiv.classList.remove('d-none');
+    }
+}
+
+function navigateBySearch(pacienteId) {
+    document.getElementById('globalSearchResults').classList.add('d-none');
+    document.getElementById('globalSearch').value = '';
+    
+    selectModule('pacientes');
+    editarPaciente(pacienteId);
+}
+
+// ====================== GESTÃO DE ARQUIVOS ======================
+async function abrirModalArquivos() {
+    const pacienteId = document.getElementById('pacId').value;
+    if (!pacienteId) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalArquivos'));
+    modal.show();
+    
+    await carregarArquivosPaciente(pacienteId);
+}
+
+async function carregarArquivosPaciente(pacienteId) {
+    const tbody = document.getElementById('listaArquivosPaciente');
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3">Carregando...</td></tr>';
+    
+    try {
+        const result = await apiRequest(`arquivos.php?paciente_id=${pacienteId}`);
+        if (result.success) {
+            if (result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Nenhum arquivo anexado.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = result.data.map(arq => `
+                <tr>
+                    <td><i class="bi bi-file-earmark-text me-2"></i>${arq.nome_original}</td>
+                    <td>${formataDataBR(arq.criado_em.split(' ')[0])}</td>
+                    <td>${(arq.tamanho / 1024).toFixed(1)} KB</td>
+                    <td class="text-center">
+                        <a href="${arq.caminho}" target="_blank" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-eye"></i></a>
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirArquivoPaciente(${arq.id}, '${pacienteId}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-danger">Erro ao carregar arquivos.</td></tr>';
+    }
+}
+
+async function uploadArquivoPaciente() {
+    const pacienteId = document.getElementById('pacId').value;
+    const fileInput = document.getElementById('inputArquivoPaciente');
+    
+    if (!fileInput.files[0]) {
+        mostrarToast('Selecione um arquivo', 'warning');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('arquivo', fileInput.files[0]);
+    formData.append('paciente_id', pacienteId);
+    
+    try {
+        const response = await fetch('api/arquivos.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarToast('Arquivo enviado!');
+            fileInput.value = '';
+            await carregarArquivosPaciente(pacienteId);
+        } else {
+            mostrarToast(result.error || 'Erro no upload', 'danger');
+        }
+    } catch (error) {
+        mostrarToast('Erro de conexão', 'danger');
+    }
+}
+
+async function excluirArquivoPaciente(id, pacienteId) {
+    if (!confirm('Excluir este arquivo permanentemente?')) return;
+    
+    try {
+        const result = await apiRequest(`arquivos.php?id=${id}`, 'DELETE');
+        if (result.success) {
+            mostrarToast('Arquivo removido');
+            await carregarArquivosPaciente(pacienteId);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// ====================== PERSISTÊNCIA DE FORMULÁRIO ======================
+function initFormPersistence() {
+    const forms = ['pacienteForm', 'atendimentoForm', 'financeiroForm', 'despesaForm'];
+    
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        
+        // Carregar rascunho
+        const draft = localStorage.getItem(`draft_${formId}`);
+        if (draft) {
+            const data = JSON.parse(draft);
+            Object.keys(data).forEach(key => {
+                const input = form.querySelector(`#${key}`);
+                if (input && !input.value) { // Só preenche se estiver vazio
+                    if (input.type === 'checkbox') input.checked = data[key];
+                    else input.value = data[key];
+                }
+            });
+        }
+        
+        // Salvar rascunho ao digitar
+        form.addEventListener('input', () => {
+            const formData = {};
+            form.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.id) {
+                    formData[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                }
+            });
+            localStorage.setItem(`draft_${formId}`, JSON.stringify(formData));
+        });
+        
+        // Limpar rascunho ao enviar
+        form.addEventListener('submit', () => {
+            localStorage.removeItem(`draft_${formId}`);
+        });
+    });
+}
 async function apiRequest(endpoint, method = 'GET', data = null) {
     const url = API_BASE_URL + endpoint;
     const options = {
@@ -906,6 +1173,7 @@ async function inicializarSistema(moduloInicial = 'dashboard') {
 
     // Popular Dashboard
     renderDashboardSummaries();
+    initCharts();
 
     initDashboardInteractivity();
 
@@ -1164,6 +1432,11 @@ async function editarPaciente(id) {
     document.getElementById('pacTel').value = p.telefone;
     document.getElementById('pacEmail').value = p.email || '';
     document.getElementById('pacEnd').value = p.endereco || '';
+    
+    // Mostrar botão de arquivos apenas para pacientes existentes
+    const btnArq = document.getElementById('btnArquivosPaciente');
+    if (btnArq) btnArq.classList.remove('d-none');
+
     if (p.responsavel_nome) {
         document.getElementById('respNome').value = p.responsavel_nome;
         document.getElementById('respTel').value = p.responsavel_telefone;
@@ -1320,6 +1593,8 @@ function renderAgenda(dadosCustom = null) {
             statusAtend === 'Falta' ? 'badge-danger' :
                 statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada' ? 'badge-warning' : 'badge-info';
         
+        const podeVerProntuario = ['admin', 'terapeuta'].includes(usuarioLogado?.tipo);
+        
         html += `<tr>
             <td>${idAtend}</td>
             <td>${nomePaciente}</td>
@@ -1329,7 +1604,14 @@ function renderAgenda(dadosCustom = null) {
             <td>${dataInicioPacote}</td>
             <td><span class="badge-custom ${badgeClass}">${statusAtend}</span></td>
             <td>
-                ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirAtendimento('${idAtend}')"><i class="bi bi-trash"></i></button>` : ''}
+                <div class="d-flex gap-1">
+                    ${podeVerProntuario ? `
+                        <button class="btn btn-sm btn-outline-primary" onclick="abrirProntuario('${idAtend}')" title="Prontuário">
+                            <i class="bi bi-journal-text"></i>
+                        </button>
+                    ` : ''}
+                    ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirAtendimento('${idAtend}')" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                </div>
             </td>
         </tr>`;
     });
@@ -1440,9 +1722,19 @@ async function renderFinanceiro() {
     
     document.getElementById('finTbody').innerHTML = html || '<tr><td colspan="9" class="text-center py-3 text-muted">Nenhum lançamento encontrado</td></tr>';
     
-    document.getElementById('finTotalBruto').innerHTML = `R$ ${totalBruto.toFixed(2)}`;
-    document.getElementById('finCusto').innerHTML = `R$ ${totalCusto.toFixed(2)}`;
-    document.getElementById('finLiquido').innerHTML = `R$ ${totalLiquido.toFixed(2)}`;
+    // Atualizar Totais com dados da API
+    const resumo = await carregarFinanceiro(mes, clinicaFiltro);
+    if (resumo) {
+        document.getElementById('finTotalBruto').innerHTML = `R$ ${resumo.total_bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        document.getElementById('finCusto').innerHTML = `R$ ${resumo.custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        document.getElementById('finLiquido').innerHTML = `R$ ${resumo.liquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        
+        const saldoRealEl = document.getElementById('finSaldoReal');
+        if (saldoRealEl) {
+            saldoRealEl.innerHTML = `R$ ${resumo.saldo_real.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            saldoRealEl.className = resumo.saldo_real >= 0 ? 'fw-bold mb-0 text-white' : 'fw-bold mb-0 text-danger';
+        }
+    }
 }
 
 async function editarFinanceiro(id) {
@@ -2431,6 +2723,7 @@ function exportarRelatorio(tipo) {
 document.addEventListener('DOMContentLoaded', function() {
     initUsuariosTab();
     initTabListeners();
+    initFormPersistence();
     
     // Verificar se está logado e inicializar sistema
     verificarLoginSalvo();

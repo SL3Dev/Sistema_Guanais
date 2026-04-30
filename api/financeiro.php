@@ -64,11 +64,22 @@ switch ($method) {
             
             $custo = round($totalBruto * 0.25, 2);
             $liquido = round($totalBruto - $custo, 2);
+
+            // Buscar despesas pagas no mês (Simplificado)
+            $stmtDespesas = $db->prepare("SELECT SUM(valor_total / num_parcelas) as despesas_pagas 
+                                        FROM despesas 
+                                        WHERE parcelas_pagas > 0 
+                                        AND (data_inicio <= ? OR dia_vencimento IS NOT NULL)");
+            $stmtDespesas->execute([$mes . '-31']);
+            $despesasResumo = $stmtDespesas->fetch();
+            $despesasPagas = round(floatval($despesasResumo['despesas_pagas'] ?? 0), 2);
             
             $resumo = [
                 'total_bruto' => $totalBruto,
                 'custo' => $custo,
                 'liquido' => $liquido,
+                'despesas_pagas' => $despesasPagas,
+                'saldo_real' => round($liquido - $despesasPagas, 2),
                 'total_lancamentos' => count($lancamentos)
             ];
             

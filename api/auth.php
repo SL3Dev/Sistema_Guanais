@@ -37,7 +37,7 @@ switch ($method) {
         
         try {
             // Buscar usuário no banco
-            $stmt = $db->prepare("SELECT id, usuario, senha, nome, email FROM usuarios WHERE usuario = ? AND ativo = 1");
+            $stmt = $db->prepare("SELECT id, usuario, senha, nome, email, tipo FROM usuarios WHERE usuario = ? AND ativo = 1");
             $stmt->execute([$usuario]);
             $user = $stmt->fetch();
             
@@ -45,21 +45,29 @@ switch ($method) {
                 errorResponse('Usuário ou senha inválidos', 401);
             }
             
-            // Verificar senha usando password_verify (compatível com bcrypt do database.sql)
-            // Também aceita MD5 para compatibilidade com hashes antigos
+            // Validar senha (compatível com hash moderno e legado em texto puro)
             $senhaValida = false;
-            
-            // Primeiro tenta password_verify (bcrypt)
+
+            // Hash bcrypt/argon etc.
             if (password_verify($senha, $user['senha'])) {
                 $senhaValida = true;
-            } 
-            // Se não, tenta MD5 (para compatibilidade)
-            else if (md5($senha) === $user['senha']) {
-                $senhaValida = true;
+
+                // Se hash precisar rehash, atualiza automaticamente
+                if (password_needs_rehash($user['senha'], PASSWORD_BCRYPT)) {
+                    $novoHash = password_hash($senha, PASSWORD_BCRYPT);
+                    $stmtUpdate = $db->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
+                    $stmtUpdate->execute([$novoHash, $user['id']]);
+                }
             }
-            // Verifica se a senha é exatamente igual (para senhas simples em teste)
-            else if ($senha === $user['senha']) {
+
+            // Compatibilidade com senhas antigas armazenadas em texto puro
+            if (!$senhaValida && hash_equals((string)$user['senha'], (string)$senha)) {
                 $senhaValida = true;
+
+                // Migração transparente para hash seguro
+                $novoHash = password_hash($senha, PASSWORD_BCRYPT);
+                $stmtUpdate = $db->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
+                $stmtUpdate->execute([$novoHash, $user['id']]);
             }
             
             if (!$senhaValida) {
@@ -70,6 +78,7 @@ switch ($method) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['usuario'] = $user['usuario'];
             $_SESSION['nome'] = $user['nome'];
+            $_SESSION['tipo'] = $user['tipo'];
             $_SESSION['logged_in'] = true;
             
             // Buscar permissões
@@ -87,6 +96,7 @@ switch ($method) {
                     'id' => $user['id'],
                     'usuario' => $user['usuario'],
                     'nome' => $user['nome'],
+                    'tipo' => $user['tipo'],
                     'permissoes' => $permissoes
                 ],
                 'token' => $token
@@ -111,6 +121,7 @@ switch ($method) {
                     'id' => $_SESSION['user_id'],
                     'usuario' => $_SESSION['usuario'],
                     'nome' => $_SESSION['nome'],
+                    'tipo' => $_SESSION['tipo'] ?? 'secretaria',
                     'permissoes' => $permissoes
                 ],
                 'logged' => true

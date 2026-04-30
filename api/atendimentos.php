@@ -88,10 +88,17 @@ switch ($method) {
             $stmt->execute($params);
             $atendimentos = $stmt->fetchAll();
             
-            // Formatar dados
+            // Formatar dados e controlar visibilidade da evolução
+            $podeVerEvolucao = in_array($_SESSION['tipo'] ?? '', ['admin', 'terapeuta']);
+            
             foreach ($atendimentos as &$atendimento) {
                 $atendimento['data_atendimento'] = formatDateToBR($atendimento['data_atendimento']);
                 $atendimento['data_inicio_pacote'] = formatDateToBR($atendimento['data_inicio_pacote']);
+                
+                // Se não tiver permissão, remove a evolução do retorno
+                if (!$podeVerEvolucao) {
+                    unset($atendimento['evolucao']);
+                }
             }
             
             // Calcular resumo
@@ -150,8 +157,8 @@ switch ($method) {
             
             $stmt = $db->prepare("INSERT INTO atendimentos (
                 id_atendimento, paciente_id, paciente_nome, data_atendimento, 
-                tipo_pacote, data_inicio_pacote, status, unidade, observacoes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                tipo_pacote, data_inicio_pacote, status, unidade, observacoes, evolucao
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             $result = $stmt->execute([
                 $id,
@@ -162,7 +169,8 @@ switch ($method) {
                 formatDateToISO($input['data_inicio_pacote']),
                 $input['status'],
                 $input['unidade'],
-                isset($input['observacoes']) ? sanitize($input['observacoes']) : null
+                isset($input['observacoes']) ? sanitize($input['observacoes']) : null,
+                isset($input['evolucao']) ? sanitize($input['evolucao']) : null
             ]);
             
             if ($result) {
@@ -205,7 +213,8 @@ switch ($method) {
             
             $stmt = $db->prepare("UPDATE atendimentos SET 
                 paciente_id = ?, paciente_nome = ?, data_atendimento = ?, 
-                tipo_pacote = ?, data_inicio_pacote = ?, status = ?, unidade = ?, observacoes = ?
+                tipo_pacote = ?, data_inicio_pacote = ?, status = ?, unidade = ?, 
+                observacoes = ?, evolucao = ?
             WHERE id_atendimento = ?");
             
             $result = $stmt->execute([
@@ -217,6 +226,7 @@ switch ($method) {
                 $input['status'] ?? 'Confirmado',
                 $input['unidade'] ?? 'ANIMO',
                 isset($input['observacoes']) ? sanitize($input['observacoes']) : null,
+                isset($input['evolucao']) ? sanitize($input['evolucao']) : null,
                 $input['id_atendimento']
             ]);
             
@@ -231,6 +241,49 @@ switch ($method) {
                 $atendimento['data_inicio_pacote'] = formatDateToBR($atendimento['data_inicio_pacote']);
                 
                 successResponse($atendimento, 'Atendimento atualizado com sucesso');
+            } else {
+                errorResponse('Erro ao atualizar atendimento', 500);
+            }
+        } catch (PDOException $e) {
+            errorResponse('Erro ao atualizar atendimento', 500);
+        }
+        break;
+        
+    case 'PATCH':
+        requirePermission('atendimentos', 'editar');
+        // Atualizar apenas evolução ou status
+        $input = getJsonInput();
+        if (empty($input)) $input = $_POST;
+        
+        if (empty($input['id_atendimento'])) {
+            errorResponse('ID do atendimento é obrigatório', 400);
+        }
+        
+        try {
+            $fields = [];
+            $params = [];
+            
+            if (isset($input['evolucao'])) {
+                $fields[] = "evolucao = ?";
+                $params[] = sanitize($input['evolucao']);
+            }
+            
+            if (isset($input['status'])) {
+                $fields[] = "status = ?";
+                $params[] = $input['status'];
+            }
+            
+            if (empty($fields)) {
+                errorResponse('Nenhum campo para atualizar', 400);
+            }
+            
+            $params[] = $input['id_atendimento'];
+            $sql = "UPDATE atendimentos SET " . implode(', ', $fields) . " WHERE id_atendimento = ?";
+            $stmt = $db->prepare($sql);
+            $result = $stmt->execute($params);
+            
+            if ($result) {
+                successResponse(['id' => $input['id_atendimento']], 'Atendimento atualizado com sucesso');
             } else {
                 errorResponse('Erro ao atualizar atendimento', 500);
             }

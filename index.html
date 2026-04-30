@@ -147,6 +147,16 @@
                 <small id="headerSystemSubtitle" class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Gestão Integrada</small>
             </div>
         </div>
+
+        <!-- Busca Global -->
+        <div class="d-none d-lg-flex position-relative mx-3" style="min-width: 300px;">
+            <input type="text" id="globalSearch" class="form-control border-0 shadow-sm ps-5 bg-light" 
+                   placeholder="Buscar paciente rapidamente..." oninput="handleGlobalSearch()" style="border-radius: 10px;">
+            <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+            <div id="globalSearchResults" class="position-absolute w-100 bg-white shadow-lg rounded-3 mt-2 d-none" 
+                 style="top: 100%; z-index: 1050; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+
         <div class="d-flex gap-2 align-items-center flex-wrap">
             <span id="status-salvo"><i class="bi bi-check-circle-fill"></i>Salvo</span>
             <div class="theme-toggle" id="themeToggle" title="Alternar tema" style="cursor: pointer; display: flex; align-items: center; gap: 8px; background: var(--verde-pale); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: var(--verde);">
@@ -297,8 +307,30 @@
                     </div>
                 </div>
 
+                <!-- Gráficos Visuais -->
+                <div class=\"row mt-4\">
+                    <div class=\"col-lg-6 mb-4\">
+                        <div class=\"caixa-guanais h-100\">
+                            <h6 class=\"fw-bold mb-3\"><i class=\"bi bi-bar-chart-line me-2\"></i>Faturamento (Últimos 6 Meses)</h6>
+                            <canvas id=\"chartFaturamento\"></canvas>
+                        </div>
+                    </div>
+                    <div class=\"col-lg-3 mb-4\">
+                        <div class=\"caixa-guanais h-100\">
+                            <h6 class=\"fw-bold mb-3\"><i class=\"bi bi-pie-chart me-2\"></i>Status Sessões</h6>
+                            <canvas id=\"chartStatus\"></canvas>
+                        </div>
+                    </div>
+                    <div class=\"col-lg-3 mb-4\">
+                        <div class=\"caixa-guanais h-100\">
+                            <h6 class=\"fw-bold mb-3\"><i class=\"bi bi-hospital me-2\"></i>Unidades</h6>
+                            <canvas id=\"chartUnidade\"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Atalhos Rápidos / Resumo Opcional -->
-                <div class="row mt-5">
+                <div class=\"row mt-4\">
                     <div class="col-md-6">
                         <div class="caixa-guanais h-100">
                             <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Próximos Atendimentos</h6>
@@ -499,6 +531,9 @@
                                     <button type="submit" class="btn btn-verde">
                                         <i class="bi bi-check-lg me-2"></i>Salvar Paciente
                                     </button>
+                                    <button type="button" id="btnArquivosPaciente" class="btn btn-outline-primary d-none" onclick="abrirModalArquivos()">
+                                        <i class="bi bi-paperclip me-2"></i>Documentos / Anexos
+                                    </button>
                                     <button type="button" class="btn btn-light border" onclick="resetPacienteForm()">
                                         <i class="bi bi-x-lg me-2"></i>Cancelar
                                     </button>
@@ -555,6 +590,12 @@
                                     <p class="mb-1" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Líquido</p>
                                     <strong id="finLiquido" style="font-size: 1.25rem;">R$ 0,00</strong>
                                 </div>
+                            </div>
+                            <hr style="opacity: 0.3;">
+                            <div class="p-2 rounded" style="background: rgba(255,255,255,0.1);">
+                                <small class="d-block text-uppercase mb-1" style="font-size: 0.65rem; opacity: 0.8;">Saldo Real (Lucro Consolidado)</small>
+                                <h3 id="finSaldoReal" class="fw-bold mb-0">R$ 0,00</h3>
+                                <small class="text-white-50" style="font-size: 0.6rem;">(Líquido - Despesas Pagas)</small>
                             </div>
                         </div>
                         
@@ -800,9 +841,14 @@
                                     <option>ESPAÇO GUANAIS</option>
                                 </select>
                             </div>
+                        <div class=\"col-12 mb-3\">
+                            <label class=\"form-label\">Evolução Clínica (Prontuário)</label>
+                            <textarea id=\"atenEvolucao\" class=\"form-control\" rows=\"4\" placeholder=\"Registros da sessão...\"></textarea>
+                            <small class=\"text-muted\">Apenas terapeutas e administradores podem ver este campo.</small>
                         </div>
-                        
-                        <button type="submit" class="btn btn-verde w-100 py-3 fw-bold">
+                        </div>
+
+                        <button type=\"submit\" class=\"btn btn-verde w-100 py-3 fw-bold\">
                             <i class="bi bi-calendar-check me-2"></i>Salvar Atendimento
                         </button>
                     </form>
@@ -1264,6 +1310,86 @@
 
         </div>
     </div>
+<!-- Modal de Prontuário -->
+<div class=\"modal fade\" id=\"modalProntuario\" tabindex=\"-1\" aria-hidden=\"true\">
+    <div class=\"modal-dialog modal-lg\">
+        <div class=\"modal-content border-0 shadow\">
+            <div class=\"modal-header bg-verde text-white border-0\">
+                <h5 class=\"modal-title fw-bold\"><i class=\"bi bi-journal-text me-2\"></i>Prontuário de Atendimento</h5>
+                <button type=\"button\" class=\"btn-close btn-close-white\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
+            </div>
+            <div class=\"modal-body p-4\">
+                <div class=\"row g-3 mb-4\">
+                    <div class=\"col-md-6\">
+                        <label class=\"form-label text-muted small mb-0\">Paciente</label>
+                        <div id=\"prontPaciente\" class=\"fw-bold text-dark fs-5\">—</div>
+                    </div>
+                    <div class=\"col-md-6 text-md-end\">
+                        <label class=\"form-label text-muted small mb-0\">Data da Sessão</label>
+                        <div id=\"prontData\" class=\"fw-bold text-dark\">—</div>
+                    </div>
+                </div>
+
+                <div class=\"mb-3\">
+                    <label class=\"form-label fw-bold\"><i class=\"bi bi-pencil-square me-2\"></i>Evolução Clínica</label>
+                    <textarea id=\"prontEvolucao\" class=\"form-control\" rows=\"10\" placeholder=\"Descreva a evolução do paciente nesta sessão...\"></textarea>
+                </div>
+
+                <div id=\"prontFeedback\" class=\"alert alert-success d-none\">
+                    <i class=\"bi bi-check-circle me-2\"></i>Evolução salva com sucesso!
+                </div>
+            </div>
+            <div class=\"modal-footer border-0\">
+                <button type=\"button\" class=\"btn btn-light\" data-bs-dismiss=\"modal\">Fechar</button>
+                <button type=\"button\" class=\"btn btn-verde px-4\" onclick=\"salvarEvolucaoProntuario()\">
+                    <i class=\"bi bi-save me-2\"></i>Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Arquivos/Anexos -->
+<div class="modal fade" id="modalArquivos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-paperclip me-2"></i>Documentos do Paciente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4 p-3 bg-light rounded-3">
+                    <label class="form-label fw-bold">Novo Anexo (PDF, Imagens)</label>
+                    <div class="input-group">
+                        <input type="file" id="inputArquivoPaciente" class="form-control" accept=".pdf,image/*">
+                        <button class="btn btn-primary" type="button" onclick="uploadArquivoPaciente()">
+                            <i class="bi bi-upload me-2"></i>Enviar
+                        </button>
+                    </div>
+                    <small class="text-muted">Tamanho máximo: 5MB. Formatos: PDF, JPG, PNG, WEBP.</small>
+                </div>
+
+                <h6 class="fw-bold mb-3">Arquivos Salvos</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Data</th>
+                                <th>Tamanho</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaArquivosPaciente">
+                            <!-- Carregado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <div id="toast-container"></div>
