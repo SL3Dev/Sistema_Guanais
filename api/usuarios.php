@@ -24,18 +24,36 @@ switch ($method) {
         if (!hasPermission('configuracoes', 'visualizar')) {
             errorResponse('Permissão negada', 403);
         }
-        
-        $stmt = $db->prepare("SELECT id, usuario, nome, email, tipo, ativo, criado_em FROM usuarios ORDER BY id");
-        $stmt->execute();
-        $usuarios = $stmt->fetchAll();
-        
-        foreach ($usuarios as &$usuario) {
+
+        $id = isset($_GET['id']) ? $_GET['id'] : null;
+
+        if (!empty($id)) {
+            $stmt = $db->prepare("SELECT id, usuario, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia, ativo, criado_em FROM usuarios WHERE id = ?");
+            $stmt->execute([$id]);
+            $usuario = $stmt->fetch();
+
+            if (!$usuario) {
+                errorResponse('Usuário não encontrado', 404);
+            }
+
             $stmt = $db->prepare("SELECT modulo, acao, permitido FROM permissoes WHERE usuario_id = ?");
             $stmt->execute([$usuario['id']]);
             $usuario['permissoes'] = $stmt->fetchAll();
+
+            successResponse($usuario, 'Usuário carregado com sucesso');
+        } else {
+            $stmt = $db->prepare("SELECT id, usuario, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia, ativo, criado_em FROM usuarios ORDER BY id");
+            $stmt->execute();
+            $usuarios = $stmt->fetchAll();
+
+            foreach ($usuarios as &$usuario) {
+                $stmt = $db->prepare("SELECT modulo, acao, permitido FROM permissoes WHERE usuario_id = ?");
+                $stmt->execute([$usuario['id']]);
+                $usuario['permissoes'] = $stmt->fetchAll();
+            }
+
+            successResponse($usuarios, 'Usuários listados com sucesso');
         }
-        
-        successResponse($usuarios, 'Usuários listados com sucesso');
         break;
         
     case 'POST':
@@ -55,7 +73,24 @@ switch ($method) {
         if (empty($usuario)) $errors[] = 'Usuário é obrigatório';
         if (empty($senha)) $errors[] = 'Senha é obrigatória';
         if (empty($nome)) $errors[] = 'Nome é obrigatório';
-        if (!in_array($tipo, ['admin', 'terapeuta', 'secretaria'])) $errors[] = 'Tipo inválido';
+        if (!in_array($tipo, ['admin', 'terapeuta', 'secretaria', 'psicologa'])) $errors[] = 'Tipo inválido';
+
+        $abordagem = isset($input['abordagem']) ? trim($input['abordagem']) : '';
+        $temas = isset($input['temas']) ? trim($input['temas']) : '';
+        $formacaoAcademica = isset($input['formacao_academica']) ? trim($input['formacao_academica']) : '';
+        $idiomas = isset($input['idiomas']) ? trim($input['idiomas']) : '';
+        $idade = isset($input['idade']) ? (int)$input['idade'] : null;
+        $fotoPerfil = isset($input['foto_perfil']) ? trim($input['foto_perfil']) : '';
+        $tipoPsicoterapia = isset($input['tipo_psicoterapia']) ? trim($input['tipo_psicoterapia']) : '';
+
+        if ($tipo === 'psicologa') {
+            if (empty($abordagem)) $errors[] = 'Abordagem é obrigatória para psicóloga';
+            if (empty($temas)) $errors[] = 'Temas de atuação são obrigatórios para psicóloga';
+            if (empty($formacaoAcademica)) $errors[] = 'Formação acadêmica é obrigatória para psicóloga';
+            if (empty($idiomas)) $errors[] = 'Idiomas são obrigatórios para psicóloga';
+            if (empty($idade) || $idade < 18) $errors[] = 'Idade válida (>= 18) é obrigatória para psicóloga';
+            if (empty($tipoPsicoterapia)) $errors[] = 'Tipo de psicoterapia é obrigatório para psicóloga';
+        }
         
         if (!empty($errors)) {
             errorResponse('Erro de validação', 400, $errors);
@@ -69,8 +104,17 @@ switch ($method) {
         
         try {
             $senhaHash = password_hash($senha, PASSWORD_BCRYPT);
-            $stmt = $db->prepare("INSERT INTO usuarios (usuario, senha, nome, email, tipo) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$usuario, $senhaHash, $nome, $email, $tipo]);
+            $stmt = $db->prepare("INSERT INTO usuarios (usuario, senha, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $usuario, $senhaHash, $nome, $email, $tipo,
+                $abordagem ?: null,
+                $temas ?: null,
+                $formacaoAcademica ?: null,
+                $idiomas ?: null,
+                $idade,
+                $fotoPerfil ?: null,
+                $tipoPsicoterapia ?: null
+            ]);
             $usuarioId = $db->lastInsertId();
             
             if (!empty($permissoes)) {
@@ -96,6 +140,15 @@ switch ($method) {
                         ['configuracoes', 'visualizar']
                     ];
                     foreach ($permissoesTerapeuta as $p) {
+                        $stmt->execute([$usuarioId, $p[0], $p[1], 1]);
+                    }
+                } elseif ($tipo === 'psicologa') {
+                    $permissoesPsicologa = [
+                        ['pacientes', 'visualizar'], ['pacientes', 'editar'],
+                        ['atendimentos', 'visualizar'], ['atendimentos', 'editar'], ['atendimentos', 'criar'],
+                        ['configuracoes', 'visualizar']
+                    ];
+                    foreach ($permissoesPsicologa as $p) {
                         $stmt->execute([$usuarioId, $p[0], $p[1], 1]);
                     }
                 } else {
@@ -137,7 +190,23 @@ switch ($method) {
         $errors = [];
         if (isset($input['usuario']) && empty($input['usuario'])) $errors[] = 'Usuário não pode ser vazio';
         if (isset($input['nome']) && empty($input['nome'])) $errors[] = 'Nome é obrigatório';
-        if (isset($input['tipo']) && !in_array($input['tipo'], ['admin', 'terapeuta', 'secretaria'])) $errors[] = 'Tipo inválido';
+        if (isset($input['tipo']) && !in_array($input['tipo'], ['admin', 'terapeuta', 'secretaria', 'psicologa'])) $errors[] = 'Tipo inválido';
+
+        $tipoEfetivo = isset($input['tipo']) ? $input['tipo'] : null;
+        if ($tipoEfetivo === null) {
+            $stmt = $db->prepare("SELECT tipo FROM usuarios WHERE id = ?");
+            $stmt->execute([$id]);
+            $tipoEfetivo = $stmt->fetchColumn();
+        }
+
+        if ($tipoEfetivo === 'psicologa') {
+            $camposObrigatoriosPsi = ['abordagem', 'temas', 'formacao_academica', 'idiomas', 'idade', 'tipo_psicoterapia'];
+            foreach ($camposObrigatoriosPsi as $campoPsi) {
+                if (array_key_exists($campoPsi, $input) && empty($input[$campoPsi])) {
+                    $errors[] = "Campo obrigatório para psicóloga: {$campoPsi}";
+                }
+            }
+        }
         
         if (!empty($errors)) {
             errorResponse('Erro de validação', 400, $errors);
@@ -179,6 +248,41 @@ switch ($method) {
             if (isset($input['tipo'])) {
                 $fields[] = "tipo = ?";
                 $params[] = $input['tipo'];
+            }
+
+            if (isset($input['abordagem'])) {
+                $fields[] = "abordagem = ?";
+                $params[] = sanitize($input['abordagem']);
+            }
+
+            if (isset($input['temas'])) {
+                $fields[] = "temas = ?";
+                $params[] = sanitize($input['temas']);
+            }
+
+            if (isset($input['formacao_academica'])) {
+                $fields[] = "formacao_academica = ?";
+                $params[] = sanitize($input['formacao_academica']);
+            }
+
+            if (isset($input['idiomas'])) {
+                $fields[] = "idiomas = ?";
+                $params[] = sanitize($input['idiomas']);
+            }
+
+            if (isset($input['idade'])) {
+                $fields[] = "idade = ?";
+                $params[] = (int)$input['idade'];
+            }
+
+            if (isset($input['foto_perfil'])) {
+                $fields[] = "foto_perfil = ?";
+                $params[] = sanitize($input['foto_perfil']);
+            }
+
+            if (isset($input['tipo_psicoterapia'])) {
+                $fields[] = "tipo_psicoterapia = ?";
+                $params[] = sanitize($input['tipo_psicoterapia']);
             }
             
             if (isset($input['ativo'])) {

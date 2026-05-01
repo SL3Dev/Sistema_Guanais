@@ -555,6 +555,49 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.module-bg {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(2px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.55;
+    animation: moduleFloat 18s ease-in-out infinite alternate;
+}
+
+.module-bg-1 {
+    width: 420px;
+    height: 420px;
+    left: -120px;
+    top: -90px;
+    background: radial-gradient(circle at 30% 30%, rgba(137,178,162,.35), rgba(137,178,162,.06) 70%);
+}
+
+.module-bg-2 {
+    width: 340px;
+    height: 340px;
+    right: -100px;
+    bottom: -70px;
+    background: radial-gradient(circle at 40% 40%, rgba(201,133,42,.30), rgba(201,133,42,.06) 72%);
+    animation-delay: -4s;
+}
+
+.module-bg-3 {
+    width: 260px;
+    height: 260px;
+    right: 22%;
+    top: 18%;
+    background: radial-gradient(circle at 50% 50%, rgba(14,165,233,.22), rgba(14,165,233,.04) 72%);
+    animation-delay: -9s;
+}
+
+@keyframes moduleFloat {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    100% { transform: translate3d(18px, -14px, 0) scale(1.08); }
 }
 
 .module-selection-card {
@@ -566,6 +609,8 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
     max-width: 1100px;
     width: 100%;
     border: 1px solid rgba(137, 178, 162, 0.2);
+    position: relative;
+    z-index: 2;
 }
 
 .module-selection-title {
@@ -656,6 +701,7 @@ body.dark #loginSystemSubtitle {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
+    isolation: isolate;
 }
 
 .menu-card::before {
@@ -668,10 +714,24 @@ body.dark #loginSystemSubtitle {
     transform-origin: left;
 }
 
+.menu-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 15% 15%, rgba(255,255,255,.40), transparent 42%);
+    opacity: .6;
+    z-index: -1;
+    transition: opacity .35s ease;
+}
+
 .menu-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 15px 35px rgba(137, 178, 162, 0.15);
     border-color: rgba(137, 178, 162, 0.3);
+}
+
+.menu-card:hover::after {
+    opacity: .9;
 }
 
 .menu-card:hover::before {
@@ -693,6 +753,18 @@ body.dark #loginSystemSubtitle {
 
 .menu-card:hover .menu-card-icon {
     transform: scale(1.15) rotate(5deg);
+}
+
+body.dark .module-bg-1 {
+    background: radial-gradient(circle at 30% 30%, rgba(94,234,212,.22), rgba(94,234,212,.04) 74%);
+}
+
+body.dark .module-bg-2 {
+    background: radial-gradient(circle at 35% 35%, rgba(251,191,36,.20), rgba(251,191,36,.04) 74%);
+}
+
+body.dark .module-bg-3 {
+    background: radial-gradient(circle at 50% 50%, rgba(125,211,252,.18), rgba(125,211,252,.03) 74%);
 }
 
 .menu-card h5 {

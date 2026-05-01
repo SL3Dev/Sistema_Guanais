@@ -683,7 +683,13 @@ function renderUsuarios() {
     const podeExcluir = userHasPermission('configuracoes', 'excluir');
 
     usuariosData.forEach(u => {
-        const tipoLabel = u.tipo === 'admin' ? 'Administrador' : u.tipo === 'terapeuta' ? 'Terapeuta' : 'Secretaria';
+        const tipoLabel = u.tipo === 'admin'
+            ? 'Administrador'
+            : u.tipo === 'terapeuta'
+                ? 'Terapeuta'
+                : u.tipo === 'psicologa'
+                    ? 'Psicóloga'
+                    : 'Secretaria';
         const statusClass = u.ativo ? 'badge-success' : 'badge-danger';
         const statusLabel = u.ativo ? 'Ativo' : 'Inativo';
         
@@ -721,13 +727,40 @@ document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => 
     const nome = document.getElementById('usuNome').value.trim();
     const email = document.getElementById('usuEmail').value.trim();
     const tipo = document.getElementById('usuTipo').value;
+    const abordagem = document.getElementById('usuAbordagem')?.value?.trim() || '';
+    const temas = document.getElementById('usuTemas')?.value?.trim() || '';
+    const formacao_academica = document.getElementById('usuFormacaoAcademica')?.value?.trim() || '';
+    const idiomas = document.getElementById('usuIdiomas')?.value?.trim() || '';
+    const idade = document.getElementById('usuIdade')?.value || '';
+    const foto_perfil = document.getElementById('usuFotoPerfil')?.value?.trim() || '';
+    const tipo_psicoterapia = document.getElementById('usuTipoPsicoterapia')?.value?.trim() || '';
     
     if (!usuario) { mostrarToast('Usuário é obrigatório', 'danger'); return; }
     if (!senha || senha.length < 4) { mostrarToast('Senha deve ter pelo menos 4 caracteres', 'danger'); return; }
     if (!nome) { mostrarToast('Nome é obrigatório', 'danger'); return; }
     if (email && !email.includes('@')) { mostrarToast('Email inválido', 'danger'); return; }
     
-    const novoUsuario = { usuario, senha, nome, email, tipo };
+    if (tipo === 'psicologa') {
+        if (!abordagem || !temas || !formacao_academica || !idiomas || !idade || !tipo_psicoterapia) {
+            mostrarToast('Preencha todos os campos obrigatórios da psicóloga', 'danger');
+            return;
+        }
+    }
+
+    const novoUsuario = {
+        usuario,
+        senha,
+        nome,
+        email,
+        tipo,
+        abordagem,
+        temas,
+        formacao_academica,
+        idiomas,
+        idade: idade ? parseInt(idade, 10) : null,
+        foto_perfil,
+        tipo_psicoterapia
+    };
     
     try {
         const result = await apiRequest('usuarios.php', 'POST', novoUsuario);
@@ -754,8 +787,16 @@ async function editarUsuario(id) {
             document.getElementById('editUsuNome').value = usuario.nome || '';
             document.getElementById('editUsuEmail').value = usuario.email || '';
             document.getElementById('editUsuTipo').value = usuario.tipo || 'secretaria';
+            document.getElementById('editUsuAbordagem').value = usuario.abordagem || '';
+            document.getElementById('editUsuTemas').value = usuario.temas || '';
+            document.getElementById('editUsuFormacaoAcademica').value = usuario.formacao_academica || '';
+            document.getElementById('editUsuIdiomas').value = usuario.idiomas || '';
+            document.getElementById('editUsuIdade').value = usuario.idade || '';
+            document.getElementById('editUsuFotoPerfil').value = usuario.foto_perfil || '';
+            document.getElementById('editUsuTipoPsicoterapia').value = usuario.tipo_psicoterapia || '';
             document.getElementById('editUsuAtivo').checked = usuario.ativo == 1;
             document.getElementById('editUsuSenha').value = '';
+            toggleCamposPsicologaEdicao();
 
             new bootstrap.Modal(document.getElementById('modalEditarUsuario')).show();
         } else {
@@ -774,8 +815,32 @@ async function atualizarUsuario() {
     const tipo = document.getElementById('editUsuTipo').value;
     const ativo = document.getElementById('editUsuAtivo').checked ? 1 : 0;
     const senha = document.getElementById('editUsuSenha').value;
+    const abordagem = document.getElementById('editUsuAbordagem')?.value?.trim() || '';
+    const temas = document.getElementById('editUsuTemas')?.value?.trim() || '';
+    const formacao_academica = document.getElementById('editUsuFormacaoAcademica')?.value?.trim() || '';
+    const idiomas = document.getElementById('editUsuIdiomas')?.value?.trim() || '';
+    const idade = document.getElementById('editUsuIdade')?.value || '';
+    const foto_perfil = document.getElementById('editUsuFotoPerfil')?.value?.trim() || '';
+    const tipo_psicoterapia = document.getElementById('editUsuTipoPsicoterapia')?.value?.trim() || '';
 
-    const payload = { nome, email, tipo, ativo };
+    if (tipo === 'psicologa' && (!abordagem || !temas || !formacao_academica || !idiomas || !idade || !tipo_psicoterapia)) {
+        mostrarToast('Preencha todos os campos obrigatórios da psicóloga', 'danger');
+        return;
+    }
+
+    const payload = {
+        nome,
+        email,
+        tipo,
+        ativo,
+        abordagem,
+        temas,
+        formacao_academica,
+        idiomas,
+        idade: idade ? parseInt(idade, 10) : null,
+        foto_perfil,
+        tipo_psicoterapia
+    };
     if (senha.trim() !== '') payload.senha = senha;
 
     try {
@@ -891,6 +956,18 @@ async function salvarPermissoes() {
 }
 
 function initUsuariosTab() {
+    const tipoNovo = document.getElementById('usuTipo');
+    if (tipoNovo) {
+        tipoNovo.addEventListener('change', toggleCamposPsicologaCadastro);
+        toggleCamposPsicologaCadastro();
+    }
+
+    const tipoEdicao = document.getElementById('editUsuTipo');
+    if (tipoEdicao) {
+        tipoEdicao.addEventListener('change', toggleCamposPsicologaEdicao);
+        toggleCamposPsicologaEdicao();
+    }
+
     const configTab = document.querySelector('#mainTab button[data-bs-target="#configuracoes"]');
     if (configTab) {
         configTab.addEventListener('shown.bs.tab', function() {
@@ -900,6 +977,20 @@ function initUsuariosTab() {
     if (document.querySelector('#configuracoes').classList.contains('show')) {
         carregarUsuarios();
     }
+}
+
+function toggleCamposPsicologaCadastro() {
+    const tipo = document.getElementById('usuTipo')?.value;
+    const secao = document.getElementById('camposPsicologa');
+    if (!secao) return;
+    secao.classList.toggle('d-none', tipo !== 'psicologa');
+}
+
+function toggleCamposPsicologaEdicao() {
+    const tipo = document.getElementById('editUsuTipo')?.value;
+    const secao = document.getElementById('editCamposPsicologa');
+    if (!secao) return;
+    secao.classList.toggle('d-none', tipo !== 'psicologa');
 }
 
 // ====================== FUNÇÕES AUXILIARES ======================
@@ -1539,7 +1630,7 @@ function renderAgenda(dadosCustom = null) {
             statusAtend === 'Falta' ? 'badge-danger' :
                 statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada' ? 'badge-warning' : 'badge-info';
         
-        const podeVerProntuario = ['admin', 'terapeuta'].includes(usuarioLogado?.tipo);
+        const podeVerProntuario = ['admin', 'terapeuta', 'psicologa'].includes(usuarioLogado?.tipo);
         
         html += `<tr>
             <td>${idAtend}</td>
@@ -2638,7 +2729,7 @@ async function renderProntuarioLista() {
     const tbody = document.getElementById('prontuarioTbody');
     if (!tbody) return;
 
-    const podeVerProntuario = ['admin', 'terapeuta'].includes(usuarioLogado?.tipo);
+    const podeVerProntuario = ['admin', 'terapeuta', 'psicologa'].includes(usuarioLogado?.tipo);
     if (!podeVerProntuario) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Sem permissão para visualizar prontuário.</td></tr>';
         return;

@@ -89,7 +89,7 @@ switch ($method) {
             $atendimentos = $stmt->fetchAll();
             
             // Formatar dados e controlar visibilidade da evolução
-            $podeVerEvolucao = in_array($_SESSION['tipo'] ?? '', ['admin', 'terapeuta']);
+            $podeVerEvolucao = in_array($_SESSION['tipo'] ?? '', ['admin', 'terapeuta', 'psicologa']);
             
             foreach ($atendimentos as &$atendimento) {
                 $atendimento['data_atendimento'] = formatDateToBR($atendimento['data_atendimento']);

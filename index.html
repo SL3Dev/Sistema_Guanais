@@ -63,6 +63,9 @@
 
 <!-- TELA DE SELEÇÃO DE MÓDULOS -->
 <div id="moduleSelectionScreen" class="module-selection-container" style="display: none;">
+    <div class="module-bg module-bg-1"></div>
+    <div class="module-bg module-bg-2"></div>
+    <div class="module-bg module-bg-3"></div>
     <div class="module-selection-card text-center">
         <div class="mb-5">
             <h1 id="selectionSystemName" class="module-selection-title">Espaço Guanais</h1>
@@ -1116,8 +1119,49 @@
                                     <select id="usuTipo" class="form-select">
                                         <option value="secretaria">Secretaria</option>
                                         <option value="terapeuta">Terapeuta</option>
+                                        <option value="psicologa">Psicóloga</option>
                                         <option value="admin">Administrador</option>
                                     </select>
+                                </div>
+                                <div id="camposPsicologa" class="d-none border rounded p-3 mb-3" style="background: var(--verde-pale);">
+                                    <h6 class="mb-3"><i class="bi bi-heart-pulse me-2"></i>Dados da Psicóloga</h6>
+                                    <div class="mb-2">
+                                        <label class="form-label">Tipo de abordagem *</label>
+                                        <select id="usuAbordagem" class="form-select">
+                                            <option value="">Selecione</option>
+                                            <option>Psicologia Clínica</option>
+                                            <option>Psicanálise</option>
+                                            <option>Terapia Cognitivo-Comportamental (TCC)</option>
+                                            <option>Humanista</option>
+                                            <option>Sistêmica</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Temas de atuação *</label>
+                                        <input type="text" id="usuTemas" class="form-control" placeholder="Luto, conflitos, depressão, psicologia organizacional...">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Formação acadêmica *</label>
+                                        <textarea id="usuFormacaoAcademica" class="form-control" rows="2" placeholder="Graduação, especializações..."></textarea>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Idiomas *</label>
+                                            <input type="text" id="usuIdiomas" class="form-control" placeholder="Português, Inglês...">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Idade *</label>
+                                            <input type="number" id="usuIdade" class="form-control" min="18" max="99">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Foto (URL)</label>
+                                            <input type="text" id="usuFotoPerfil" class="form-control" placeholder="https://...">
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="form-label">Tipo de psicoterapia *</label>
+                                        <input type="text" id="usuTipoPsicoterapia" class="form-control" placeholder="Psicoterapia individual, casal, grupo...">
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-verde w-100 py-2">
                                     <i class="bi bi-check-lg me-2"></i>Criar Usuário
@@ -1308,8 +1352,21 @@
                                     <select id="editUsuTipo" class="form-select">
                                         <option value="secretaria">Secretaria</option>
                                         <option value="terapeuta">Terapeuta</option>
+                                        <option value="psicologa">Psicóloga</option>
                                         <option value="admin">Administrador</option>
                                     </select>
+                                </div>
+                                <div id="editCamposPsicologa" class="d-none border rounded p-3 mb-3" style="background: var(--verde-pale);">
+                                    <h6 class="mb-3">Dados da Psicóloga</h6>
+                                    <input type="text" id="editUsuAbordagem" class="form-control mb-2" placeholder="Tipo de abordagem">
+                                    <input type="text" id="editUsuTemas" class="form-control mb-2" placeholder="Temas de atuação">
+                                    <textarea id="editUsuFormacaoAcademica" class="form-control mb-2" rows="2" placeholder="Formação acadêmica"></textarea>
+                                    <input type="text" id="editUsuIdiomas" class="form-control mb-2" placeholder="Idiomas">
+                                    <div class="row g-2">
+                                        <div class="col-md-6"><input type="number" id="editUsuIdade" class="form-control" min="18" max="99" placeholder="Idade"></div>
+                                        <div class="col-md-6"><input type="text" id="editUsuFotoPerfil" class="form-control" placeholder="URL da foto de perfil"></div>
+                                    </div>
+                                    <input type="text" id="editUsuTipoPsicoterapia" class="form-control mt-2" placeholder="Tipo de psicoterapia">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Nova Senha (deixe vazio para manter)</label>

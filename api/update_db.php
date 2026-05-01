@@ -218,6 +218,32 @@ try {
     ");
     $updates[] = "View 'vw_pacientes_pacotes' criada/atualizada.";
 
+    // 9. Atualizar estrutura da tabela usuarios para suportar psicóloga e campos adicionais
+    $stmt = $db->query("SHOW COLUMNS FROM usuarios LIKE 'tipo'");
+    if ($stmt->rowCount() > 0) {
+        $db->exec("ALTER TABLE usuarios MODIFY COLUMN tipo ENUM('admin', 'terapeuta', 'secretaria', 'psicologa') DEFAULT 'secretaria'");
+        $updates[] = "Campo 'tipo' da tabela 'usuarios' atualizado para incluir 'psicologa'.";
+    }
+
+    $novosCamposUsuarios = [
+        "abordagem VARCHAR(120) NULL",
+        "temas TEXT NULL",
+        "formacao_academica TEXT NULL",
+        "idiomas TEXT NULL",
+        "idade INT NULL",
+        "foto_perfil VARCHAR(255) NULL",
+        "tipo_psicoterapia VARCHAR(120) NULL"
+    ];
+
+    foreach ($novosCamposUsuarios as $colDef) {
+        $colName = explode(' ', $colDef)[0];
+        $stmt = $db->query("SHOW COLUMNS FROM usuarios LIKE '{$colName}'");
+        if ($stmt->rowCount() == 0) {
+            $db->exec("ALTER TABLE usuarios ADD COLUMN {$colDef}");
+            $updates[] = "Adicionado campo '{$colName}' à tabela 'usuarios'.";
+        }
+    }
+
     // 3. Inserir novas configurações se não existirem
     $configs = [
         ['nome_sistema', 'Espaço Guanais', 'texto', 'Nome do sistema'],
