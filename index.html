@@ -16,6 +16,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
+    <!-- Phosphor Icons (Modern) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -37,7 +40,7 @@
                 <label class="form-label" for="loginUser">Usuário</label>
                 <div class="input-group">
                     <span class="input-group-text bg-transparent border-end-0">
-                        <i class="bi bi-person text-muted"></i>
+                        <i class="ph ph-user text-muted"></i>
                     </span>
                     <input type="text" id="loginUser" class="form-control border-start-0 ps-0" placeholder="Digite seu usuário" autocomplete="off" required>
                 </div>
@@ -46,13 +49,13 @@
                 <label class="form-label" for="loginPass">Senha</label>
                 <div class="input-group">
                     <span class="input-group-text bg-transparent border-end-0">
-                        <i class="bi bi-lock text-muted"></i>
+                        <i class="ph ph-lock text-muted"></i>
                     </span>
                     <input type="password" id="loginPass" class="form-control border-start-0 ps-0" placeholder="Digite sua senha" required>
                 </div>
             </div>
             <button type="submit" class="btn btn-verde w-100 py-3 fw-semibold">
-                <i class="bi bi-box-arrow-in-right me-2"></i>Entrar no Sistema
+                <i class="ph ph-sign-in me-2"></i>Entrar no Sistema
             </button>
         </form>
         <div class="text-center mt-4">
@@ -76,7 +79,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('agenda')">
                     <div class="menu-card-icon bg-info-pale">
-                        <i class="bi bi-calendar-check"></i>
+                        <i class="ph ph-calendar-check"></i>
                     </div>
                     <h5>Agenda</h5>
                     <p>Controle de atendimentos e faltas.</p>
@@ -85,7 +88,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('pacientes')">
                     <div class="menu-card-icon bg-verde-pale">
-                        <i class="bi bi-people"></i>
+                        <i class="ph ph-users"></i>
                     </div>
                     <h5>Pacientes</h5>
                     <p>Cadastro e histórico completo.</p>
@@ -94,7 +97,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('financeiro')">
                     <div class="menu-card-icon bg-ouro-pale">
-                        <i class="bi bi-currency-dollar"></i>
+                        <i class="ph ph-coins"></i>
                     </div>
                     <h5>Financeiro</h5>
                     <p>Gestão de caixa e faturamento.</p>
@@ -103,7 +106,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('despesas')">
                     <div class="menu-card-icon bg-danger-pale">
-                        <i class="bi bi-cash-stack"></i>
+                        <i class="ph ph-receipt"></i>
                     </div>
                     <h5>Despesas</h5>
                     <p>Controle de gastos e contas.</p>
@@ -112,7 +115,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('relatorios')">
                     <div class="menu-card-icon bg-primary-pale">
-                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        <i class="ph ph-trend-up"></i>
                     </div>
                     <h5>Relatórios</h5>
                     <p>Análise de dados e exportação.</p>
@@ -121,7 +124,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('prontuario')">
                     <div class="menu-card-icon bg-primary-pale">
-                        <i class="bi bi-journal-medical"></i>
+                        <i class="ph ph-stethoscope"></i>
                     </div>
                     <h5>Prontuário</h5>
                     <p>Evolução clínica organizada por sessão.</p>
@@ -130,7 +133,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('configuracoes')">
                     <div class="menu-card-icon bg-secondary-pale">
-                        <i class="bi bi-gear"></i>
+                        <i class="ph ph-gear"></i>
                     </div>
                     <h5>Configurações</h5>
                     <p>Ajustes, usuários e logos.</p>
@@ -139,7 +142,7 @@
         </div>
         <div class="mt-5">
             <button class="btn btn-outline-secondary btn-sm px-4" onclick="sairSistema()">
-                <i class="bi bi-box-arrow-right me-2"></i>Sair do Sistema
+                <i class="ph ph-sign-out me-2"></i>Sair do Sistema
             </button>
         </div>
     </div>
@@ -151,7 +154,7 @@
     <header class="app-header d-flex justify-content-between align-items-center flex-wrap">
         <div class="d-flex align-items-center gap-3">
             <div id="headerLogoContainer" class="d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: var(--verde-pale); border-radius: 12px; overflow: hidden;">
-                <i id="headerLogoIcon" class="bi bi-heart-pulse" style="font-size: 1.25rem; color: var(--verde);"></i>
+                <i id="headerLogoIcon" class="ph ph-leaf" style="font-size: 1.25rem; color: var(--verde);"></i>
                 <img id="headerLogoImg" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
@@ -164,19 +167,26 @@
         <div class="d-none d-lg-flex position-relative mx-3" style="min-width: 300px;">
             <input type="text" id="globalSearch" class="form-control border-0 shadow-sm ps-5 bg-light" 
                    placeholder="Buscar paciente rapidamente..." oninput="handleGlobalSearch()" style="border-radius: 10px;">
-            <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+            <i class="ph ph-magnifying-glass position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
             <div id="globalSearchResults" class="position-absolute w-100 bg-white shadow-lg rounded-3 mt-2 d-none" 
                  style="top: 100%; z-index: 1050; max-height: 300px; overflow-y: auto;"></div>
         </div>
 
         <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="user-pill" id="userPill">
+                <img id="loggedUserAvatar" src="https://placehold.co/44x44" alt="Usuário">
+                <div>
+                    <div id="loggedUserName" class="fw-semibold">Usuário</div>
+                    <small id="loggedUserRole" class="text-muted">Perfil</small>
+                </div>
+            </div>
             <div class="theme-toggle" id="themeToggle" title="Alternar tema">
-                <i class="bi bi-sun-fill"></i>
-                <i class="bi bi-moon-fill" style="display:none;"></i>
+                <i class="ph ph-sun"></i>
+                <i class="ph ph-moon" style="display:none;"></i>
                 <span class="d-none d-sm-inline">Tema</span>
             </div>
             <button class="btn btn-sm btn-light border text-danger" onclick="sairSistema()" title="Sair">
-                <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Sair</span>
+                <i class="ph ph-sign-out"></i> <span class="d-none d-md-inline">Sair</span>
             </button>
             <input type="file" id="fileImport" class="d-none" accept=".xlsx,.xls,.csv" onchange="importarExcel(event, false)">
         </div>
@@ -188,52 +198,52 @@
         <ul class="nav nav-tabs border-0 gap-2 mb-4 flex-wrap" id="mainTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
-                    <i class="bi bi-house-door"></i> Início
+                    <i class="ph ph-house"></i> Dashboard
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#agenda" type="button" role="tab">
-                    <i class="bi bi-calendar-week"></i> Agenda
+                    <i class="ph ph-calendar"></i> Agenda
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pacientes" type="button" role="tab">
-                    <i class="bi bi-people"></i> Pacientes
+                    <i class="ph ph-users"></i> Pacientes
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#financeiro" type="button" role="tab">
-                    <i class="bi bi-cash-stack"></i> Financeiro
+                    <i class="ph ph-currency-dollar"></i> Financeiro
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#despesas" type="button" role="tab">
-                    <i class="bi bi-receipt"></i> Despesas
+                    <i class="ph ph-receipt"></i> Despesas
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#novoAtendimento" type="button" role="tab">
-                    <i class="bi bi-plus-circle"></i> Novo Atend.
+                    <i class="ph ph-plus-circle"></i> Novo Atend.
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#relatorios" type="button" role="tab">
-                    <i class="bi bi-bar-chart"></i> Relatórios
+                    <i class="ph ph-chart-line-up"></i> Relatórios
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#prontuario" type="button" role="tab">
-                    <i class="bi bi-journal-medical"></i> Prontuário
+                    <i class="ph ph-clipboard-text"></i> Prontuário
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#configuracoes" type="button" role="tab">
-                    <i class="bi bi-gear"></i> Configurações
+                    <i class="ph ph-gear"></i> Configurações
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ajuda" type="button" role="tab">
-                    <i class="bi bi-question-circle"></i> Ajuda
+                    <i class="ph ph-question"></i> Ajuda
                 </button>
             </li>
         </ul>
@@ -248,77 +258,29 @@
                     <p class="text-muted">O que você deseja fazer hoje?</p>
                 </div>
 
-                <div class="row g-4 dashboard-grid">
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('agenda')">
-                            <div class="menu-card-icon bg-verde-pale text-verde">
-                                <i class="bi bi-calendar-week"></i>
-                            </div>
-                            <h5>Agenda</h5>
-                            <p>Ver atendimentos e compromissos</p>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-3">
+                        <div class="dash-card">
+                            <div class="dash-label">Sessões Hoje</div>
+                            <div class="dash-value" id="dashSessoesHoje">0</div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('pacientes')">
-                            <div class="menu-card-icon bg-info-pale text-info">
-                                <i class="bi bi-people"></i>
-                            </div>
-                            <h5>Pacientes</h5>
-                            <p>Cadastrar e gerenciar pacientes</p>
+                    <div class="col-md-3">
+                        <div class="dash-card">
+                            <div class="dash-label">Pacientes Ativos</div>
+                            <div class="dash-value" id="dashPacientesAtivos">0</div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('financeiro')">
-                            <div class="menu-card-icon bg-ouro-pale text-ouro">
-                                <i class="bi bi-cash-stack"></i>
-                            </div>
-                            <h5>Financeiro</h5>
-                            <p>Lançamentos e fluxo de caixa</p>
+                    <div class="col-md-3">
+                        <div class="dash-card">
+                            <div class="dash-label">Status Sessões</div>
+                            <div class="dash-value" id="dashStatusResumo">0</div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('despesas')">
-                            <div class="menu-card-icon bg-danger-pale text-danger">
-                                <i class="bi bi-receipt"></i>
-                            </div>
-                            <h5>Despesas</h5>
-                            <p>Controle de gastos e contas</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('novoAtendimento')">
-                            <div class="menu-card-icon bg-primary-pale text-primary">
-                                <i class="bi bi-plus-circle"></i>
-                            </div>
-                            <h5>Novo Atendimento</h5>
-                            <p>Registrar uma nova sessão</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('relatorios')">
-                            <div class="menu-card-icon bg-secondary-pale text-secondary">
-                                <i class="bi bi-bar-chart"></i>
-                            </div>
-                            <h5>Relatórios</h5>
-                            <p>Análise de dados e produtividade</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('configuracoes')">
-                            <div class="menu-card-icon bg-dark-pale text-dark">
-                                <i class="bi bi-gear"></i>
-                            </div>
-                            <h5>Configurações</h5>
-                            <p>Ajustes e gestão de usuários</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="menu-card" onclick="irParaAba('ajuda')">
-                            <div class="menu-card-icon bg-light-pale text-muted">
-                                <i class="bi bi-question-circle"></i>
-                            </div>
-                            <h5>Ajuda</h5>
-                            <p>Suporte e manual do sistema</p>
+                    <div class="col-md-3">
+                        <div class="dash-card">
+                            <div class="dash-label">Resumo Financeiro</div>
+                            <div class="dash-value" id="dashResumoFinanceiro">R$ 0</div>
                         </div>
                     </div>
                 </div>
@@ -327,19 +289,19 @@
                 <div class="row mt-4">
                     <div class="col-lg-6 mb-4">
                         <div class="caixa-guanais h-100">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-line me-2"></i>Faturamento (Últimos 6 Meses)</h6>
+                            <h6 class="fw-bold mb-3"><i class="ph ph-chart-bar me-2"></i>Faturamento (Últimos 6 Meses)</h6>
                             <canvas id="chartFaturamento"></canvas>
                         </div>
                     </div>
                     <div class="col-lg-3 mb-4">
                         <div class="caixa-guanais h-100">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2"></i>Status Sessões</h6>
+                            <h6 class="fw-bold mb-3"><i class="ph ph-chart-pie me-2"></i>Status Sessões</h6>
                             <canvas id="chartStatus"></canvas>
                         </div>
                     </div>
                     <div class="col-lg-3 mb-4">
                         <div class="caixa-guanais h-100">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-hospital me-2"></i>Unidades</h6>
+                            <h6 class="fw-bold mb-3"><i class="ph ph-office-building me-2"></i>Unidades</h6>
                             <canvas id="chartUnidade"></canvas>
                         </div>
                     </div>
@@ -349,7 +311,7 @@
                 <div class="row mt-4">
                     <div class="col-md-6">
                         <div class="caixa-guanais h-100">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Próximos Atendimentos</h6>
+                            <h6 class="fw-bold mb-3"><i class="ph ph-clock-counter-clockwise me-2"></i>Próximos Atendimentos</h6>
                             <div id="dashboardProximos" class="list-group list-group-flush">
                                 <div class="text-center py-4 text-muted">Carregando agenda...</div>
                             </div>
@@ -357,7 +319,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="caixa-guanais h-100">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2"></i>Resumo Financeiro (Mês)</h6>
+                            <h6 class="fw-bold mb-3"><i class="ph ph-trend-up me-2"></i>Resumo Financeiro (Mês)</h6>
                             <div id="dashboardFinResumo" class="p-3 text-center">
                                 <div class="text-center py-4 text-muted">Carregando dados...</div>
                             </div>
@@ -372,28 +334,28 @@
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
                         <div class="dash-card clickable" id="cardAtivos">
-                            <div class="dash-icon"><i class="bi bi-person-check"></i></div>
+                            <div class="dash-icon"><i class="ph ph-user-check"></i></div>
                             <div class="dash-label">Pacientes Ativos</div>
                             <div class="dash-value" id="dashAtivos">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="dash-card clickable" id="cardFaltas" style="border-left-color: #dc3545 !important;">
-                            <div class="dash-icon" style="background: #ffeaea; color: #dc3545;"><i class="bi bi-calendar-x"></i></div>
+                            <div class="dash-icon" style="background: #ffeaea; color: #dc3545;"><i class="ph ph-calendar-x"></i></div>
                             <div class="dash-label">Faltas no Mês</div>
                             <div class="dash-value" id="dashFaltas" style="color: #dc3545;">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="dash-card clickable" id="cardExcecoes" style="border-left-color: var(--ouro) !important;">
-                            <div class="dash-icon" style="background: var(--ouro-pale); color: var(--ouro);"><i class="bi bi-exclamation-triangle"></i></div>
+                            <div class="dash-icon" style="background: var(--ouro-pale); color: var(--ouro);"><i class="ph ph-warning-circle"></i></div>
                             <div class="dash-label">Exceções</div>
                             <div class="dash-value" id="dashExcecoes" style="color: var(--ouro);">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="dash-card clickable" id="cardProximo" style="border-left-color: #0dcaf0 !important;">
-                            <div class="dash-icon" style="background: rgba(13, 202, 240, 0.1); color: #0dcaf0;"><i class="bi bi-clock-history"></i></div>
+                            <div class="dash-icon" style="background: rgba(13, 202, 240, 0.1); color: #0dcaf0;"><i class="ph ph-clock-afternoon"></i></div>
                             <div class="dash-label">Próximo Atend.</div>
                             <div class="dash-value" id="dashProximo" style="font-size: 1.1rem; font-family: var(--font-body) !important;">—</div>
                         </div>
@@ -402,7 +364,7 @@
 
                 <!-- Filtros -->
                 <div class="caixa-guanais mb-4">
-                    <h6 class="mb-3" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-funnel me-2"></i>Filtros de Agenda</h6>
+                    <h6 class="mb-3" style="color: var(--verde-escuro); font-weight: 700;"><i class="ph ph-funnel me-2"></i>Filtros de Agenda</h6>
                     <div class="row g-2">
                         <div class="col-md-3">
                             <input type="text" id="filtroNome" class="form-control" placeholder="🔍 Buscar paciente...">
@@ -436,10 +398,10 @@
                         </div>
                         <div class="col-md-3 d-flex gap-2">
                             <button class="btn btn-verde flex-grow-1" onclick="filtrarHoje()">
-                                <i class="bi bi-calendar-event me-2"></i>Hoje
+                                <i class="ph ph-calendar-event me-2"></i>Hoje
                             </button>
                             <button class="btn btn-outline-secondary flex-grow-1" onclick="limparFiltrosAgenda()">
-                                <i class="bi bi-eraser me-2"></i>Limpar
+                                <i class="ph ph-eraser me-2"></i>Limpar
                             </button>
                         </div>
                     </div>
@@ -475,9 +437,25 @@
                 <div class="row">
                     <div class="col-lg-4">
                         <div class="caixa-guanais card-accent">
-                            <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-person-add me-2"></i>Cadastro de Paciente</h5>
+                            <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="ph ph-user-plus me-2"></i>Cadastro de Paciente</h5>
                             <form id="pacienteForm">
                                 <input type="hidden" id="pacId">
+                                <div class="mb-3">
+                                    <label class="form-label">Psicóloga Responsável</label>
+                                    <select id="pacPsicologa" class="form-select">
+                                        <option value="">Selecione</option>
+                                    </select>
+                                </div>
+                                <div id="psicologaResponsavelCard" class="d-none mb-3 p-3 psicologa-card">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img id="psicologaResponsavelFoto" src="https://placehold.co/64x64" alt="Psicóloga" class="psicologa-card-foto">
+                                        <div class="flex-grow-1">
+                                            <h6 id="psicologaResponsavelNome" class="mb-1 fw-bold">Psicóloga responsável</h6>
+                                            <small id="psicologaResponsavelTipo" class="text-muted d-block"></small>
+                                            <small id="psicologaResponsavelInfos" class="text-muted d-block"></small>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="mb-3">
                                     <label class="form-label">Nome completo *</label>
                                     <input type="text" id="pacNome" class="form-control" placeholder="Digite o nome completo" required>
@@ -507,14 +485,14 @@
                                 
                                 <!-- Responsável (menores de 18) -->
                                 <div id="respSec" class="d-none mt-4 p-3" style="background: rgba(137,178,162,0.1); border-radius: var(--radius-sm); border: 1px dashed var(--verde);">
-                                    <h6 class="mb-3" style="color: var(--verde-escuro);"><i class="bi bi-person-badge me-2"></i>Responsável</h6>
+                                    <h6 class="mb-3" style="color: var(--verde-escuro);"><i class="ph ph-identification-card me-2"></i>Responsável</h6>
                                     <input type="text" id="respNome" class="form-control mb-2" placeholder="Nome do responsável">
                                     <input type="text" id="respTel" class="form-control" placeholder="Telefone do responsável">
                                 </div>
                                 
                                 <!-- Emergência (maiores de 18) -->
                                 <div id="emergSec" class="mt-4 p-3" style="background: rgba(201,133,42,0.05); border-radius: var(--radius-sm); border: 1px dashed var(--ouro);">
-                                    <h6 class="mb-3" style="color: var(--ouro);"><i class="bi bi-heart-pulse me-2"></i>Contato de Emergência</h6>
+                                    <h6 class="mb-3" style="color: var(--ouro);"><i class="ph ph-activity me-2"></i>Contato de Emergência</h6>
                                     <div class="mb-3">
                                         <label class="form-label">Nome do contato</label>
                                         <input type="text" id="emergNome" class="form-control" placeholder="Nome completo">
@@ -545,19 +523,36 @@
                                 
                                 <div class="d-grid gap-2 mt-4">
                                     <button type="submit" class="btn btn-verde">
-                                        <i class="bi bi-check-lg me-2"></i>Salvar Paciente
+                                        <i class="ph ph-check me-2"></i>Salvar Paciente
                                     </button>
                                     <button type="button" id="btnArquivosPaciente" class="btn btn-outline-primary d-none" onclick="abrirModalArquivos()">
-                                        <i class="bi bi-paperclip me-2"></i>Documentos / Anexos
+                                        <i class="ph ph-paperclip me-2"></i>Documentos / Anexos
                                     </button>
                                     <button type="button" class="btn btn-light border" onclick="resetPacienteForm()">
-                                        <i class="bi bi-x-lg me-2"></i>Cancelar
+                                        <i class="ph ph-x me-2"></i>Cancelar
                                     </button>
                                 </div>
                             </form>
                         </div>
                     </div>
                     <div class="col-lg-8">
+                        <div id="pacienteHighlightCard" class="paciente-highlight-card d-none mb-3">
+                            <div class="paciente-highlight-head">
+                                <div>
+                                    <small class="paciente-highlight-label">Paciente selecionado</small>
+                                    <h6 id="pacienteHighlightNome" class="mb-0">—</h6>
+                                </div>
+                                <span class="badge bg-success-subtle text-success-emphasis" id="pacienteHighlightId">ID —</span>
+                            </div>
+                            <div class="paciente-highlight-body">
+                                <img id="pacienteHighlightPsiFoto" src="https://placehold.co/72x72" alt="Psicóloga" class="paciente-highlight-foto">
+                                <div>
+                                    <h6 id="pacienteHighlightPsiNome" class="mb-1">Psicóloga responsável</h6>
+                                    <p id="pacienteHighlightPsiTipo" class="mb-1 text-muted small"></p>
+                                    <p id="pacienteHighlightPsiInfo" class="mb-0 text-muted small"></p>
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-wrap">
                             <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-people me-2"></i>Lista de Pacientes</h5>
@@ -594,7 +589,7 @@
                     <div class="col-lg-4">
                         <!-- Resumo Financeiro -->
                         <div class="fin-resumo mb-4 text-center">
-                            <h5 class="mb-3"><i class="bi bi-graph-up-arrow me-2"></i>Resumo do Mês</h5>
+                            <h5 class="mb-3"><i class="ph ph-trend-up me-2"></i>Resumo do Mês</h5>
                             <h2 id="finTotalBruto" style="font-family: var(--font-display); font-size: 2.5rem; color: #fff;">R$ 0,00</h2>
                             <hr style="opacity: 0.3;">
                             <div class="row">
@@ -617,7 +612,7 @@
                         
                         <!-- Formulário de Lançamento -->
                         <div class="caixa-guanais card-accent-ouro">
-                            <h5 class="mb-4" style="color: var(--ouro); font-weight: 700;"><i class="bi bi-cash-coin me-2"></i>Lançar Recebimento</h5>
+                            <h5 class="mb-4" style="color: var(--ouro); font-weight: 700;"><i class="ph ph-coins me-2"></i>Lançar Recebimento</h5>
                             <form id="financeiroForm">
                                 <input type="hidden" id="finEditId" value="">
                                 <div class="mb-3">
@@ -675,7 +670,7 @@
                                     </label>
                                 </div>
                                 <button type="submit" class="btn btn-ouro w-100 py-2">
-                                    <i class="bi bi-check-circle me-2"></i>Registrar Recebimento
+                                    <i class="ph ph-check-circle me-2"></i>Registrar Recebimento
                                 </button>
                             </form>
                         </div>
@@ -684,7 +679,7 @@
                     <div class="col-lg-8">
                         <div class="table-wrap">
                             <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-graph-up-arrow me-2"></i>Lançamentos Financeiros</h5>
+                                <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="ph ph-trend-up me-2"></i>Lançamentos Financeiros</h5>
                             </div>
                             <div class="p-3 bg-light border-bottom d-flex gap-2 flex-wrap">
                                 <input type="month" id="finMesFiltro" class="form-control" style="max-width: 180px;">
@@ -725,7 +720,7 @@
                 <div class="row">
                     <div class="col-lg-4">
                         <div class="caixa-guanais" style="border-left: 5px solid #dc3545;">
-                            <h5 class="mb-4" style="color: #dc3545; font-weight: 700;"><i class="bi bi-receipt-cutoff me-2"></i>Cadastrar Despesa</h5>
+                            <h5 class="mb-4" style="color: #dc3545; font-weight: 700;"><i class="ph ph-receipt me-2"></i>Cadastrar Despesa</h5>
                             <form id="despesaForm">
                                 <input type="hidden" id="despesaEditId" value="">
                                 <div class="mb-3">
@@ -764,7 +759,7 @@
                                     </div>
                                 </div>
                                 <button type="submit" class="btn btn-danger w-100 py-2">
-                                    <i class="bi bi-check-lg me-2"></i>Salvar Despesa
+                                    <i class="ph ph-check me-2"></i>Salvar Despesa
                                 </button>
                             </form>
                         </div>
@@ -772,7 +767,7 @@
                     <div class="col-lg-8">
                         <div class="table-wrap">
                             <div class="p-4 bg-white border-bottom">
-                                <h5 class="mb-0" style="color: #dc3545; font-weight: 700;"><i class="bi bi-list-check me-2"></i>Despesas Cadastradas</h5>
+                                <h5 class="mb-0" style="color: #dc3545; font-weight: 700;"><i class="ph ph-list-checks me-2"></i>Despesas Cadastradas</h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table-custom mb-0">
@@ -1093,6 +1088,28 @@
 
             <!-- CONFIGURAÇÕES -->
             <div class="tab-pane fade" id="configuracoes" role="tabpanel">
+                <div class="caixa-guanais mb-4">
+                    <ul class="nav nav-pills nav-pills-custom" id="configSubTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#configUsuarios" type="button" role="tab">
+                                <i class="bi bi-people me-2"></i>Usuários
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#configVisual" type="button" role="tab">
+                                <i class="bi bi-palette me-2"></i>Design Visual
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#configDados" type="button" role="tab">
+                                <i class="bi bi-database me-2"></i>Dados e Backup
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="configSubTabContent">
+                <div class="tab-pane fade show active" id="configUsuarios" role="tabpanel">
                 <div class="row">
                     <div class="col-lg-4">
                         <div class="caixa-guanais card-accent">
@@ -1122,6 +1139,15 @@
                                         <option value="psicologa">Psicóloga</option>
                                         <option value="admin">Administrador</option>
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Foto de Perfil (URL opcional)</label>
+                                    <input type="text" id="usuFotoPerfil" class="form-control" placeholder="https://...">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Upload de Foto de Perfil (opcional)</label>
+                                    <input type="file" id="usuFotoPerfilFile" class="form-control" accept="image/*">
+                                    <small class="text-muted">Se enviar arquivo, ele terá prioridade sobre a URL.</small>
                                 </div>
                                 <div id="camposPsicologa" class="d-none border rounded p-3 mb-3" style="background: var(--verde-pale);">
                                     <h6 class="mb-3"><i class="bi bi-heart-pulse me-2"></i>Dados da Psicóloga</h6>
@@ -1153,11 +1179,8 @@
                                             <label class="form-label">Idade *</label>
                                             <input type="number" id="usuIdade" class="form-control" min="18" max="99">
                                         </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Foto (URL)</label>
-                                            <input type="text" id="usuFotoPerfil" class="form-control" placeholder="https://...">
-                                        </div>
                                     </div>
+                            <small class="text-muted d-block mt-2">Dica: você pode usar URL ou upload para aparecer no canto superior direito do dashboard.</small>
                                     <div class="mt-2">
                                         <label class="form-label">Tipo de psicoterapia *</label>
                                         <input type="text" id="usuTipoPsicoterapia" class="form-control" placeholder="Psicoterapia individual, casal, grupo...">
@@ -1194,6 +1217,9 @@
                         </div>
                     </div>
                 </div>
+                </div>
+
+                <div class="tab-pane fade" id="configVisual" role="tabpanel">
 <!-- Gestão de Identidade e Logos -->
 <div class="row mt-4">
     <div class="col-12">
@@ -1267,6 +1293,9 @@
                         </div>
                     </div>
                 </div>
+                </div>
+
+                <div class="tab-pane fade" id="configDados" role="tabpanel">
 
                 
                 <!-- Importação e Backup -->
@@ -1279,7 +1308,7 @@
                                     <p class="text-muted mb-0">Importe dados de pacientes, atendimentos e financeiro através de arquivos Excel (.xlsx). O sistema processará automaticamente as relações entre os dados.</p>
                                 </div>
                                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                                    <input type="file" id="fileImportConfig" class="d-none" accept=".xlsx, .xls" onchange="importarExcel(event)">
+                                    <input type="file" id="fileImportConfig" class="d-none" accept=".xlsx, .xls" onchange="importarExcel(event, false)">
                                     <button class="btn btn-outline-primary px-4 me-2" onclick="document.getElementById('fileImportConfig').click()">
                                         <i class="bi bi-upload me-2"></i>Importar Excel
                                     </button>
@@ -1288,8 +1317,43 @@
                                     </button>
                                 </div>
                             </div>
+                            <hr class="my-4">
+                            <div>
+                                <h6 class="fw-bold mb-3"><i class="bi bi-shield-check me-2"></i>Auditoria de Backup/Importação (Hoje)</h6>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <div class="dash-card">
+                                            <div class="dash-label">Importações hoje</div>
+                                            <div class="dash-value" id="auditoriaImportacoesHoje">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="dash-card">
+                                            <div class="dash-label">Usuários que importaram hoje</div>
+                                            <div id="auditoriaUsuariosHoje" class="text-muted">Nenhum</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Horário</th>
+                                                <th>Usuário</th>
+                                                <th>Ação</th>
+                                                <th>Arquivo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="auditoriaBackupTbody">
+                                            <tr><td colspan="4" class="text-muted text-center">Sem registros hoje</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
+                </div>
                 </div>
 
                 <!-- Modal de Permissões -->
@@ -1356,6 +1420,14 @@
                                         <option value="admin">Administrador</option>
                                     </select>
                                 </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Foto de Perfil (URL opcional)</label>
+                                    <input type="text" id="editUsuFotoPerfil" class="form-control" placeholder="URL da foto de perfil">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Upload de Foto de Perfil (opcional)</label>
+                                    <input type="file" id="editUsuFotoPerfilFile" class="form-control" accept="image/*">
+                                </div>
                                 <div id="editCamposPsicologa" class="d-none border rounded p-3 mb-3" style="background: var(--verde-pale);">
                                     <h6 class="mb-3">Dados da Psicóloga</h6>
                                     <input type="text" id="editUsuAbordagem" class="form-control mb-2" placeholder="Tipo de abordagem">
@@ -1364,7 +1436,6 @@
                                     <input type="text" id="editUsuIdiomas" class="form-control mb-2" placeholder="Idiomas">
                                     <div class="row g-2">
                                         <div class="col-md-6"><input type="number" id="editUsuIdade" class="form-control" min="18" max="99" placeholder="Idade"></div>
-                                        <div class="col-md-6"><input type="text" id="editUsuFotoPerfil" class="form-control" placeholder="URL da foto de perfil"></div>
                                     </div>
                                     <input type="text" id="editUsuTipoPsicoterapia" class="form-control mt-2" placeholder="Tipo de psicoterapia">
                                 </div>

@@ -197,12 +197,12 @@ async function carregarArquivosPaciente(pacienteId) {
             
             tbody.innerHTML = result.data.map(arq => `
                 <tr>
-                    <td><i class="bi bi-file-earmark-text me-2"></i>${arq.nome_original}</td>
+                    <td><i class="ph ph-file-text me-2"></i>${arq.nome_original}</td>
                     <td>${formataDataBR(arq.criado_em.split(' ')[0])}</td>
                     <td>${(arq.tamanho / 1024).toFixed(1)} KB</td>
                     <td class="text-center">
-                        <a href="${arq.caminho}" target="_blank" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-eye"></i></a>
-                        <button class="btn btn-sm btn-outline-danger" onclick="excluirArquivoPaciente(${arq.id}, '${pacienteId}')"><i class="bi bi-trash"></i></button>
+                        <a href="${arq.caminho}" target="_blank" class="btn btn-sm btn-outline-primary me-1"><i class="ph ph-eye"></i></a>
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirArquivoPaciente(${arq.id}, '${pacienteId}')"><i class="ph ph-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -297,7 +297,7 @@ function initFormPersistence() {
         });
     });
 }
-async function apiRequest(endpoint, method = 'GET', data = null) {
+async function apiRequest(endpoint, method = 'GET', data = null, silent = false) {
     const url = API_BASE_URL + endpoint;
     const options = {
         method: method,
@@ -327,9 +327,32 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
         return result;
     } catch (error) {
         console.error('Erro na API:', error);
-        mostrarToast('Erro: ' + error.message, 'danger');
+        if (!silent) {
+            mostrarToast('Erro: ' + error.message, 'danger');
+        }
         throw error;
     }
+}
+
+async function uploadFotoPerfilUsuario(file, usuarioId = null) {
+    if (!file) return '';
+
+    const formData = new FormData();
+    formData.append('foto_perfil', file);
+    if (usuarioId) formData.append('usuario_id', String(usuarioId));
+
+    const response = await fetch('api/usuarios.php?upload_foto=1', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erro ao enviar foto de perfil');
+    }
+
+    return result.data?.foto_perfil || '';
 }
 
 // ====================== AUTENTICAÇÃO ======================
@@ -733,6 +756,7 @@ document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => 
     const idiomas = document.getElementById('usuIdiomas')?.value?.trim() || '';
     const idade = document.getElementById('usuIdade')?.value || '';
     const foto_perfil = document.getElementById('usuFotoPerfil')?.value?.trim() || '';
+    const foto_perfil_file = document.getElementById('usuFotoPerfilFile')?.files?.[0] || null;
     const tipo_psicoterapia = document.getElementById('usuTipoPsicoterapia')?.value?.trim() || '';
     
     if (!usuario) { mostrarToast('Usuário é obrigatório', 'danger'); return; }
@@ -747,6 +771,11 @@ document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => 
         }
     }
 
+    let fotoPerfilFinal = foto_perfil;
+    if (foto_perfil_file) {
+        fotoPerfilFinal = await uploadFotoPerfilUsuario(foto_perfil_file);
+    }
+
     const novoUsuario = {
         usuario,
         senha,
@@ -758,7 +787,7 @@ document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => 
         formacao_academica,
         idiomas,
         idade: idade ? parseInt(idade, 10) : null,
-        foto_perfil,
+        foto_perfil: fotoPerfilFinal,
         tipo_psicoterapia
     };
     
@@ -767,6 +796,8 @@ document.getElementById('usuarioForm')?.addEventListener('submit', async (e) => 
         if (result.success) {
             mostrarToast('Usuário criado com sucesso');
             document.getElementById('usuarioForm').reset();
+            const fileInput = document.getElementById('usuFotoPerfilFile');
+            if (fileInput) fileInput.value = '';
             await carregarUsuarios();
         } else {
             mostrarToast(result.error || 'Erro ao criar usuário', 'danger');
@@ -793,6 +824,8 @@ async function editarUsuario(id) {
             document.getElementById('editUsuIdiomas').value = usuario.idiomas || '';
             document.getElementById('editUsuIdade').value = usuario.idade || '';
             document.getElementById('editUsuFotoPerfil').value = usuario.foto_perfil || '';
+            const editFileInput = document.getElementById('editUsuFotoPerfilFile');
+            if (editFileInput) editFileInput.value = '';
             document.getElementById('editUsuTipoPsicoterapia').value = usuario.tipo_psicoterapia || '';
             document.getElementById('editUsuAtivo').checked = usuario.ativo == 1;
             document.getElementById('editUsuSenha').value = '';
@@ -821,11 +854,17 @@ async function atualizarUsuario() {
     const idiomas = document.getElementById('editUsuIdiomas')?.value?.trim() || '';
     const idade = document.getElementById('editUsuIdade')?.value || '';
     const foto_perfil = document.getElementById('editUsuFotoPerfil')?.value?.trim() || '';
+    const foto_perfil_file = document.getElementById('editUsuFotoPerfilFile')?.files?.[0] || null;
     const tipo_psicoterapia = document.getElementById('editUsuTipoPsicoterapia')?.value?.trim() || '';
 
     if (tipo === 'psicologa' && (!abordagem || !temas || !formacao_academica || !idiomas || !idade || !tipo_psicoterapia)) {
         mostrarToast('Preencha todos os campos obrigatórios da psicóloga', 'danger');
         return;
+    }
+
+    let fotoPerfilFinal = foto_perfil;
+    if (foto_perfil_file) {
+        fotoPerfilFinal = await uploadFotoPerfilUsuario(foto_perfil_file, id);
     }
 
     const payload = {
@@ -838,7 +877,7 @@ async function atualizarUsuario() {
         formacao_academica,
         idiomas,
         idade: idade ? parseInt(idade, 10) : null,
-        foto_perfil,
+        foto_perfil: fotoPerfilFinal,
         tipo_psicoterapia
     };
     if (senha.trim() !== '') payload.senha = senha;
@@ -972,10 +1011,12 @@ function initUsuariosTab() {
     if (configTab) {
         configTab.addEventListener('shown.bs.tab', function() {
             carregarUsuarios();
+            carregarAuditoriaBackup();
         });
     }
     if (document.querySelector('#configuracoes').classList.contains('show')) {
         carregarUsuarios();
+        carregarAuditoriaBackup();
     }
 }
 
@@ -1098,6 +1139,28 @@ function initDashboardInteractivity() {
                 mostrarToast('Nenhum atendimento futuro encontrado', 'warning');
             }
         });
+    }
+}
+
+function atualizarHeaderUsuario() {
+    if (!usuarioLogado) return;
+    const nome = usuarioLogado.nome || usuarioLogado.usuario || 'Usuário';
+    const tipo = usuarioLogado.tipo || 'perfil';
+    const foto = usuarioLogado.foto_perfil || '';
+
+    const nameEl = document.getElementById('loggedUserName');
+    const roleEl = document.getElementById('loggedUserRole');
+    const avatarEl = document.getElementById('loggedUserAvatar');
+    const welcomeEl = document.getElementById('userNameDisplay');
+
+    if (nameEl) nameEl.textContent = nome;
+    if (roleEl) roleEl.textContent = (tipo.charAt(0).toUpperCase() + tipo.slice(1));
+    if (welcomeEl) welcomeEl.textContent = nome.split(' ')[0];
+    if (avatarEl) {
+        avatarEl.src = foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0f172a&color=fff`;
+        avatarEl.onerror = () => {
+            avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0f172a&color=fff`;
+        };
     }
 }
 
@@ -1358,6 +1421,8 @@ async function inicializarSistema(moduloInicial = 'dashboard') {
     renderAgenda();
     renderFinanceiro();
     renderDespesas();
+    renderDashboardSummaries();
+    initCharts();
     atualizarSelectPacientes();
     
     // Setar valor padrão do mês atual
@@ -1428,6 +1493,102 @@ function atualizarSelectPacientes() {
     if (relatorioPaciente) relatorioPaciente.innerHTML = '<option value="">Todos os pacientes</option>' + opts.replace('<option value="">Selecione</option>', '');
 }
 
+async function carregarPsicologasResponsaveis() {
+    const select = document.getElementById('pacPsicologa');
+    if (!select) return;
+
+    const valorAtual = select.value || '';
+    select.innerHTML = '<option value="">Selecione</option>';
+
+    try {
+        const result = await apiRequest('usuarios.php');
+        const usuarios = Array.isArray(result.data) ? result.data : [];
+        const psicologas = usuarios.filter(u => u.tipo === 'psicologa' && (u.ativo == 1 || u.ativo === true));
+
+        psicologas.forEach(psi => {
+            const option = document.createElement('option');
+            option.value = psi.id;
+            option.textContent = psi.nome || psi.usuario || `Psicóloga #${psi.id}`;
+            option.dataset.foto = psi.foto_perfil || '';
+            option.dataset.email = psi.email || '';
+            option.dataset.abordagem = psi.abordagem || '';
+            option.dataset.tipoPsicoterapia = psi.tipo_psicoterapia || '';
+            select.appendChild(option);
+        });
+
+        if (valorAtual && select.querySelector(`option[value="${valorAtual}"]`)) {
+            select.value = valorAtual;
+        }
+    } catch (error) {
+        // Usuários sem permissão em configurações podem não acessar este endpoint
+    }
+}
+
+function atualizarCardPsicologaResponsavel(dadosPsicologa = null) {
+    const card = document.getElementById('psicologaResponsavelCard');
+    const foto = document.getElementById('psicologaResponsavelFoto');
+    const nome = document.getElementById('psicologaResponsavelNome');
+    const tipo = document.getElementById('psicologaResponsavelTipo');
+    const infos = document.getElementById('psicologaResponsavelInfos');
+
+    if (!card || !foto || !nome || !tipo || !infos) return;
+
+    if (!dadosPsicologa || !dadosPsicologa.nome) {
+        card.classList.add('d-none');
+        return;
+    }
+
+    const fotoPath = dadosPsicologa.foto || 'https://placehold.co/64x64';
+    foto.src = fotoPath;
+    nome.textContent = dadosPsicologa.nome;
+    tipo.textContent = dadosPsicologa.tipo_psicoterapia ? `Psicoterapia: ${dadosPsicologa.tipo_psicoterapia}` : 'Psicóloga responsável';
+
+    const infoParts = [];
+    if (dadosPsicologa.abordagem) infoParts.push(`Abordagem: ${dadosPsicologa.abordagem}`);
+    if (dadosPsicologa.email) infoParts.push(dadosPsicologa.email);
+    infos.textContent = infoParts.join(' • ');
+
+    card.classList.remove('d-none');
+}
+
+function destacarPacienteNaLista(p) {
+    const card = document.getElementById('pacienteHighlightCard');
+    if (!card || !p) return;
+
+    const nome = document.getElementById('pacienteHighlightNome');
+    const id = document.getElementById('pacienteHighlightId');
+    const psiFoto = document.getElementById('pacienteHighlightPsiFoto');
+    const psiNome = document.getElementById('pacienteHighlightPsiNome');
+    const psiTipo = document.getElementById('pacienteHighlightPsiTipo');
+    const psiInfo = document.getElementById('pacienteHighlightPsiInfo');
+
+    if (nome) nome.textContent = p.nome || 'Paciente';
+    if (id) id.textContent = `ID ${p.id || '—'}`;
+    if (psiFoto) psiFoto.src = p.psicologa_foto || 'https://placehold.co/72x72';
+    if (psiNome) psiNome.textContent = p.psicologa_nome || 'Psicóloga não vinculada';
+    if (psiTipo) psiTipo.textContent = p.psicologa_tipo_psicoterapia ? `Psicoterapia: ${p.psicologa_tipo_psicoterapia}` : '';
+
+    const infoParts = [];
+    if (p.psicologa_abordagem) infoParts.push(`Abordagem: ${p.psicologa_abordagem}`);
+    if (p.psicologa_email) infoParts.push(p.psicologa_email);
+    if (psiInfo) psiInfo.textContent = infoParts.join(' • ') || 'Selecione uma psicóloga responsável no cadastro para exibir os dados completos.';
+
+    card.classList.remove('d-none');
+}
+
+async function selecionarPacienteLista(id) {
+    let p = null;
+    try {
+        const result = await apiRequest(`pacientes.php?id=${id}&completo=true`);
+        p = result?.data || null;
+    } catch (error) {
+        p = dados.pacientes.find(x => x.id === id);
+    }
+
+    if (!p) return;
+    destacarPacienteNaLista(p);
+}
+
 // ========== PACIENTES ==========
 function renderPacientes() {
     let busca = document.getElementById('buscaPaciente')?.value.toLowerCase() || '';
@@ -1438,17 +1599,17 @@ function renderPacientes() {
     const podeExcluir = userHasPermission('pacientes', 'excluir');
 
     filtered.forEach(p => {
-        html += `<tr>
+        html += `<tr onclick="selecionarPacienteLista('${p.id}')" style="cursor:pointer;">
             <td>${p.id}</td>
             <td>${p.nome}</td>
             <td>${p.telefone}</td>
             <td>${calcularIdade(p.data_nascimento)}</td>
             <td>
-                ${podeEditar ? `<button class="btn btn-sm btn-outline" onclick="editarPaciente('${p.id}')" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
-                <button class="btn btn-sm btn-outline-primary" onclick="irParaProntuarioPaciente('${p.id}', '${(p.nome || '').replace(/'/g, "\\'")}')" title="Abrir prontuário">
+                ${podeEditar ? `<button class="btn btn-sm btn-outline" onclick="editarPaciente('${p.id}'); return false;" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                <button class="btn btn-sm btn-outline-primary" onclick="irParaProntuarioPaciente('${p.id}', '${(p.nome || '').replace(/'/g, "\\'")}'); return false;" title="Abrir prontuário">
                     <i class="bi bi-journal-medical"></i>
                 </button>
-                ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirPaciente('${p.id}')"><i class="bi bi-trash"></i></button>` : ''}
+                ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirPaciente('${p.id}'); return false;"><i class="bi bi-trash"></i></button>` : ''}
             </td>
         </tr>`;
     });
@@ -1458,8 +1619,19 @@ function renderPacientes() {
 }
 
 async function editarPaciente(id) {
-    let p = dados.pacientes.find(x => x.id === id);
+    let p = null;
+
+    try {
+        const result = await apiRequest(`pacientes.php?id=${id}&completo=true`);
+        p = result?.data || null;
+    } catch (error) {
+        p = dados.pacientes.find(x => x.id === id);
+    }
+
     if (!p) return;
+
+    await carregarPsicologasResponsaveis();
+
     document.getElementById('pacId').value = p.id;
     document.getElementById('pacNome').value = p.nome;
     document.getElementById('pacCpf').value = p.cpf || '';
@@ -1467,6 +1639,16 @@ async function editarPaciente(id) {
     document.getElementById('pacTel').value = p.telefone;
     document.getElementById('pacEmail').value = p.email || '';
     document.getElementById('pacEnd').value = p.endereco || '';
+    document.getElementById('pacPsicologa').value = p.psicologa_responsavel_id || '';
+
+    atualizarCardPsicologaResponsavel({
+        nome: p.psicologa_nome || '',
+        foto: p.psicologa_foto || '',
+        email: p.psicologa_email || '',
+        abordagem: p.psicologa_abordagem || '',
+        tipo_psicoterapia: p.psicologa_tipo_psicoterapia || ''
+    });
+    destacarPacienteNaLista(p);
     
     // Mostrar botão de arquivos apenas para pacientes existentes
     const btnArq = document.getElementById('btnArquivosPaciente');
@@ -1507,9 +1689,12 @@ function resetPacienteForm() {
     document.getElementById('emergSec').classList.remove('d-none');
     const btnArq = document.getElementById('btnArquivosPaciente');
     if (btnArq) btnArq.classList.add('d-none');
+    const selectPsi = document.getElementById('pacPsicologa');
+    if (selectPsi) selectPsi.value = '';
+    atualizarCardPsicologaResponsavel(null);
 }
 
-document.getElementById('pacienteForm').addEventListener('submit', async (e) => {
+document.getElementById('pacienteForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     let id = document.getElementById('pacId').value || null;
     let idade = calcularIdade(document.getElementById('pacNasc').value);
@@ -1521,7 +1706,8 @@ document.getElementById('pacienteForm').addEventListener('submit', async (e) => 
         data_nascimento: document.getElementById('pacNasc').value,
         telefone: document.getElementById('pacTel').value,
         email: document.getElementById('pacEmail').value,
-        endereco: document.getElementById('pacEnd').value
+        endereco: document.getElementById('pacEnd').value,
+        psicologa_responsavel_id: document.getElementById('pacPsicologa').value || null
     };
     
     if (idade < 18) {
@@ -1672,7 +1858,7 @@ function limparFiltrosAgenda() {
     renderAgenda();
 }
 
-document.getElementById('atendimentoForm').addEventListener('submit', async (e) => {
+document.getElementById('atendimentoForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     let pacienteId = document.getElementById('atendPaciente').value;
@@ -1807,7 +1993,7 @@ async function excluirFinanceiro(id) {
     }
 }
 
-document.getElementById('financeiroForm').addEventListener('submit', async (e) => {
+document.getElementById('financeiroForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     let editId = document.getElementById('finEditId').value;
     let pacienteId = document.getElementById('finPaciente').value;
@@ -1936,7 +2122,7 @@ async function excluirDespesa(id) {
     }
 }
 
-document.getElementById('despesaForm').addEventListener('submit', async (e) => {
+document.getElementById('despesaForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     let editId = document.getElementById('despesaEditId').value;
     
@@ -2150,6 +2336,23 @@ async function preencherPacoteAutomatico(pacienteId) {
         htmlInfo += `</div></div>`;
         infoPacienteDiv.innerHTML = htmlInfo;
     }
+
+    const hojeStr = new Date().toISOString().slice(0, 10);
+    const atendHoje = (dados.atendimentos || []).filter(a => formataDataISO(a.data_atendimento) === hojeStr);
+    const statusResumo = obterResumoStatusSessao();
+
+    const elSessoes = document.getElementById('dashSessoesHoje');
+    const elPacAtivos = document.getElementById('dashPacientesAtivos');
+    const elStatus = document.getElementById('dashStatusResumo');
+    const elFin = document.getElementById('dashResumoFinanceiro');
+
+    if (elSessoes) elSessoes.textContent = atendHoje.length;
+    if (elPacAtivos) elPacAtivos.textContent = (dados.pacientes || []).filter(p => p.ativo != 0).length;
+    if (elStatus) elStatus.textContent = `${statusResumo.confirmado}/${(dados.atendimentos || []).length || 0}`;
+    if (elFin) {
+        const total = (dados.financeiro || []).reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
+        elFin.textContent = `R$ ${total.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+    }
 }
 
 function resetarInfoAtendimento() {
@@ -2185,7 +2388,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ====================== EXPORTAR / IMPORTAR ======================
-function exportarExcel() {
+async function exportarExcel() {
+    const senhaConfirmacao = prompt('Confirme sua senha para GERAR BACKUP:');
+    if (!senhaConfirmacao) {
+        mostrarToast('Operação cancelada: senha obrigatória.', 'warning');
+        return;
+    }
+
+    try {
+        await apiRequest('auditoria_backup.php', 'POST', {
+            acao: 'backup',
+            senha: senhaConfirmacao,
+            arquivo: null,
+            detalhes: { origem: 'config_dados' }
+        }, true);
+    } catch (error) {
+        mostrarToast('Senha inválida ou sem permissão para backup', 'danger');
+        return;
+    }
+
     if (typeof XLSX === 'undefined') {
         mostrarToast('Erro ao exportar: Biblioteca XLSX não encontrada', 'danger');
         return;
@@ -2265,6 +2486,7 @@ function exportarExcel() {
     XLSX.writeFile(wb, `Backup_Espaco_Guanais_${dataHora}.xlsx`);
     
     mostrarToast('Backup exportado com sucesso');
+    carregarAuditoriaBackup();
 }
 
 // Funções de Normalização para Importação
@@ -2300,6 +2522,27 @@ function normalizarStatusAtendimento(valor) {
 async function importarExcel(event, restaurar) {
     let file = event.target.files[0];
     if (!file) return;
+
+    const senhaConfirmacao = prompt('Confirme sua senha para IMPORTAR BACKUP:');
+    if (!senhaConfirmacao) {
+        mostrarToast('Operação cancelada: senha obrigatória.', 'warning');
+        event.target.value = '';
+        return;
+    }
+
+    try {
+        await apiRequest('auditoria_backup.php', 'POST', {
+            acao: 'importacao',
+            senha: senhaConfirmacao,
+            arquivo: file.name,
+            detalhes: { restaurar: !!restaurar }
+        }, true);
+    } catch (error) {
+        mostrarToast('Senha inválida ou sem permissão para importação', 'danger');
+        event.target.value = '';
+        return;
+    }
+
     if (restaurar && !confirm('Restaurar apagará dados atuais. Continuar?')) return;
     
     let reader = new FileReader();
@@ -2376,6 +2619,7 @@ async function importarExcel(event, restaurar) {
         });
         
         try {
+            let errosImportacao = [];
             if (pacientesIncompletos.length > 0) {
                 mostrarToast(`Atenção: ${pacientesIncompletos.length} paciente(s) sem data de nascimento. Verifique o log.`, 'warning');
                 console.warn('Pacientes com dados incompletos (data de nascimento ausente):', pacientesIncompletos);
@@ -2391,15 +2635,16 @@ async function importarExcel(event, restaurar) {
                     continue;
                 }
                 try {
-                    const result = await apiRequest('pacientes.php', 'POST', paciente);
+                    const result = await apiRequest('pacientes.php', 'POST', paciente, true);
                     if (result.success) {
                         pacienteMapa.set(paciente.nome, result.data.id);
                     }
                 } catch (err) {
-                    // Se falhar (ex: CPF duplicado), tentar buscar o ID existente
-                    if (err.message.includes('já cadastrado')) {
-                        // O ID já deve estar no 'paciente' se for um backup completo
-                        pacienteMapa.set(paciente.nome, paciente.id);
+                    // Se falhar (ex: CPF duplicado), não derrubar toda importação
+                    if (String(err.message || '').includes('já cadastrado')) {
+                        pacienteMapa.set(paciente.nome, paciente.id || null);
+                    } else {
+                        errosImportacao.push(`Paciente ${paciente.nome}: ${err.message || 'erro desconhecido'}`);
                     }
                 }
             }
@@ -2410,7 +2655,14 @@ async function importarExcel(event, restaurar) {
                     atendimento.paciente_id = pacienteMapa.get(atendimento.paciente_nome);
                 }
                 if (atendimento.paciente_id) {
-                    await apiRequest('atendimentos.php', 'POST', atendimento);
+                    try {
+                        await apiRequest('atendimentos.php', 'POST', atendimento, true);
+                    } catch (err) {
+                        const msg = String(err.message || '');
+                        if (!msg.includes('já cadastrado') && !msg.includes('duplicado')) {
+                            errosImportacao.push(`Atendimento ${atendimento.paciente_nome || atendimento.paciente_id}: ${err.message || 'erro desconhecido'}`);
+                        }
+                    }
                 }
             }
             
@@ -2420,20 +2672,40 @@ async function importarExcel(event, restaurar) {
                     lancamento.paciente_id = pacienteMapa.get(lancamento.paciente_nome);
                 }
                 if (lancamento.paciente_id) {
-                    await apiRequest('financeiro.php', 'POST', lancamento);
+                    try {
+                        await apiRequest('financeiro.php', 'POST', lancamento, true);
+                    } catch (err) {
+                        const msg = String(err.message || '');
+                        if (!msg.includes('já cadastrado') && !msg.includes('duplicado')) {
+                            errosImportacao.push(`Financeiro ${lancamento.paciente_nome || lancamento.paciente_id}: ${err.message || 'erro desconhecido'}`);
+                        }
+                    }
                 }
             }
             
             // 4. Salvar despesas
             for (const despesa of novosDespesas) {
-                await apiRequest('despesas.php', 'POST', despesa);
+                try {
+                    await apiRequest('despesas.php', 'POST', despesa, true);
+                } catch (err) {
+                    const msg = String(err.message || '');
+                    if (!msg.includes('já cadastrado') && !msg.includes('duplicado')) {
+                        errosImportacao.push(`Despesa ${despesa.descricao || ''}: ${err.message || 'erro desconhecido'}`);
+                    }
+                }
             }
             
             // Recarregar todos os dados
             await inicializarSistema();
             
             const totalRegistros = novosPacientes.length + novosAtendimentos.length + novosFinanceiro.length + novosDespesas.length;
-            mostrarToast(`Importação concluída com ${totalRegistros} registros salvos no banco de dados`);
+            if (errosImportacao.length > 0) {
+                console.warn('Erros na importação:', errosImportacao);
+                mostrarToast(`Importação concluída com alertas (${errosImportacao.length} erro(s)). Veja o console (F12).`, 'warning');
+            } else {
+                mostrarToast(`Importação concluída com ${totalRegistros} registros salvos no banco de dados`);
+            }
+            carregarAuditoriaBackup();
         } catch (error) {
             console.error('Erro na importação:', error);
             mostrarToast('Erro ao importar dados: ' + error.message, 'danger');
@@ -2443,8 +2715,50 @@ async function importarExcel(event, restaurar) {
     event.target.value = '';
 }
 
+async function carregarAuditoriaBackup() {
+    const totalEl = document.getElementById('auditoriaImportacoesHoje');
+    const usuariosEl = document.getElementById('auditoriaUsuariosHoje');
+    const tbody = document.getElementById('auditoriaBackupTbody');
+    if (!totalEl || !usuariosEl || !tbody) return;
+
+    try {
+        const result = await apiRequest('auditoria_backup.php', 'GET', null, true);
+        const data = result.data || {};
+        totalEl.textContent = data.importacoes_hoje || 0;
+        usuariosEl.textContent = (data.usuarios_importacao_hoje || []).join(', ') || 'Nenhum';
+
+        const logs = Array.isArray(data.logs_hoje) ? data.logs_hoje : [];
+        if (!logs.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Sem registros hoje</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = logs.map(l => {
+            const horario = (l.criado_em || '').split(' ')[1] || '';
+            const acao = l.acao === 'importacao' ? 'Importação' : 'Backup';
+            return `<tr>
+                <td>${horario}</td>
+                <td>${l.usuario_nome || ''}</td>
+                <td>${acao}</td>
+                <td>${l.arquivo || '-'}</td>
+            </tr>`;
+        }).join('');
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Não foi possível carregar auditoria</td></tr>';
+    }
+}
+
 function converterDataBR(data) {
     if (!data) return '';
+    if (typeof data === 'number' && !Number.isNaN(data)) {
+        // Serial de data do Excel
+        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+        const dt = new Date(excelEpoch.getTime() + Math.round(data) * 86400000);
+        const y = dt.getUTCFullYear();
+        const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+        const d = String(dt.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
     if (data.includes('-') && data.split('-')[0].length === 4) return data;
     if (data.includes('/')) {
         let partes = data.split('/');
@@ -2490,7 +2804,7 @@ async function sairSistema() {
     sessionStorage.clear();
 }
 
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     let user = document.getElementById('loginUser').value;
     let pass = document.getElementById('loginPass').value;
@@ -2500,6 +2814,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('moduleSelectionScreen').style.display = 'flex';
         document.getElementById('moduleSelectionUserName').textContent = usuarioLogado.nome.split(' ')[0];
+        atualizarHeaderUsuario();
         aplicarPermissoesUI(); // Aplicar permissões aos cards da tela de seleção
         mostrarToast('Bem-vindo ao sistema!');
     } else {
@@ -2514,6 +2829,7 @@ async function verificarLoginSalvo() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('moduleSelectionScreen').style.display = 'flex';
             document.getElementById('moduleSelectionUserName').textContent = usuarioLogado.nome.split(' ')[0];
+            atualizarHeaderUsuario();
             aplicarPermissoesUI(); // Aplicar permissões aos cards da tela de seleção
         } else {
             sessionStorage.clear();

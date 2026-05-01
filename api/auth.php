@@ -138,6 +138,51 @@ switch ($method) {
         session_destroy();
         successResponse([], 'Logout realizado com sucesso');
         break;
+
+    case 'PATCH':
+        // Validar senha do usuário logado (confirmação sensível)
+        if (!isAuthenticated()) {
+            errorResponse('Usuário não autenticado', 401);
+        }
+
+        $input = getJsonInput();
+        if (empty($input)) {
+            $input = $_POST;
+        }
+
+        $senha = isset($input['senha']) ? (string)$input['senha'] : '';
+        if ($senha === '') {
+            errorResponse('Senha é obrigatória', 400);
+        }
+
+        try {
+            $stmt = $db->prepare("SELECT id, senha FROM usuarios WHERE id = ? AND ativo = 1");
+            $stmt->execute([$_SESSION['user_id']]);
+            $user = $stmt->fetch();
+
+            if (!$user) {
+                errorResponse('Usuário não encontrado', 404);
+            }
+
+            $senhaValida = false;
+            if (password_verify($senha, $user['senha'])) {
+                $senhaValida = true;
+            } elseif (hash_equals((string)$user['senha'], $senha)) {
+                $senhaValida = true;
+                $novoHash = password_hash($senha, PASSWORD_BCRYPT);
+                $stmtUpdate = $db->prepare("UPDATE usuarios SET senha = ? WHERE id = ?");
+                $stmtUpdate->execute([$novoHash, $user['id']]);
+            }
+
+            if (!$senhaValida) {
+                errorResponse('Senha inválida', 401);
+            }
+
+            successResponse(['validado' => true], 'Senha confirmada com sucesso');
+        } catch (PDOException $e) {
+            errorResponse('Erro ao validar senha', 500);
+        }
+        break;
         
     default:
         errorResponse('Método não permitido', 405);

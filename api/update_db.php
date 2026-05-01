@@ -41,6 +41,24 @@ try {
         $updates[] = "Adicionado campo 'emergencia_info_adicionais' à tabela 'pacientes'.";
     }
 
+    $stmt = $db->query("SHOW COLUMNS FROM pacientes LIKE 'psicologa_responsavel_id'");
+    if ($stmt->rowCount() == 0) {
+        $db->exec("ALTER TABLE pacientes ADD COLUMN psicologa_responsavel_id INT NULL AFTER emergencia_info_adicionais");
+        $updates[] = "Adicionado campo 'psicologa_responsavel_id' à tabela 'pacientes'.";
+    }
+
+    $stmt = $db->query("SHOW INDEX FROM pacientes WHERE Key_name = 'idx_pacientes_psicologa'");
+    if ($stmt->rowCount() == 0) {
+        $db->exec("ALTER TABLE pacientes ADD INDEX idx_pacientes_psicologa (psicologa_responsavel_id)");
+        $updates[] = "Adicionado índice 'idx_pacientes_psicologa' na tabela 'pacientes'.";
+    }
+
+    $stmt = $db->query("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pacientes' AND CONSTRAINT_NAME = 'fk_pacientes_psicologa'");
+    if ($stmt->rowCount() == 0) {
+        $db->exec("ALTER TABLE pacientes ADD CONSTRAINT fk_pacientes_psicologa FOREIGN KEY (psicologa_responsavel_id) REFERENCES usuarios(id) ON UPDATE CASCADE ON DELETE SET NULL");
+        $updates[] = "Adicionada FK 'fk_pacientes_psicologa' na tabela 'pacientes'.";
+    }
+
     // 2. Criar tabela de configurações (se não existir)
     $stmt = $db->query("SHOW TABLES LIKE 'configuracoes'");
     if ($stmt->rowCount() == 0) {

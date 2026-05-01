@@ -19,6 +19,79 @@ $db = Database::getInstance()->getConnection();
 $modulosDisponiveis = ['pacientes', 'atendimentos', 'financeiro', 'despesas', 'configuracoes'];
 $acoesDisponiveis = ['visualizar', 'editar', 'excluir', 'criar'];
 
+function selectUsuariosCompat($db, $where = '', $params = [], $single = false) {
+    $queries = [
+        "SELECT id, usuario, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia, ativo, criado_em FROM usuarios $where",
+        "SELECT id, usuario, nome, email, tipo, foto_perfil, ativo, criado_em FROM usuarios $where",
+        "SELECT id, usuario, nome, email, tipo, ativo, criado_em FROM usuarios $where",
+        "SELECT id, usuario, nome, email, tipo FROM usuarios $where"
+    ];
+
+    $lastError = null;
+    foreach ($queries as $sql) {
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            return $single ? $stmt->fetch() : $stmt->fetchAll();
+        } catch (PDOException $e) {
+            $lastError = $e;
+        }
+    }
+
+    if ($lastError) {
+        throw $lastError;
+    }
+
+    return $single ? null : [];
+}
+
+if ($method === 'POST' && isset($_GET['upload_foto'])) {
+    if (!hasPermission('configuracoes', 'editar') && !hasPermission('configuracoes', 'criar')) {
+        errorResponse('Permissão negada', 403);
+    }
+
+    if (!isset($_FILES['foto_perfil'])) {
+        errorResponse('Arquivo de foto é obrigatório', 400);
+    }
+
+    $file = $_FILES['foto_perfil'];
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        errorResponse('Erro no upload da foto', 400);
+    }
+
+    $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!in_array($file['type'], $allowed)) {
+        errorResponse('Formato inválido. Use JPG, PNG, WEBP ou GIF', 400);
+    }
+
+    if ($file['size'] > 5 * 1024 * 1024) {
+        errorResponse('Arquivo excede 5MB', 400);
+    }
+
+    $uploadDir = '../uploads/perfis/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $fileName = 'perfil_' . time() . '_' . mt_rand(1000, 9999) . '.' . $ext;
+    $targetPath = $uploadDir . $fileName;
+
+    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        errorResponse('Não foi possível salvar a foto', 500);
+    }
+
+    $dbPath = 'uploads/perfis/' . $fileName;
+
+    $usuarioId = isset($_POST['usuario_id']) ? trim($_POST['usuario_id']) : '';
+    if ($usuarioId !== '') {
+        $stmt = $db->prepare("UPDATE usuarios SET foto_perfil = ? WHERE id = ?");
+        $stmt->execute([$dbPath, $usuarioId]);
+    }
+
+    successResponse(['foto_perfil' => $dbPath], 'Foto de perfil enviada com sucesso');
+}
+
 switch ($method) {
     case 'GET':
         if (!hasPermission('configuracoes', 'visualizar')) {
@@ -28,9 +101,7 @@ switch ($method) {
         $id = isset($_GET['id']) ? $_GET['id'] : null;
 
         if (!empty($id)) {
-            $stmt = $db->prepare("SELECT id, usuario, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia, ativo, criado_em FROM usuarios WHERE id = ?");
-            $stmt->execute([$id]);
-            $usuario = $stmt->fetch();
+            $usuario = selectUsuariosCompat($db, "WHERE id = ?", [$id], true);
 
             if (!$usuario) {
                 errorResponse('Usuário não encontrado', 404);
@@ -42,9 +113,7 @@ switch ($method) {
 
             successResponse($usuario, 'Usuário carregado com sucesso');
         } else {
-            $stmt = $db->prepare("SELECT id, usuario, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia, ativo, criado_em FROM usuarios ORDER BY id");
-            $stmt->execute();
-            $usuarios = $stmt->fetchAll();
+            $usuarios = selectUsuariosCompat($db, "ORDER BY id", [], false);
 
             foreach ($usuarios as &$usuario) {
                 $stmt = $db->prepare("SELECT modulo, acao, permitido FROM permissoes WHERE usuario_id = ?");
@@ -104,17 +173,22 @@ switch ($method) {
         
         try {
             $senhaHash = password_hash($senha, PASSWORD_BCRYPT);
-            $stmt = $db->prepare("INSERT INTO usuarios (usuario, senha, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([
-                $usuario, $senhaHash, $nome, $email, $tipo,
-                $abordagem ?: null,
-                $temas ?: null,
-                $formacaoAcademica ?: null,
-                $idiomas ?: null,
-                $idade,
-                $fotoPerfil ?: null,
-                $tipoPsicoterapia ?: null
-            ]);
+            try {
+                $stmt = $db->prepare("INSERT INTO usuarios (usuario, senha, nome, email, tipo, abordagem, temas, formacao_academica, idiomas, idade, foto_perfil, tipo_psicoterapia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([
+                    $usuario, $senhaHash, $nome, $email, $tipo,
+                    $abordagem ?: null,
+                    $temas ?: null,
+                    $formacaoAcademica ?: null,
+                    $idiomas ?: null,
+                    $idade,
+                    $fotoPerfil ?: null,
+                    $tipoPsicoterapia ?: null
+                ]);
+            } catch (PDOException $e) {
+                $stmt = $db->prepare("INSERT INTO usuarios (usuario, senha, nome, email, tipo, foto_perfil) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$usuario, $senhaHash, $nome, $email, $tipo, $fotoPerfil ?: null]);
+            }
             $usuarioId = $db->lastInsertId();
             
             if (!empty($permissoes)) {

@@ -92,9 +92,8 @@ function ok(r){ return r && r.json && r.json.success; }
 
 async function ensurePaciente(){
   if(state.pacienteId) return true;
-  const id = uid('PTEST');
-  const r = await apiJson('pacientes.php','POST',{id,nome:'Paciente Base '+stamp(),data_nascimento:'01/01/2000',telefone:'11999990000'});
-  if(ok(r)){ state.pacienteId = id; return true; }
+  const r = await apiJson('pacientes.php','POST',{nome:'Paciente Base '+stamp(),data_nascimento:'01/01/2000',telefone:'11999990000'});
+  if(ok(r)){ state.pacienteId = r?.json?.data?.id || null; return !!state.pacienteId; }
   push('base',false,'Falha ao criar paciente base',r);
   return false;
 }
@@ -109,10 +108,12 @@ async function testAuth(){
 }
 
 async function testPacientes(){
-  const id = uid('P');
-  const c = await apiJson('pacientes.php','POST',{id,nome:'Paciente '+id,data_nascimento:'10/10/2000',telefone:'11988887777'});
+  const localRef = uid('P');
+  const c = await apiJson('pacientes.php','POST',{nome:'Paciente '+localRef,data_nascimento:'10/10/2000',telefone:'11988887777'});
   push('pacientes', ok(c), 'Criar paciente', c);
   if(!ok(c)) return;
+  const id = c?.json?.data?.id;
+  if(!id){ push('pacientes', false, 'ID não retornado ao criar paciente', c); return; }
   const u = await apiJson('pacientes.php','PUT',{id,nome:'Paciente Edit '+id,data_nascimento:'10/10/2000',telefone:'11988887777'});
   push('pacientes', ok(u), 'Editar paciente', u);
   const g = await apiJson('pacientes.php?id='+encodeURIComponent(id),'GET');

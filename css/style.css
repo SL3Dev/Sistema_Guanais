@@ -477,6 +477,252 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
     border: none !important;
 }
 
+/* ===== Layout dashboard com sidebar à esquerda (sem quebrar JS) ===== */
+#appScreen {
+    background:
+      radial-gradient(circle at 15% 10%, rgba(137,178,162,.12), transparent 35%),
+      linear-gradient(160deg, #f4f8f6 0%, #eef4f1 45%, #e8f0ed 100%);
+    min-height: 100vh;
+}
+
+#appScreen .container-fluid {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
+}
+
+#mainTab {
+    display: flex !important;
+    flex-direction: column;
+    gap: 6px !important;
+    align-self: start;
+    position: sticky;
+    top: 100px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    background: linear-gradient(180deg, #1e3a31 0%, #162b24 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 24px !important;
+    padding: 16px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    scrollbar-width: none; /* Firefox */
+}
+
+#mainTab::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+#mainTab::before {
+    content: '🌿 Menu Principal';
+    display: block;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#mainTab .nav-item { width: 100%; }
+
+#mainTab .nav-link {
+    width: 100%;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.7) !important;
+    border-radius: 14px !important;
+    padding: 12px 16px !important;
+    background: transparent !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+#mainTab .nav-link i { 
+    margin-right: 12px; 
+    font-size: 1.1rem;
+    opacity: 0.8;
+    transition: transform 0.3s ease;
+}
+
+#mainTab .nav-link:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+    transform: translateX(4px);
+}
+
+#mainTab .nav-link:hover i {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+#mainTab .nav-link.active {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+    position: relative;
+}
+
+#mainTab .nav-link.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 4px;
+    background: var(--verde);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px var(--verde);
+}
+
+#mainTab .nav-link.active i {
+    color: var(--verde);
+    opacity: 1;
+}
+
+.psicologa-card {
+    background: linear-gradient(145deg, rgba(245, 252, 250, .95), rgba(233, 246, 242, .92));
+    border: 1px solid rgba(137,178,162,.35);
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(46,59,53,.08);
+}
+
+.psicologa-card-foto {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(137,178,162,.55);
+    box-shadow: 0 4px 10px rgba(46,59,53,.15);
+}
+
+.paciente-highlight-card {
+    border: 1px solid rgba(137,178,162,.35);
+    border-radius: 16px;
+    padding: 14px;
+    background: linear-gradient(140deg, rgba(245,252,250,.98), rgba(230,243,238,.95));
+    box-shadow: 0 10px 24px rgba(46,59,53,.10);
+}
+
+.paciente-highlight-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.paciente-highlight-label {
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    font-size: .68rem;
+    color: #5c7d72;
+}
+
+.paciente-highlight-body {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.72);
+}
+
+.paciente-highlight-foto {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(137,178,162,.55);
+}
+
+body.dark .paciente-highlight-card {
+    background: linear-gradient(145deg, rgba(22,38,47,.95), rgba(13,25,31,.92));
+    border-color: rgba(125,211,252,.28);
+}
+
+body.dark .paciente-highlight-body {
+    background: rgba(255,255,255,.03);
+}
+
+body.dark .psicologa-card {
+    background: linear-gradient(145deg, rgba(22, 38, 47, .92), rgba(15, 28, 35, .92));
+    border-color: rgba(125, 211, 252, .28);
+}
+
+#mainTab .nav-link.active::after { display: none; }
+
+#mainTabContent {
+    min-width: 0;
+}
+
+#mainTabContent .tab-pane {
+    background: rgba(255, 255, 255, .92);
+    border: 1px solid rgba(137,178,162,.22);
+    border-radius: 18px;
+    padding: 18px;
+}
+
+#appScreen .app-header {
+    background: rgba(255, 255, 255, .88) !important;
+    border-bottom: 1px solid rgba(137,178,162,.25) !important;
+}
+
+#appScreen .app-header h5,
+#appScreen .app-header h4,
+#appScreen .app-header h3,
+#appScreen .app-header small,
+#appScreen .app-header .text-muted {
+    color: #2e3b35 !important;
+}
+
+.user-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, .45);
+    border: 1px solid rgba(148,163,184,.28);
+    min-width: 190px;
+}
+
+.user-pill img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(125,211,252,.5);
+}
+
+#loggedUserName { color: #f8fbff; font-size: .86rem; line-height: 1.1; }
+#loggedUserRole { color: #cfe1da !important; font-size: .72rem; }
+
+#dashboard .welcome-header h2,
+#dashboard .welcome-header p,
+#mainTabContent .tab-pane .text-muted {
+    color: var(--text-primary) !important;
+    opacity: .9;
+}
+
+@media (max-width: 992px) {
+    #appScreen .container-fluid {
+        grid-template-columns: 1fr;
+    }
+
+    #mainTab {
+        flex-direction: row;
+        overflow-x: auto;
+        max-height: none;
+        position: static;
+        white-space: nowrap;
+    }
+
+    #mainTab .nav-item { width: auto; }
+    #mainTab .nav-link { width: auto; }
+}
+
 .nav-tabs .nav-link {
     border: none !important;
     border-radius: var(--radius-sm) !important;
@@ -618,12 +864,45 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
     font-size: 2.5rem;
     color: var(--verde-escuro);
     margin-bottom: 0.5rem;
+    letter-spacing: .5px;
+    position: relative;
+    display: inline-block;
+    background: linear-gradient(100deg, var(--verde-escuro), var(--verde), var(--ouro));
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titleFlow 6s ease-in-out infinite;
 }
 
 .module-selection-subtitle {
     color: var(--cinza-muted);
     font-size: 1.1rem;
     margin-bottom: 3rem;
+    animation: subtitleBreath 4.8s ease-in-out infinite;
+}
+
+.module-selection-subtitle #moduleSelectionUserName {
+    color: var(--verde-escuro);
+    font-weight: 700;
+    letter-spacing: .2px;
+    display: inline-block;
+    animation: userGlow 3.8s ease-in-out infinite;
+}
+
+@keyframes titleFlow {
+    0%, 100% { background-position: 0% 50%; transform: translateY(0); }
+    50% { background-position: 100% 50%; transform: translateY(-1px); }
+}
+
+@keyframes subtitleBreath {
+    0%, 100% { opacity: .92; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-1px); }
+}
+
+@keyframes userGlow {
+    0%, 100% { text-shadow: 0 0 0 rgba(137,178,162,0); }
+    50% { text-shadow: 0 0 14px rgba(137,178,162,.32); }
 }
 
 /* ===== Ajustes visuais de Configurações (preview logos) ===== */
@@ -951,15 +1230,15 @@ body.dark .financeiro-resumo .p-2.rounded {
 }
 
 .caixa-guanais {
-    background: var(--ouro-pale) !important;
-    border: 1.5px solid rgba(201,133,42,.2) !important;
+    background: var(--bg-surface) !important;
+    border: 1.5px solid rgba(137,178,162,.20) !important;
     border-radius: var(--radius-md) !important;
     padding: 1.5rem !important;
-    box-shadow: 0 4px 20px rgba(201,133,42,.1);
+    box-shadow: 0 4px 20px rgba(46,59,53,.08);
     transition: var(--transition);
 }
 .caixa-guanais:hover {
-    box-shadow: 0 8px 32px rgba(201,133,42,.18);
+    box-shadow: 0 8px 32px rgba(46,59,53,.12);
     transform: translateY(-2px);
 }
 

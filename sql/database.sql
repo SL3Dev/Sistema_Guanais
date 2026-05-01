@@ -92,10 +92,13 @@ CREATE TABLE IF NOT EXISTS pacientes (
     emergencia_telefone VARCHAR(20),
     emergencia_parentesco VARCHAR(50),
     emergencia_info_adicionais TEXT,
+    psicologa_responsavel_id INT NULL,
     ativo BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_pacientes_nome (nome)
+    INDEX idx_pacientes_nome (nome),
+    INDEX idx_pacientes_psicologa (psicologa_responsavel_id),
+    CONSTRAINT fk_pacientes_psicologa FOREIGN KEY (psicologa_responsavel_id) REFERENCES usuarios(id) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
