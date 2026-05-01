@@ -10,6 +10,26 @@ require_once 'config.php';
 $method = getRequestMethod();
 $db = Database::getInstance()->getConnection();
 
+function usuarioEhPsicologa() {
+    return isset($_SESSION['tipo']) && $_SESSION['tipo'] === 'psicologa';
+}
+
+function psicologaVinculadaAoPaciente($db, $pacienteId) {
+    if (!isset($_SESSION['user_id']) || empty($pacienteId)) {
+        return false;
+    }
+
+    $stmt = $db->prepare("SELECT id FROM pacientes WHERE id = ? AND psicologa_responsavel_id = ? AND ativo = 1");
+    $stmt->execute([$pacienteId, $_SESSION['user_id']]);
+    return (bool)$stmt->fetch();
+}
+
+function bloquearProntuarioSemVinculo($db, $pacienteId) {
+    if (!usuarioEhPsicologa() || !psicologaVinculadaAoPaciente($db, $pacienteId)) {
+        errorResponse('Acesso ao prontuário negado', 403);
+    }
+}
+
 /**
  * Aplica a regra de exceção nos atendimentos
  * Se um atendimento Confirmado ultrapassar o limite de dias do pacote,
@@ -78,7 +98,7 @@ switch ($method) {
             
             $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
             
-            $sql = "SELECT a.*, p.cpf, p.telefone as telefone_paciente, p.email as email_paciente 
+            $sql = "SELECT a.*, p.cpf, p.telefone as telefone_paciente, p.email as email_paciente, p.psicologa_responsavel_id
                     FROM atendimentos a 
                     LEFT JOIN pacientes p ON a.paciente_id = p.id 
                     $whereClause 
@@ -89,16 +109,22 @@ switch ($method) {
             $atendimentos = $stmt->fetchAll();
             
             // Formatar dados e controlar visibilidade da evolução
-            $podeVerEvolucao = in_array($_SESSION['tipo'] ?? '', ['admin', 'terapeuta', 'psicologa']);
+            $podeVerEvolucaoGeral = usuarioEhPsicologa();
             
             foreach ($atendimentos as &$atendimento) {
                 $atendimento['data_atendimento'] = formatDateToBR($atendimento['data_atendimento']);
                 $atendimento['data_inicio_pacote'] = formatDateToBR($atendimento['data_inicio_pacote']);
                 
-                // Se não tiver permissão, remove a evolução do retorno
+                $podeVerEvolucao = $podeVerEvolucaoGeral
+                    && !empty($atendimento['psicologa_responsavel_id'])
+                    && intval($atendimento['psicologa_responsavel_id']) === intval($_SESSION['user_id'] ?? 0);
+
+                // Somente a psicóloga vinculada pode visualizar evolução/prontuário
                 if (!$podeVerEvolucao) {
                     unset($atendimento['evolucao']);
                 }
+
+                unset($atendimento['psicologa_responsavel_id']);
             }
             
             // Calcular resumo
@@ -204,6 +230,10 @@ switch ($method) {
         }
         
         try {
+            if (isset($input['evolucao']) && trim((string)$input['evolucao']) !== '') {
+                bloquearProntuarioSemVinculo($db, $input['paciente_id'] ?? '');
+            }
+
             // Verificar se atendimento existe
             $stmt = $db->prepare("SELECT id_atendimento FROM atendimentos WHERE id_atendimento = ?");
             $stmt->execute([$input['id_atendimento']]);
@@ -260,6 +290,18 @@ switch ($method) {
         }
         
         try {
+            if (isset($input['evolucao'])) {
+                $stmtAt = $db->prepare("SELECT paciente_id FROM atendimentos WHERE id_atendimento = ?");
+                $stmtAt->execute([$input['id_atendimento']]);
+                $at = $stmtAt->fetch();
+
+                if (!$at) {
+                    errorResponse('Atendimento não encontrado', 404);
+                }
+
+                bloquearProntuarioSemVinculo($db, $at['paciente_id']);
+            }
+
             $fields = [];
             $params = [];
             

@@ -398,6 +398,15 @@ function userHasPermission(modulo, acao) {
     );
 }
 
+function podeAcessarProntuarioDoAtendimento(atendimento) {
+    if (!usuarioLogado || usuarioLogado.tipo !== 'psicologa' || !atendimento) return false;
+
+    const paciente = (dados.pacientes || []).find(p => String(p.id).trim() === String(atendimento.paciente_id || '').trim());
+    if (!paciente || !paciente.psicologa_responsavel_id) return false;
+
+    return String(paciente.psicologa_responsavel_id) === String(usuarioLogado.id);
+}
+
 function aplicarPermissoesUI() {
     if (!usuarioLogado) return;
 
@@ -1816,7 +1825,7 @@ function renderAgenda(dadosCustom = null) {
             statusAtend === 'Falta' ? 'badge-danger' :
                 statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada' ? 'badge-warning' : 'badge-info';
         
-        const podeVerProntuario = ['admin', 'terapeuta', 'psicologa'].includes(usuarioLogado?.tipo);
+        const podeVerProntuario = podeAcessarProntuarioDoAtendimento(a);
         
         html += `<tr>
             <td>${idAtend}</td>
@@ -3045,9 +3054,9 @@ async function renderProntuarioLista() {
     const tbody = document.getElementById('prontuarioTbody');
     if (!tbody) return;
 
-    const podeVerProntuario = ['admin', 'terapeuta', 'psicologa'].includes(usuarioLogado?.tipo);
+    const podeVerProntuario = usuarioLogado?.tipo === 'psicologa';
     if (!podeVerProntuario) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Sem permissão para visualizar prontuário.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Somente a psicóloga vinculada pode acessar prontuário.</td></tr>';
         return;
     }
 
@@ -3062,6 +3071,8 @@ async function renderProntuarioLista() {
 
     const itens = [...dados.atendimentos]
         .filter(a => {
+            if (!podeAcessarProntuarioDoAtendimento(a)) return false;
+
             const paciente = pacientePorId.get(String(a.paciente_id).trim()) || {};
             const nome = normalizar(a.paciente_nome || paciente.nome || '');
             const pacienteId = normalizar(a.paciente_id || '');
