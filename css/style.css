@@ -46,77 +46,100 @@
     --border-light: #dce5e1;
 }
 
-/* Dark mode overrides */
+/* Dark mode overrides - Paleta Verde Sálvia premium */
 body.dark {
-    --bg-body: #0a0f1e;
-    --bg-surface: #141b2d;
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --border-light: #2d3748;
-    --verde-pale: rgba(137, 178, 162, 0.15);
-    --ouro-pale: rgba(201, 133, 42, 0.15);
-    --crema: #0a0f1e;
-    --cinza-txt: #f8fafc;
-    --cinza-muted: #94a3b8;
-    --branco: #141b2d;
-    --borda: #2d3748;
-}
+    --bg-body: #0C1418;
+    --bg-surface: #122027;
+    --text-primary: #F5F7F8;
+    --text-secondary: #C7D2D7;
+    --border-light: #31424A;
+    --verde: #5EEAD4;
+    --verde-escuro: #2DD4BF;
+    --verde-pale: rgba(94, 234, 212, 0.12);
+    --ouro: #FBBF24;
+    --ouro-pale: rgba(251, 191, 36, 0.14);
+    --crema: #0C1418;
+    --cinza-txt: #F5F7F8;
+    --cinza-muted: #A7B3B7;
+    --branco: #1A2B33;
+    --borda: #31424A;
+    --sombra-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+    --sombra-md: 0 12px 30px rgba(0, 0, 0, 0.42);
+    --sombra-lg: 0 24px 50px rgba(0, 0, 0, 0.55);
 
-body.dark {
-    background: radial-gradient(ellipse at 30% 30%, #1a150e 0%, #0a0f1e 50%, #0d1a15 100%);
+    background:
+      radial-gradient(circle at 8% 10%, rgba(46, 211, 191, 0.16), transparent 35%),
+      radial-gradient(circle at 92% 0%, rgba(125, 211, 252, 0.13), transparent 30%),
+      linear-gradient(160deg, #081015 0%, #0C1418 48%, #0A1116 100%);
 }
 
 body.dark .app-header {
-    background: rgba(20, 27, 45, 0.9) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+    background: linear-gradient(145deg, rgba(20,35,42,.95), rgba(12,20,24,.95)) !important;
+    border-bottom-color: rgba(125, 211, 252, 0.20) !important;
 }
 
 body.dark .nav-tabs {
-    background: #0f172a !important;
+    background: linear-gradient(145deg, #132129, #0f1b21) !important;
+    border: 1px solid rgba(125, 211, 252, 0.15) !important;
 }
 
 body.dark .nav-tabs .nav-link.active {
-    background: #1e293b !important;
-    color: var(--verde) !important;
+    background: linear-gradient(145deg, #1A2B33, #16252d) !important;
+    color: #E7FDFC !important;
+}
+
+body.dark .nav-tabs .nav-link {
+    color: #D1DBDF !important;
+}
+
+body.dark .nav-tabs .nav-link:hover {
+    background: rgba(94, 234, 212, 0.12) !important;
+    color: #F5FFFE !important;
 }
 
 body.dark .table-custom th, body.dark .table thead th {
-    background: #1a2236 !important;
-    color: var(--cinza-muted) !important;
+    background: #16252d !important;
+    color: #D2DDE2 !important;
 }
 
 body.dark .table-custom td, body.dark .table tbody td {
-    border-bottom-color: #1a2236 !important;
+    border-bottom-color: #253841 !important;
+    color: #ECF3F5 !important;
 }
 
 body.dark .table-custom tr:hover td {
-    background: rgba(255, 255, 255, 0.02) !important;
+    background: rgba(94, 234, 212, 0.07) !important;
 }
 
 body.dark .caixa-guanais {
-    background: rgba(201, 133, 42, 0.05) !important;
-    border-color: rgba(201, 133, 42, 0.2) !important;
+    background: linear-gradient(165deg, rgba(21,35,42,.88), rgba(12,20,24,.88)) !important;
+    border-color: rgba(125, 211, 252, 0.20) !important;
 }
 
 body.dark .form-control, body.dark .form-select {
-    background-color: #1a2236;
-    border-color: #2d3748;
-    color: #e2e8f0;
+    background-color: #121f26;
+    border-color: #31424A;
+    color: #F5F7F8;
+}
+
+body.dark .form-control::placeholder {
+    color: #9BB0B7;
 }
 
 body.dark .card, body.dark .card-modern, body.dark .module-selection-card {
-    background: #141b2d !important;
+    background: linear-gradient(170deg, rgba(20,35,42,.84), rgba(12,20,24,.88)) !important;
+    border: 1px solid rgba(125, 211, 252, 0.16) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
 }
 
 body.dark .menu-card {
-    background: #1e293b;
-    border-color: #2d3748;
+    background: linear-gradient(165deg, #16262f, #122027);
+    border-color: rgba(125, 211, 252, 0.20);
 }
 
 body.dark .menu-card:hover {
-    border-color: var(--verde);
-    background: #243049;
+    border-color: rgba(94, 234, 212, 0.55);
+    background: linear-gradient(165deg, #1b313a, #172a32);
 }
 
 body.dark .list-group-item-custom:hover {
@@ -124,29 +147,29 @@ body.dark .list-group-item-custom:hover {
 }
 
 body.dark .btn-light {
-    background: #1e293b;
-    border-color: #2d3748;
-    color: #e2e8f0;
+    background: #1A2B33;
+    border-color: #31424A;
+    color: #ECF4F7;
 }
 
 body.dark .btn-outline-secondary {
-    color: #94a3b8;
-    border-color: #2d3748;
+    color: #C2D0D5;
+    border-color: #31424A;
 }
 
 body.dark .btn-outline-secondary:hover {
-    background: #2d3748;
-    color: #fff;
+    background: #23363F;
+    color: #F5F7F8;
 }
 
 body.dark .modal-content {
-    background: #141b2d;
-    color: #e2e8f0;
-    border-color: #2d3748;
+    background: linear-gradient(160deg, #16262f, #0f1c23);
+    color: #F5F7F8;
+    border-color: #31424A;
 }
 
 body.dark .modal-header, body.dark .modal-footer {
-    border-color: #2d3748;
+    border-color: #31424A;
 }
 
 body.dark hr {
@@ -154,8 +177,68 @@ body.dark hr {
 }
 
 body.dark .login-card {
-    background: rgba(20, 27, 45, 0.95) !important;
-    border-top-color: var(--verde) !important;
+    background: linear-gradient(160deg, rgba(20,35,42,.96), rgba(12,20,24,.96)) !important;
+    border-top-color: #5EEAD4 !important;
+}
+
+body.dark .login-container,
+body.dark .module-selection-container {
+    background:
+      radial-gradient(circle at 10% 12%, rgba(46, 211, 191, 0.12), transparent 32%),
+      radial-gradient(circle at 84% 18%, rgba(125, 211, 252, 0.10), transparent 30%),
+      linear-gradient(160deg, #081015 0%, #0C1418 48%, #0A1116 100%) !important;
+}
+
+/* Contraste global de textos no dark */
+body.dark,
+body.dark p,
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+body.dark .text-muted,
+body.dark small,
+body.dark label,
+body.dark .form-label,
+body.dark .menu-card p,
+body.dark .module-selection-subtitle,
+body.dark .dash-label {
+    color: #C7D2D7 !important;
+}
+
+body.dark .menu-card h5,
+body.dark .dash-value,
+body.dark .table-custom td,
+body.dark .table tbody td,
+body.dark .welcome-header h2,
+body.dark #headerSystemName,
+body.dark .btn,
+body.dark .caixa-guanais h5,
+body.dark .caixa-guanais h6 {
+    color: #F5F7F8 !important;
+}
+
+body.dark .btn-verde,
+body.dark .btn-primary {
+    background: linear-gradient(135deg, #5EEAD4, #2DD4BF) !important;
+    color: #063c36 !important;
+    box-shadow: 0 8px 24px rgba(45, 212, 191, .28);
+}
+
+body.dark .btn-verde:hover,
+body.dark .btn-primary:hover {
+    filter: brightness(1.04);
+}
+
+body.dark .table-wrap,
+body.dark .table-responsive,
+body.dark .p-4.bg-white,
+body.dark .p-3.bg-light {
+    background: #122027 !important;
+    color: #F5F7F8 !important;
+    border-color: #31424A !important;
 }
 
 body {
@@ -732,6 +815,56 @@ body.dark #loginSystemSubtitle {
     box-shadow: 0 8px 24px rgba(106,149,133,.3) !important;
     position: relative;
     overflow: hidden;
+}
+
+/* Resumo do mês - refinamento visual no modo escuro */
+body.dark .fin-resumo,
+body.dark .financeiro-resumo {
+    background:
+      radial-gradient(circle at 8% 12%, rgba(255,255,255,.14), transparent 28%),
+      radial-gradient(circle at 88% 22%, rgba(125, 211, 252, .22), transparent 34%),
+      linear-gradient(145deg, #2DD4BF 0%, #34d9c4 40%, #1fb8a7 100%) !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    box-shadow:
+      0 16px 34px rgba(0, 0, 0, .35),
+      0 0 0 1px rgba(255,255,255,.08) inset !important;
+    color: #f7fffd !important;
+}
+
+body.dark .fin-resumo h5,
+body.dark .financeiro-resumo h5 {
+    color: #e8fffb !important;
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+
+body.dark .fin-resumo h2,
+body.dark .financeiro-resumo h2,
+body.dark .fin-resumo h3,
+body.dark .financeiro-resumo h3 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 10px rgba(0,0,0,.18);
+}
+
+body.dark .fin-resumo p,
+body.dark .financeiro-resumo p,
+body.dark .fin-resumo small,
+body.dark .financeiro-resumo small,
+body.dark .fin-resumo strong,
+body.dark .financeiro-resumo strong {
+    color: #eafffb !important;
+}
+
+body.dark .fin-resumo hr,
+body.dark .financeiro-resumo hr {
+    border-color: rgba(236, 255, 250, .35) !important;
+}
+
+body.dark .fin-resumo .p-2.rounded,
+body.dark .financeiro-resumo .p-2.rounded {
+    background: rgba(255,255,255,.14) !important;
+    border: 1px solid rgba(255,255,255,.22);
+    backdrop-filter: blur(4px);
 }
 
 .fin-resumo::before, .financeiro-resumo::before {
