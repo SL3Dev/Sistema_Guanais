@@ -125,12 +125,9 @@ switch ($method) {
             $stmt = $db->prepare("SELECT id FROM configuracoes WHERE chave = ?");
             $stmt->execute([$input['chave']]);
             if (!$stmt->fetch()) {
-                if (strpos($input['chave'], 'logo_') === 0) {
-                    $stmt = $db->prepare("INSERT INTO configuracoes (id, chave, valor, tipo) VALUES (?, ?, ?, 'arquivo')");
-                    $stmt->execute([generateId('CFG'), $input['chave'], $input['valor']]);
-                } else {
-                    errorResponse('Configuração não encontrada', 404);
-                }
+                $tipoConfig = (strpos($input['chave'], 'logo_') === 0) ? 'arquivo' : 'texto';
+                $stmt = $db->prepare("INSERT INTO configuracoes (id, chave, valor, tipo) VALUES (?, ?, ?, ?)");
+                $stmt->execute([generateId('CFG'), $input['chave'], $input['valor'], $tipoConfig]);
             }
 
             $stmt = $db->prepare("UPDATE configuracoes SET valor = ? WHERE chave = ?");

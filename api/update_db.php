@@ -140,6 +140,13 @@ try {
         $updates[] = "Preenchido 'data_inicio_pacote' na tabela 'atendimentos' com 'data_atendimento' para registros sem valor.";
     }
 
+    // 6.1 Adicionar campo evolucao na tabela atendimentos (se não existir)
+    $stmt = $db->query("SHOW COLUMNS FROM atendimentos LIKE 'evolucao'");
+    if ($stmt->rowCount() == 0) {
+        $db->exec("ALTER TABLE atendimentos ADD COLUMN evolucao TEXT AFTER observacoes");
+        $updates[] = "Adicionado campo 'evolucao' à tabela 'atendimentos'.";
+    }
+
     // 7. Adicionar colunas paciente_nome, tipo_pacote e data_inicio_pacote à tabela financeiro (se não existirem)
     $stmt = $db->query("SHOW COLUMNS FROM financeiro LIKE 'paciente_nome'");
     if ($stmt->rowCount() == 0) {

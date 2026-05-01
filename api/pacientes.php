@@ -7,6 +7,13 @@
 
 require_once 'config.php';
 
+function gerarProximoIdPaciente($db) {
+    $stmt = $db->query("SELECT MAX(CAST(id AS UNSIGNED)) AS max_id FROM pacientes WHERE id REGEXP '^[0-9]+$'");
+    $row = $stmt->fetch();
+    $max = isset($row['max_id']) ? intval($row['max_id']) : 0;
+    return strval($max + 1);
+}
+
 $method = getRequestMethod();
 $db = Database::getInstance()->getConnection();
 
@@ -152,8 +159,8 @@ switch ($method) {
         }
         
         try {
-            // Usar ID fornecido ou gerar um novo
-            $id = !empty($input['id']) ? sanitize($input['id']) : generateId('P');
+            // Sempre gerar ID sequencial numérico (1,2,3...)
+            $id = gerarProximoIdPaciente($db);
             
             // Aceitar data_nascimento ou data_nasc (legado)
             $dataNasc = !empty($input['data_nascimento']) ? $input['data_nascimento'] : $input['data_nasc'];

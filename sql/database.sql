@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS atendimentos (
     status ENUM('Confirmado', 'Falta', 'Reagendado', 'Exceção Justificada') DEFAULT 'Confirmado',
     unidade ENUM('ANIMO', 'ESPAÇO GUANAIS') NOT NULL,
     observacoes TEXT,
+    evolucao TEXT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON UPDATE CASCADE ON DELETE CASCADE,

@@ -116,6 +116,15 @@
                 </div>
             </div>
             <div class="col-6 col-md-4 col-lg-3">
+                <div class="menu-card" onclick="selectModule('prontuario')">
+                    <div class="menu-card-icon bg-primary-pale">
+                        <i class="bi bi-journal-medical"></i>
+                    </div>
+                    <h5>Prontuário</h5>
+                    <p>Evolução clínica organizada por sessão.</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
                 <div class="menu-card" onclick="selectModule('configuracoes')">
                     <div class="menu-card-icon bg-secondary-pale">
                         <i class="bi bi-gear"></i>
@@ -158,8 +167,7 @@
         </div>
 
         <div class="d-flex gap-2 align-items-center flex-wrap">
-            <span id="status-salvo"><i class="bi bi-check-circle-fill"></i>Salvo</span>
-            <div class="theme-toggle" id="themeToggle" title="Alternar tema" style="cursor: pointer; display: flex; align-items: center; gap: 8px; background: var(--verde-pale); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: var(--verde);">
+            <div class="theme-toggle" id="themeToggle" title="Alternar tema">
                 <i class="bi bi-sun-fill"></i>
                 <i class="bi bi-moon-fill" style="display:none;"></i>
                 <span class="d-none d-sm-inline">Tema</span>
@@ -208,6 +216,11 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#relatorios" type="button" role="tab">
                     <i class="bi bi-bar-chart"></i> Relatórios
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#prontuario" type="button" role="tab">
+                    <i class="bi bi-journal-medical"></i> Prontuário
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -308,29 +321,29 @@
                 </div>
 
                 <!-- Gráficos Visuais -->
-                <div class=\"row mt-4\">
-                    <div class=\"col-lg-6 mb-4\">
-                        <div class=\"caixa-guanais h-100\">
-                            <h6 class=\"fw-bold mb-3\"><i class=\"bi bi-bar-chart-line me-2\"></i>Faturamento (Últimos 6 Meses)</h6>
-                            <canvas id=\"chartFaturamento\"></canvas>
+                <div class="row mt-4">
+                    <div class="col-lg-6 mb-4">
+                        <div class="caixa-guanais h-100">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-line me-2"></i>Faturamento (Últimos 6 Meses)</h6>
+                            <canvas id="chartFaturamento"></canvas>
                         </div>
                     </div>
-                    <div class=\"col-lg-3 mb-4\">
-                        <div class=\"caixa-guanais h-100\">
-                            <h6 class=\"fw-bold mb-3\"><i class=\"bi bi-pie-chart me-2\"></i>Status Sessões</h6>
-                            <canvas id=\"chartStatus\"></canvas>
+                    <div class="col-lg-3 mb-4">
+                        <div class="caixa-guanais h-100">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2"></i>Status Sessões</h6>
+                            <canvas id="chartStatus"></canvas>
                         </div>
                     </div>
-                    <div class=\"col-lg-3 mb-4\">
-                        <div class=\"caixa-guanais h-100\">
-                            <h6 class=\"fw-bold mb-3\"><i class=\"bi bi-hospital me-2\"></i>Unidades</h6>
-                            <canvas id=\"chartUnidade\"></canvas>
+                    <div class="col-lg-3 mb-4">
+                        <div class="caixa-guanais h-100">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-hospital me-2"></i>Unidades</h6>
+                            <canvas id="chartUnidade"></canvas>
                         </div>
                     </div>
                 </div>
 
                 <!-- Atalhos Rápidos / Resumo Opcional -->
-                <div class=\"row mt-4\">
+                <div class="row mt-4">
                     <div class="col-md-6">
                         <div class="caixa-guanais h-100">
                             <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Próximos Atendimentos</h6>
@@ -841,14 +854,19 @@
                                     <option>ESPAÇO GUANAIS</option>
                                 </select>
                             </div>
-                        <div class=\"col-12 mb-3\">
-                            <label class=\"form-label\">Evolução Clínica (Prontuário)</label>
-                            <textarea id=\"atenEvolucao\" class=\"form-control\" rows=\"4\" placeholder=\"Registros da sessão...\"></textarea>
-                            <small class=\"text-muted\">Apenas terapeutas e administradores podem ver este campo.</small>
-                        </div>
                         </div>
 
-                        <button type=\"submit\" class=\"btn btn-verde w-100 py-3 fw-bold\">
+                        <div class="mb-4">
+                            <div class="p-3 rounded-3" style="background: rgba(14,165,233,0.06); border: 1px solid rgba(14,165,233,0.2);">
+                                <label class="form-label fw-semibold mb-2">
+                                    <i class="bi bi-journal-medical me-2"></i>Evolução Clínica (Prontuário)
+                                </label>
+                                <textarea id="atenEvolucao" class="form-control" rows="5" placeholder="Registros clínicos da sessão..."></textarea>
+                                <small class="text-muted d-block mt-2">Apenas terapeutas e administradores podem visualizar este campo.</small>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-verde w-100 py-3 fw-bold">
                             <i class="bi bi-calendar-check me-2"></i>Salvar Atendimento
                         </button>
                     </form>
@@ -881,12 +899,24 @@
                                         <option>ESPAÇO GUANAIS</option>
                                     </select>
                                 </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Tipo de Relatório</label>
+                                    <select id="relatorioTipo" class="form-select" onchange="aplicarFiltroTipoRelatorio()">
+                                        <option value="todos">Todos</option>
+                                        <option value="atendimentos">Atendimentos</option>
+                                        <option value="financeiro">Financeiro</option>
+                                        <option value="pacientes">Pacientes</option>
+                                    </select>
+                                </div>
                                 <div class="col-md-3 d-flex align-items-end gap-2">
                                     <button class="btn btn-verde flex-fill" onclick="gerarRelatorios()">
                                         <i class="bi bi-search me-2"></i>Gerar Relatórios
                                     </button>
                                     <button class="btn btn-ouro" onclick="exportarRelatorioCSV()" title="Exportar CSV">
                                         <i class="bi bi-download"></i>
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="exportarRelatorioExcel()" title="Exportar Excel">
+                                        <i class="bi bi-file-earmark-excel"></i>
                                     </button>
                                 </div>
                             </div>
@@ -914,7 +944,7 @@
                     </div>
 
                     <!-- Relatório de Atendimentos -->
-                    <div class="col-12">
+                    <div class="col-12" id="blocoRelAtendimentos">
                         <div class="table-wrap">
                             <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-calendar-check me-2"></i>Relatório de Atendimentos</h5>
@@ -947,7 +977,7 @@
                     </div>
 
                     <!-- Relatório Financeiro -->
-                    <div class="col-12">
+                    <div class="col-12" id="blocoRelFinanceiro">
                         <div class="table-wrap">
                             <div class="p-4 bg-white border-bottom">
                                 <h5 class="mb-0" style="color: var(--ouro); font-weight: 700;"><i class="bi bi-cash-coin me-2"></i>Relatório Financeiro</h5>
@@ -978,7 +1008,7 @@
                     </div>
 
                     <!-- Relatório de Pacientes -->
-                    <div class="col-12">
+                    <div class="col-12" id="blocoRelPacientes">
                         <div class="table-wrap">
                             <div class="p-4 bg-white border-bottom">
                                 <h5 class="mb-0" style="color: #0dcaf0; font-weight: 700;"><i class="bi bi-people me-2"></i>Relatório de Pacientes</h5>
@@ -1000,6 +1030,58 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRONTUÁRIO -->
+            <div class="tab-pane fade" id="prontuario" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="table-wrap">
+                            <div class="p-4 bg-white border-bottom">
+                                <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-journal-medical me-2"></i>Sessões para Prontuário</h5>
+                            </div>
+                            <div class="p-3 bg-light border-bottom">
+                                <input type="text" id="prontuarioBusca" class="form-control" placeholder="Buscar por paciente..." oninput="renderProntuarioLista()">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Paciente</th>
+                                            <th>Data</th>
+                                            <th>Status</th>
+                                            <th>Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="prontuarioTbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="caixa-guanais card-accent">
+                            <h5 class="mb-3" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-pencil-square me-2"></i>Evolução Clínica</h5>
+                            <input type="hidden" id="prontuarioAtendimentoId">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Paciente</label>
+                                    <input type="text" id="prontuarioPaciente" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Data</label>
+                                    <input type="text" id="prontuarioData" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <label class="form-label">Anotação</label>
+                            <textarea id="prontuarioEvolucao" class="form-control" rows="11" placeholder="Selecione uma sessão para editar o prontuário..."></textarea>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="button" class="btn btn-verde" onclick="salvarProntuarioModulo()">
+                                    <i class="bi bi-save me-2"></i>Salvar Prontuário
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1310,45 +1392,6 @@
 
         </div>
     </div>
-<!-- Modal de Prontuário -->
-<div class=\"modal fade\" id=\"modalProntuario\" tabindex=\"-1\" aria-hidden=\"true\">
-    <div class=\"modal-dialog modal-lg\">
-        <div class=\"modal-content border-0 shadow\">
-            <div class=\"modal-header bg-verde text-white border-0\">
-                <h5 class=\"modal-title fw-bold\"><i class=\"bi bi-journal-text me-2\"></i>Prontuário de Atendimento</h5>
-                <button type=\"button\" class=\"btn-close btn-close-white\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
-            </div>
-            <div class=\"modal-body p-4\">
-                <div class=\"row g-3 mb-4\">
-                    <div class=\"col-md-6\">
-                        <label class=\"form-label text-muted small mb-0\">Paciente</label>
-                        <div id=\"prontPaciente\" class=\"fw-bold text-dark fs-5\">—</div>
-                    </div>
-                    <div class=\"col-md-6 text-md-end\">
-                        <label class=\"form-label text-muted small mb-0\">Data da Sessão</label>
-                        <div id=\"prontData\" class=\"fw-bold text-dark\">—</div>
-                    </div>
-                </div>
-
-                <div class=\"mb-3\">
-                    <label class=\"form-label fw-bold\"><i class=\"bi bi-pencil-square me-2\"></i>Evolução Clínica</label>
-                    <textarea id=\"prontEvolucao\" class=\"form-control\" rows=\"10\" placeholder=\"Descreva a evolução do paciente nesta sessão...\"></textarea>
-                </div>
-
-                <div id=\"prontFeedback\" class=\"alert alert-success d-none\">
-                    <i class=\"bi bi-check-circle me-2\"></i>Evolução salva com sucesso!
-                </div>
-            </div>
-            <div class=\"modal-footer border-0\">
-                <button type=\"button\" class=\"btn btn-light\" data-bs-dismiss=\"modal\">Fechar</button>
-                <button type=\"button\" class=\"btn btn-verde px-4\" onclick=\"salvarEvolucaoProntuario()\">
-                    <i class=\"bi bi-save me-2\"></i>Salvar Alterações
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Modal de Arquivos/Anexos -->
 <div class="modal fade" id="modalArquivos" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">

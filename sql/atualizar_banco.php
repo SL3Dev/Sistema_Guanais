@@ -49,6 +49,7 @@ echo "<!DOCTYPE html>
         <div class='step'>
             <div class='step-title'>2. Atualizações Estruturais</div>
             <div id='atualizacoes'></div>
+            <div class='info'>Este update também garante o campo <code>evolucao</code> na tabela <code>atendimentos</code>, usado no novo módulo de prontuário.</div>
         </div>
         
         <div class='step'>

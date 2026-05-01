@@ -7,6 +7,7 @@ const API_BASE_URL = 'api/';
 // ====================== DADOS GLOBAIS ======================
 let dados = { pacientes: [], atendimentos: [], financeiro: [], despesas: [] };
 let usuarioLogado = null;
+let sistemaInicializado = false;
 
 // ====================== GRÁFICOS E UI ======================
 let chartFaturamento = null;
@@ -14,6 +15,10 @@ let chartStatus = null;
 let chartUnidade = null;
 
 function initCharts() {
+    const ultimosMeses = obterResumoFaturamento6Meses();
+    const statusResumo = obterResumoStatusSessao();
+    const unidadeResumo = obterResumoUnidades();
+
     // 1. Gráfico de Faturamento
     const ctxFaturamento = document.getElementById('chartFaturamento');
     if (ctxFaturamento) {
@@ -21,10 +26,10 @@ function initCharts() {
         chartFaturamento = new Chart(ctxFaturamento, {
             type: 'bar',
             data: {
-                labels: ['Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr'],
+                labels: ultimosMeses.labels,
                 datasets: [{
                     label: 'Faturamento',
-                    data: [4500, 5200, 4800, 6100, 5900, 7200],
+                    data: ultimosMeses.valores,
                     backgroundColor: 'rgba(56, 118, 59, 0.7)',
                     borderColor: 'rgb(56, 118, 59)',
                     borderWidth: 1,
@@ -44,7 +49,7 @@ function initCharts() {
             data: {
                 labels: ['Confirmado', 'Falta', 'Exceção'],
                 datasets: [{
-                    data: [85, 10, 5],
+                    data: [statusResumo.confirmado, statusResumo.falta, statusResumo.excecao],
                     backgroundColor: ['#38763b', '#dc3545', '#b6922e']
                 }]
             },
@@ -61,7 +66,7 @@ function initCharts() {
             data: {
                 labels: ['ANIMO', 'ESPAÇO GUANAIS'],
                 datasets: [{
-                    data: [60, 40],
+                    data: [unidadeResumo.animo, unidadeResumo.guanais],
                     backgroundColor: ['#0dcaf0', '#38763b']
                 }]
             },
@@ -70,30 +75,49 @@ function initCharts() {
     }
 }
 
+function obterResumoStatusSessao() {
+    const base = Array.isArray(dados.atendimentos) ? dados.atendimentos : [];
+    const confirmado = base.filter(a => a.status === 'Confirmado').length;
+    const falta = base.filter(a => a.status === 'Falta').length;
+    const excecao = base.filter(a => ['Exceção Justificada', 'Excecao Justificada'].includes(a.status)).length;
+    return { confirmado, falta, excecao };
+}
+
+function obterResumoUnidades() {
+    const base = Array.isArray(dados.atendimentos) ? dados.atendimentos : [];
+    const animo = base.filter(a => a.unidade === 'ANIMO').length;
+    const guanais = base.filter(a => a.unidade === 'ESPAÇO GUANAIS').length;
+    return { animo, guanais };
+}
+
+function obterResumoFaturamento6Meses() {
+    const labels = [];
+    const valores = [];
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const hoje = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+        const ref = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+        const key = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, '0')}`;
+        labels.push(meses[ref.getMonth()]);
+
+        const totalMes = (dados.financeiro || [])
+            .filter(f => (f.data || '').startsWith(key))
+            .reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
+        valores.push(Number(totalMes.toFixed(2)));
+    }
+
+    return { labels, valores };
+}
+
 // Funções do Prontuário
 async function abrirProntuario(id) {
-    try {
-        const result = await apiRequest(`atendimentos.php?id=${id}`);
-        if (result.success) {
-            const aten = result.data.atendimento;
-            document.getElementById('prontPaciente').textContent = aten.paciente_nome;
-            document.getElementById('prontData').textContent = aten.data_atendimento;
-            document.getElementById('prontEvolucao').value = aten.evolucao || '';
-            
-            const saveBtn = document.querySelector('#modalProntuario .btn-verde');
-            saveBtn.onclick = () => salvarEvolucaoProntuario(id);
-            
-            const modal = new bootstrap.Modal(document.getElementById('modalProntuario'));
-            modal.show();
-        }
-    } catch (error) {
-        console.error(error);
-    }
+    irParaAba('prontuario');
+    await carregarProntuarioNoModulo(id);
 }
 
 async function salvarEvolucaoProntuario(id) {
-    const evolucao = document.getElementById('prontEvolucao').value;
-    const feedback = document.getElementById('prontFeedback');
+    const evolucao = document.getElementById('prontuarioEvolucao').value;
     
     try {
         const result = await apiRequest('atendimentos.php', 'PATCH', {
@@ -102,12 +126,9 @@ async function salvarEvolucaoProntuario(id) {
         });
         
         if (result.success) {
-            feedback.classList.remove('d-none');
-            setTimeout(() => {
-                feedback.classList.add('d-none');
-                bootstrap.Modal.getInstance(document.getElementById('modalProntuario')).hide();
-                renderAgenda();
-            }, 1500);
+            mostrarToast('Prontuário salvo com sucesso');
+            renderAgenda();
+            renderProntuarioLista();
         }
     } catch (error) {
         console.error(error);
@@ -359,6 +380,7 @@ function aplicarPermissoesUI() {
 
     const modulosConfig = {
         'agenda': 'atendimentos',
+        'prontuario': 'atendimentos',
         'pacientes': 'pacientes',
         'financeiro': 'financeiro',
         'despesas': 'despesas',
@@ -384,6 +406,7 @@ function aplicarPermissoesUI() {
     const abas = {
         '#dashboard': 'dashboard', // Dashboard é sempre visível, mas pode ter elementos internos restritos
         '#agenda': 'atendimentos',
+        '#prontuario': 'atendimentos',
         '#pacientes': 'pacientes',
         '#financeiro': 'financeiro',
         '#despesas': 'despesas',
@@ -448,7 +471,14 @@ async function logout() {
 function selectModule(moduleId) {
     document.getElementById('moduleSelectionScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
-    irParaAba(moduleId);
+    if (!sistemaInicializado) {
+        inicializarSistema(moduleId);
+        sistemaInicializado = true;
+    } else {
+        irParaAba(moduleId);
+        renderDashboardSummaries();
+        initCharts();
+    }
     mostrarToast(`Módulo ${moduleId.charAt(0).toUpperCase() + moduleId.slice(1)} selecionado!`, 'info');
 }
 
@@ -1026,7 +1056,7 @@ function aplicarNomeSistema(nome) {
 }
 
 function aplicarSubtituloSistema(subtitulo) {
-    if (!subtitulo) return;
+    if (subtitulo === undefined || subtitulo === null) return;
     
     // Atualizar no Login
     const loginSub = document.getElementById('loginSystemSubtitle');
@@ -1147,95 +1177,6 @@ function irParaAba(tabId) {
         tab.show();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-}
-
-// ====================== INICIALIZAÇÃO ======================
-async function inicializarSistema(moduloInicial = 'dashboard') {
-    // Carregar configurações primeiro para as logos
-    await carregarConfiguracoes();
-    
-    // Carregar todos os dados da API
-    await Promise.all([
-        carregarPacientes(),
-        carregarAtendimentos(),
-        carregarFinanceiro(),
-        carregarDespesas()
-    ]);
-
-    // Atualizar nome do usuário no dashboard (se estiver no dashboard)
-    if (usuarioLogado) {
-        const userNameDisplay = document.getElementById('userNameDisplay');
-        if (userNameDisplay) userNameDisplay.textContent = usuarioLogado.nome.split(' ')[0];
-    }
-    
-    // Aplicar restrições de permissão na UI (já feito no login/selectModule)
-    // aplicarPermissoesUI(); 
-
-    // Popular Dashboard
-    renderDashboardSummaries();
-    initCharts();
-
-    initDashboardInteractivity();
-
-    renderPacientes();
-    renderAgenda();
-    renderFinanceiro();
-    renderDespesas();
-    atualizarSelectPacientes();
-    
-    // Setar valor padrão do mês atual
-    const hoje = new Date();
-    const mesAtual = hoje.toISOString().slice(0, 7);
-    const finMesFiltro = document.getElementById('finMesFiltro');
-    const relatorioMes = document.getElementById('relatorioMes');
-
-    if (finMesFiltro) finMesFiltro.value = mesAtual;
-    if (relatorioMes) relatorioMes.value = mesAtual;
-    
-    const finMesFiltroElement = document.getElementById('finMesFiltro');
-    if (finMesFiltroElement) {
-        finMesFiltroElement.addEventListener('change', () => {
-            carregarFinanceiro(finMesFiltroElement.value, document.getElementById('finClinicaFiltro').value)
-                .then(() => renderFinanceiro());
-        });
-    }
-
-    const finClinicaFiltroElement = document.getElementById('finClinicaFiltro');
-    if (finClinicaFiltroElement) {
-        finClinicaFiltroElement.addEventListener('change', () => {
-            carregarFinanceiro(document.getElementById('finMesFiltro').value, finClinicaFiltroElement.value)
-                .then(() => renderFinanceiro());
-        });
-    }
-    
-    const filtroNomeElement = document.getElementById('filtroNome');
-    if (filtroNomeElement) filtroNomeElement.addEventListener('input', renderAgenda);
-    
-    const filtroPacoteElement = document.getElementById('filtroPacote');
-    if (filtroPacoteElement) filtroPacoteElement.addEventListener('change', renderAgenda);
-    
-    const filtroStatusElement = document.getElementById('filtroStatus');
-    if (filtroStatusElement) filtroStatusElement.addEventListener('change', renderAgenda);
-    
-    const filtroUnidadeElement = document.getElementById('filtroUnidade');
-    if (filtroUnidadeElement) filtroUnidadeElement.addEventListener('change', renderAgenda);
-    
-    const buscaPacienteElement = document.getElementById('buscaPaciente');
-    if (buscaPacienteElement) buscaPacienteElement.addEventListener('input', renderPacientes);
-    
-    const pacNascElement = document.getElementById('pacNasc');
-    if (pacNascElement) {
-        pacNascElement.addEventListener('change', function() {
-            let idade = calcularIdade(this.value);
-            document.getElementById('respSec').classList.toggle('d-none', idade >= 18);
-            document.getElementById('emergSec').classList.toggle('d-none', idade < 18);
-        });
-    }
-    
-    aplicarRegraExcecao();
-
-    // Ativar a aba inicial após a inicialização completa
-    irParaAba(moduloInicial);
 }
 
 function renderDashboardSummaries() {
@@ -1412,7 +1353,10 @@ function renderPacientes() {
             <td>${p.telefone}</td>
             <td>${calcularIdade(p.data_nascimento)}</td>
             <td>
-                ${podeEditar ? `<button class="btn btn-sm btn-outline" onclick="editarPaciente('${p.id}')"><i class="bi bi-pencil"></i></button>` : ''}
+                ${podeEditar ? `<button class="btn btn-sm btn-outline" onclick="editarPaciente('${p.id}')" title="Editar"><i class="bi bi-pencil"></i></button>` : ''}
+                <button class="btn btn-sm btn-outline-primary" onclick="irParaProntuarioPaciente('${p.id}', '${(p.nome || '').replace(/'/g, "\\'")}')" title="Abrir prontuário">
+                    <i class="bi bi-journal-medical"></i>
+                </button>
                 ${podeExcluir ? `<button class="btn btn-sm btn-outline text-danger" onclick="excluirPaciente('${p.id}')"><i class="bi bi-trash"></i></button>` : ''}
             </td>
         </tr>`;
@@ -1428,7 +1372,7 @@ async function editarPaciente(id) {
     document.getElementById('pacId').value = p.id;
     document.getElementById('pacNome').value = p.nome;
     document.getElementById('pacCpf').value = p.cpf || '';
-    document.getElementById('pacNasc').value = p.data_nascimento;
+    document.getElementById('pacNasc').value = formataDataISO(p.data_nascimento);
     document.getElementById('pacTel').value = p.telefone;
     document.getElementById('pacEmail').value = p.email || '';
     document.getElementById('pacEnd').value = p.endereco || '';
@@ -1470,6 +1414,8 @@ function resetPacienteForm() {
     document.getElementById('pacId').value = '';
     document.getElementById('respSec').classList.add('d-none');
     document.getElementById('emergSec').classList.remove('d-none');
+    const btnArq = document.getElementById('btnArquivosPaciente');
+    if (btnArq) btnArq.classList.add('d-none');
 }
 
 document.getElementById('pacienteForm').addEventListener('submit', async (e) => {
@@ -1606,7 +1552,7 @@ function renderAgenda(dadosCustom = null) {
             <td>
                 <div class="d-flex gap-1">
                     ${podeVerProntuario ? `
-                        <button class="btn btn-sm btn-outline-primary" onclick="abrirProntuario('${idAtend}')" title="Prontuário">
+                        <button class="btn btn-sm btn-outline-primary" onclick="carregarProntuarioNoModulo('${idAtend}')" title="Prontuário">
                             <i class="bi bi-journal-text"></i>
                         </button>
                     ` : ''}
@@ -1667,7 +1613,8 @@ document.getElementById('atendimentoForm').addEventListener('submit', async (e) 
         tipo_pacote: tipoPacote,
         data_inicio_pacote: formataDataISO(dataInicioPacote),
         status: status,
-        unidade: unidade
+        unidade: unidade,
+        evolucao: document.getElementById('atenEvolucao')?.value?.trim() || ''
     };
     
     const success = await salvarAtendimento(novo);
@@ -2269,21 +2216,31 @@ async function importarExcel(event, restaurar) {
         let wb = XLSX.read(e.target.result, { type: 'array' });
         let novosPacientes = [], novosAtendimentos = [], novosFinanceiro = [], novosDespesas = [];
         
+        const pacientesIncompletos = [];
+
         wb.SheetNames.forEach(nome => {
             let sheet = wb.Sheets[nome];
             let data = XLSX.utils.sheet_to_json(sheet);
             
             if (nome.toLowerCase().includes('paciente')) {
-                novosPacientes = data.map(p => ({
-                    id: p['ID'] || p['id'] || gerarId('P'),
-                    nome: p['Nome'] || p['nome'] || '',
-                    cpf: p['CPF'] || p['cpf'] || '',
-                    data_nascimento: converterDataBR(p['Nascimento'] || p['data_nascimento'] || p['data_nasc'] || ''),
-                    telefone: p['Telefone'] || p['telefone'] || '',
-                    email: p['Email'] || p['email'] || '',
-                    endereco: p['Endereço'] || p['endereco'] || '',
-                    ativo: true
-                }));
+                novosPacientes = data.map((p, idx) => {
+                    const nascimento = converterDataBR(p['Nascimento'] || p['data_nascimento'] || p['data_nasc'] || '');
+                    const nomePac = p['Nome'] || p['nome'] || `Paciente sem nome #${idx + 1}`;
+                    if (!nascimento) {
+                        pacientesIncompletos.push(`${nomePac} (linha ${idx + 2} da planilha)`);
+                    }
+
+                    return {
+                        id: null,
+                        nome: nomePac,
+                        cpf: p['CPF'] || p['cpf'] || '',
+                        data_nascimento: nascimento,
+                        telefone: p['Telefone'] || p['telefone'] || '',
+                        email: p['Email'] || p['email'] || '',
+                        endereco: p['Endereço'] || p['endereco'] || '',
+                        ativo: true
+                    };
+                });
             }
             else if (nome.toLowerCase().includes('agenda')) {
                 novosAtendimentos = data.map(a => ({
@@ -2328,11 +2285,20 @@ async function importarExcel(event, restaurar) {
         });
         
         try {
+            if (pacientesIncompletos.length > 0) {
+                mostrarToast(`Atenção: ${pacientesIncompletos.length} paciente(s) sem data de nascimento. Verifique o log.`, 'warning');
+                console.warn('Pacientes com dados incompletos (data de nascimento ausente):', pacientesIncompletos);
+                alert('Foram encontrados pacientes sem data de nascimento na importação.\n\nConfira o console (F12) para detalhes e corrija a planilha.');
+            }
+
             // 1. Criar Mapa de Pacientes (Nome -> ID)
             const pacienteMapa = new Map();
             
             // Salvar pacientes no banco
             for (const paciente of novosPacientes) {
+                if (!paciente.data_nascimento) {
+                    continue;
+                }
                 try {
                     const result = await apiRequest('pacientes.php', 'POST', paciente);
                     if (result.success) {
@@ -2510,6 +2476,13 @@ function initTabListeners() {
             atualizarSelectPacientes();
         });
     }
+
+    const prontuarioTab = document.querySelector('[data-bs-target="#prontuario"]');
+    if (prontuarioTab) {
+        prontuarioTab.addEventListener('shown.bs.tab', function() {
+            renderProntuarioLista();
+        });
+    }
 }
 
 // ====================== RELATÓRIOS ======================
@@ -2525,14 +2498,16 @@ async function carregarRelatorioAtendimentos() {
         const response = await fetch(`api/atendimentos.php?${params}`);
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.data) {
+            const atendimentos = data.data.atendimentos || [];
+            const resumo = data.data.resumo || { total_atendimentos: 0, total_faltas: 0 };
             const tbody = document.querySelector('#relatorioAtendimentosTable tbody');
             if (tbody) {
-                if (data.atendimentos.length === 0) {
+                if (atendimentos.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">Nenhum atendimento encontrado</td></tr>';
                 } else {
                     tbody.innerHTML = '';
-                    data.atendimentos.forEach(atendimento => {
+                    atendimentos.forEach(atendimento => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
                             <td>${atendimento.paciente_nome}</td>
@@ -2550,8 +2525,8 @@ async function carregarRelatorioAtendimentos() {
             
             const totalEl = document.getElementById('totalAtendimentos');
             const faltasEl = document.getElementById('totalFaltas');
-            if (totalEl) totalEl.textContent = data.resumo.total_atendimentos || 0;
-            if (faltasEl) faltasEl.textContent = data.resumo.total_faltas || 0;
+            if (totalEl) totalEl.textContent = resumo.total_atendimentos || 0;
+            if (faltasEl) faltasEl.textContent = resumo.total_faltas || 0;
         }
     } catch (error) {
         console.error('Erro ao carregar relatório de atendimentos:', error);
@@ -2649,6 +2624,176 @@ async function gerarRelatorios() {
     await carregarRelatorioFinanceiro();
     await carregarRelatorioPacientes();
     mostrarToast('Relatórios gerados com sucesso');
+}
+
+async function renderProntuarioLista() {
+    const normalizar = (txt) => (txt || '')
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    const termo = normalizar(document.getElementById('prontuarioBusca')?.value || '');
+    const tbody = document.getElementById('prontuarioTbody');
+    if (!tbody) return;
+
+    const podeVerProntuario = ['admin', 'terapeuta'].includes(usuarioLogado?.tipo);
+    if (!podeVerProntuario) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Sem permissão para visualizar prontuário.</td></tr>';
+        return;
+    }
+
+    if (!dados.pacientes || dados.pacientes.length === 0) {
+        await carregarPacientes();
+    }
+    if (!dados.atendimentos || dados.atendimentos.length === 0) {
+        await carregarAtendimentos();
+    }
+
+    const pacientePorId = new Map((dados.pacientes || []).map(p => [String(p.id).trim(), p]));
+
+    const itens = [...dados.atendimentos]
+        .filter(a => {
+            const paciente = pacientePorId.get(String(a.paciente_id).trim()) || {};
+            const nome = normalizar(a.paciente_nome || paciente.nome || '');
+            const pacienteId = normalizar(a.paciente_id || '');
+            const atendimentoId = normalizar(a.id_atendimento || '');
+            const cpf = normalizar(paciente.cpf || '');
+            const telefone = normalizar(paciente.telefone || '');
+            if (!termo) return true;
+            return nome.includes(termo)
+                || pacienteId.includes(termo)
+                || atendimentoId.includes(termo)
+                || cpf.includes(termo)
+                || telefone.includes(termo);
+        })
+        .sort((a, b) => new Date(formataDataISO(b.data_atendimento)) - new Date(formataDataISO(a.data_atendimento)));
+
+    tbody.innerHTML = itens.map(a => `
+        <tr>
+            <td>${a.paciente_nome || ''}</td>
+            <td>${a.data_atendimento || ''}</td>
+            <td><span class="badge-custom badge-info">${a.status || '-'}</span></td>
+            <td><button class="btn btn-sm btn-outline-primary" onclick="carregarProntuarioNoModulo('${a.id_atendimento}')"><i class="bi bi-pencil-square"></i></button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" class="text-center py-3 text-muted">Nenhum atendimento encontrado.</td></tr>';
+}
+
+async function irParaProntuarioPaciente(pacienteId, pacienteNome = '') {
+    irParaAba('prontuario');
+
+    const campoBusca = document.getElementById('prontuarioBusca');
+    if (campoBusca) {
+        campoBusca.value = pacienteId || pacienteNome || '';
+    }
+
+    await renderProntuarioLista();
+
+    const atendimentosPaciente = (dados.atendimentos || [])
+        .filter(a => String(a.paciente_id).trim() === String(pacienteId).trim())
+        .sort((a, b) => new Date(formataDataISO(b.data_atendimento)) - new Date(formataDataISO(a.data_atendimento)));
+
+    if (atendimentosPaciente.length > 0) {
+        await carregarProntuarioNoModulo(atendimentosPaciente[0].id_atendimento);
+    } else {
+        mostrarToast('Paciente sem sessões registradas para prontuário', 'warning');
+    }
+}
+
+async function carregarProntuarioNoModulo(id) {
+    try {
+        irParaAba('prontuario');
+        const result = await apiRequest(`atendimentos.php?id=${id}`);
+        if (!result.success) return;
+
+        const aten = result.data.atendimento;
+        document.getElementById('prontuarioAtendimentoId').value = id;
+        document.getElementById('prontuarioPaciente').value = aten.paciente_nome || '';
+        document.getElementById('prontuarioData').value = aten.data_atendimento || '';
+        document.getElementById('prontuarioEvolucao').value = aten.evolucao || '';
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function aplicarFiltroTipoRelatorio() {
+    const tipo = document.getElementById('relatorioTipo')?.value || 'todos';
+
+    const blocoAtend = document.getElementById('blocoRelAtendimentos');
+    const blocoFin = document.getElementById('blocoRelFinanceiro');
+    const blocoPac = document.getElementById('blocoRelPacientes');
+
+    const visivel = (bloco, ok) => {
+        if (!bloco) return;
+        bloco.style.display = ok ? '' : 'none';
+    };
+
+    visivel(blocoAtend, tipo === 'todos' || tipo === 'atendimentos');
+    visivel(blocoFin, tipo === 'todos' || tipo === 'financeiro');
+    visivel(blocoPac, tipo === 'todos' || tipo === 'pacientes');
+}
+
+function exportarRelatorioExcel() {
+    const tipo = document.getElementById('relatorioTipo')?.value || 'todos';
+    const wb = XLSX.utils.book_new();
+
+    if (tipo === 'todos' || tipo === 'atendimentos') {
+        const dadosAt = dados.atendimentos.map(a => ({
+            ID: a.id_atendimento,
+            Paciente: a.paciente_nome,
+            Data: a.data_atendimento,
+            Pacote: a.tipo_pacote,
+            Status: a.status,
+            Unidade: a.unidade,
+            Evolucao: a.evolucao || ''
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dadosAt), 'Atendimentos');
+    }
+
+    if (tipo === 'todos' || tipo === 'financeiro') {
+        const dadosFin = dados.financeiro.map(f => ({
+            ID: f.id,
+            Paciente: f.paciente_nome,
+            Data: f.data,
+            Clinica: f.clinica,
+            Valor: f.valor,
+            Despesa: f.despesa_automatica,
+            Liquido: f.receita_disponivel,
+            Forma: f.forma_pagamento
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dadosFin), 'Financeiro');
+    }
+
+    if (tipo === 'todos' || tipo === 'pacientes') {
+        const dadosPac = dados.pacientes.map(p => ({
+            ID: p.id,
+            Nome: p.nome,
+            Telefone: p.telefone,
+            Email: p.email || '',
+            Ativo: p.ativo ? 'Sim' : 'Não'
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dadosPac), 'Pacientes');
+    }
+
+    if (!wb.SheetNames.length) {
+        mostrarToast('Sem dados para exportar', 'warning');
+        return;
+    }
+
+    const dataHora = new Date().toISOString().replace(/T/, '_').replace(/:/g, '-').slice(0, 19);
+    XLSX.writeFile(wb, `Relatorios_${tipo}_${dataHora}.xlsx`);
+    mostrarToast('Relatório em Excel exportado com sucesso');
+}
+
+async function salvarProntuarioModulo() {
+    const id = document.getElementById('prontuarioAtendimentoId')?.value;
+    if (!id) {
+        mostrarToast('Selecione uma sessão para editar', 'warning');
+        return;
+    }
+
+    await salvarEvolucaoProntuario(id);
 }
 
 function exportarRelatorioCSV() {
