@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mente Clara | Sistema Clínico de Psicologia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f4f8f6;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-card-soft: rgba(137, 178, 162, 0.08);
+      --bg-light: #fbf9f6;
+      --primary: #89b2a2;
+      --primary-2: #6a9585;
+      --secondary: #c9852a;
+      --success: #22a06b;
+      --warning: #d38b2f;
+      --danger: #cf5b5b;
+      --text: #2e3b35;
+      --text-soft: #7a8c86;
+      --text-dark: #1f2a25;
+      --border: rgba(106, 149, 133, 0.22);
+      --shadow: 0 20px 55px rgba(46, 59, 53, 0.14);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(137, 178, 162, 0.26), transparent 36%),
+        radial-gradient(circle at 85% 82%, rgba(201, 133, 42, 0.14), transparent 32%),
+        linear-gradient(145deg, #f8fbf9 0%, #f1f6f3 52%, #ecf2ef 100%);
+      overflow-x: hidden;
+    }
+
+    .page {
+      width: min(1720px, 100%);
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(740px, 1fr) 600px;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .dashboard-shell {
+      min-height: 640px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      overflow: hidden;
+      backdrop-filter: blur(22px);
+    }
+
+    .sidebar {
+      padding: 28px 20px;
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, #325347 0%, #243d34 100%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 34px;
+    }
+
+    .logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      position: relative;
+      box-shadow: 0 12px 28px rgba(106, 149, 133, 0.34);
+    }
+
+    .logo::before,
+    .logo::after {
+      content: "";
+      position: absolute;
+      border: 4px solid white;
+      border-top-color: transparent;
+      border-left-color: transparent;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      transform: rotate(45deg);
+      opacity: 0.92;
+    }
+
+    .logo::before { left: 9px; top: 12px; }
+    .logo::after { right: 9px; top: 12px; }
+
+    .brand h1 {
+      font-size: 23px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--text-soft);
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      color: #dbeafe;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: white;
+      box-shadow: 0 10px 24px rgba(36, 61, 52, 0.35);
+    }
+
+    .nav-icon {
+      width: 22px;
+      text-align: center;
+      font-size: 17px;
+    }
+
+    .profile-card {
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f7d8b1, #f1e2cb);
+      display: grid;
+      place-items: center;
+      color: #375347;
+      font-weight: 800;
+      position: relative;
+      flex: none;
+    }
+
+    .avatar::after {
+      content: "";
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--primary-2);
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      border: 2px solid #243d34;
+    }
+
+    .profile-card strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .profile-card span {
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .content {
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .topbar h2 {
+      font-size: 30px;
+      letter-spacing: -0.05em;
+    }
+
+    .topbar p {
+      color: var(--text-soft);
+      margin-top: 5px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pill,
+    .icon-btn {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--text);
+      border-radius: 14px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .icon-btn {
+      width: 44px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card,
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14);
+    }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .metric-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(137, 178, 162, 0.95), rgba(201, 133, 42, 0.55));
+      font-size: 20px;
+    }
+
+    .metric-card small {
+      color: var(--text-soft);
+      font-weight: 600;
+    }
+
+    .metric-card h3 {
+      font-size: 25px;
+      margin-bottom: 8px;
+      letter-spacing: -0.04em;
+    }
+
+    .up { color: var(--success); }
+    .warn { color: var(--warning); }
+    .danger { color: var(--danger); }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.9fr 0.78fr;
+      gap: 16px;
+    }
+
+    .panel h3 {
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    .chart-line {
+      height: 190px;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(137, 178, 162, 0.2), rgba(201, 133, 42, 0.06));
+      background-size: 100% 38px, 64px 100%, 100% 100%;
+    }
+
+    .chart-line svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .donut-wrap {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .donut {
+      width: 148px;
+      height: 148px;
+      border-radius: 50%;
+      background: conic-gradient(var(--primary) 0 38%, var(--primary-2) 38% 64%, #c9852a 64% 79%, #a9bbb4 79% 91%, #64748b 91% 100%);
+      display: grid;
+      place-items: center;
+      flex: none;
+    }
+
+    .donut::before {
+      content: "84\A Total";
+      white-space: pre;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #edf4f0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 800;
+      font-size: 22px;
+      line-height: 1.2;
+      color: #2e3b35;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: var(--primary-2);
+    }
+
+    .agenda-list,
+    .patient-list,
+    .notes-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .appointment,
+    .patient-row,
+    .note-row {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid rgba(137,178,162,0.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .appointment strong,
+    .patient-row strong,
+    .note-row strong {
+      font-size: 13px;
+      display: block;
+    }
+
+    .appointment span,
+    .patient-row span,
+    .note-row span {
+      color: var(--text-soft);
+      font-size: 11px;
+    }
+
+    .badge {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(137,178,162,0.18);
+      color: #3c5e52;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.purple {
+      background: rgba(201,133,42,0.2);
+      color: #8d5b1d;
+    }
+
+    .wide-panel {
+      grid-column: span 2;
+    }
+
+    .finance-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .mini-finance {
+      padding: 14px;
+      background: rgba(137,178,162,0.08);
+      border-radius: 15px;
+    }
+
+    .mini-finance span {
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .mini-finance strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 18px;
+    }
+
+    .wellbeing {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .mood {
+      padding: 14px;
+      border-radius: 15px;
+      background: rgba(137,178,162,0.08);
+    }
+
+    .mood .emoji {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .progress {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: var(--w);
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      border-radius: inherit;
+    }
+
+    .phones {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone {
+      width: 280px;
+      height: 590px;
+      border-radius: 42px;
+      border: 10px solid #111827;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      background: #203a31;
+      position: relative;
+    }
+
+    .phone.light {
+      background: #f8fbff;
+      color: var(--text-dark);
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92px;
+      height: 25px;
+      background: #020617;
+      border-radius: 999px;
+      z-index: 10;
+    }
+
+    .phone-screen {
+      padding: 42px 16px 18px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .mobile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .mobile-header h3 {
+      font-size: 18px;
+    }
+
+    .mobile-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .phone.light .mobile-card {
+      border-color: #e5e7eb;
+      background: white;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+    }
+
+    .schedule-item,
+    .expense-item {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 11px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 9px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .phone.light .expense-item {
+      background: #f8fafc;
+      border-left-color: transparent;
+    }
+
+    .schedule-item strong,
+    .expense-item strong {
+      font-size: 12px;
+      display: block;
+    }
+
+    .schedule-item span,
+    .expense-item span {
+      color: var(--text-soft);
+      font-size: 10px;
+    }
+
+    .expense-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      background: rgba(137,178,162,0.18);
+      display: grid;
+      place-items: center;
+      color: var(--primary);
+    }
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 66px;
+      background: rgba(255,255,255,0.06);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      font-size: 10px;
+      color: var(--text-soft);
+    }
+
+    .phone.light .bottom-nav {
+      background: white;
+      border-top-color: #e5e7eb;
+    }
+
+    .feature-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1.35fr;
+      gap: 18px;
+      margin-top: 26px;
+    }
+
+    .feature-card {
+      background: rgba(255,255,255,0.92);
+      color: var(--text-dark);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 24px 50px rgba(2, 8, 23, 0.18);
+      min-height: 150px;
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #315447;
+    }
+
+    .feature-card p,
+    .feature-card li {
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .feature-card ul {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .ai-bubble {
+      padding: 12px;
+      border-radius: 14px;
+      background: #eef5f1;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .ai-bubble.user {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: white;
+      margin-left: 34px;
+    }
+
+    .bars {
+      height: 100px;
+      display: flex;
+      align-items: end;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .bar {
+      flex: 1;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(180deg, var(--primary), var(--primary-2));
+      height: var(--h);
+    }
+
+    .benefits {
+      margin-top: 18px;
+      padding: 26px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, #315447 0%, #243d34 60%, #5d4a2c 100%);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 18px;
+    }
+
+    .benefit {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      border-right: 1px solid rgba(255,255,255,0.14);
+      padding-right: 12px;
+    }
+
+    .benefit:last-child {
+      border-right: none;
+    }
+
+    .benefit-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 17px;
+      flex: none;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      font-size: 22px;
+    }
+
+    .benefit strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .benefit span {
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1450px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .phones {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .page { padding: 16px; }
+      .dashboard-shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        display: none;
+      }
+      .metrics,
+      .dashboard-grid,
+      .feature-row,
+      .benefits,
+      .finance-cards,
+      .wellbeing {
+        grid-template-columns: 1fr;
+      }
+      .wide-panel { grid-column: span 1; }
+      .phones {
+        flex-direction: column;
+      }
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero-grid">
+      <div class="dashboard-shell">
+        <aside class="sidebar">
+          <div class="brand">
+            <div class="logo"></div>
+            <div>
+              <h1>Mente Clara</h1>
+              <span>Gestão clínica para psicologia</span>
+            </div>
+          </div>
+
+          <nav class="nav">
+            <div class="nav-item active"><span class="nav-icon">⌂</span>Dashboard</div>
+            <div class="nav-item"><span class="nav-icon">👥</span>Pacientes</div>
+            <div class="nav-item"><span class="nav-icon">📅</span>Agenda</div>
+            <div class="nav-item"><span class="nav-icon">♡</span>Sessões</div>
+            <div class="nav-item"><span class="nav-icon">📄</span>Prontuários</div>
+            <div class="nav-item"><span class="nav-icon">$</span>Financeiro</div>
+            <div class="nav-item"><span class="nav-icon">▣</span>Relatórios</div>
+            <div class="nav-item"><span class="nav-icon">✦</span>Assistente IA</div>
+            <div class="nav-item"><span class="nav-icon">⚙</span>Configurações</div>
+          </nav>
+
+          <div class="profile-card">
+            <div class="avatar">A</div>
+            <div>
+              <strong>Dra. Ana</strong>
+              <span>Psicóloga</span>
+            </div>
+          </div>
+        </aside>
+
+        <section class="content">
+          <header class="topbar">
+            <div>
+              <h2>Olá, Dra. Ana! 🌿</h2>
+              <p>Aqui está o resumo da sua clínica hoje.</p>
+            </div>
+            <div class="top-actions">
+              <div class="pill">Maio de 2026 📅</div>
+              <button class="icon-btn">🔔</button>
+              <button class="icon-btn">⚙</button>
+            </div>
+          </header>
+
+          <section class="metrics">
+            <article class="metric-card">
+              <div class="metric-top"><small>Sessões hoje</small><div class="metric-icon">👥</div></div>
+              <h3>12</h3>
+              <small class="up">↑ 20% vs ontem</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><small>Pacientes ativos</small><div class="metric-icon">🧑</div></div>
+              <h3>84</h3>
+              <small class="up">↑ 8% vs mês anterior</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><small>Receita do mês</small><div class="metric-icon">💵</div></div>
+              <h3>R$ 18.450,00</h3>
+              <small class="up">↑ 15% vs mês anterior</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><small>Próximos retornos</small><div class="metric-icon">📆</div></div>
+              <h3>9</h3>
+              <small>Nos próximos 7 dias</small>
+            </article>
+          </section>
+
+          <section class="dashboard-grid">
+            <article class="panel">
+              <h3>Evolução de atendimentos</h3>
+              <div class="chart-line">
+                <svg viewBox="0 0 500 190" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#89b2a2" stop-opacity="0.45" />
+                      <stop offset="1" stop-color="#89b2a2" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M25 150 L105 95 L185 118 L265 86 L345 66 L475 35 L475 190 L25 190 Z" fill="url(#area)" />
+                  <path d="M25 150 L105 95 L185 118 L265 86 L345 66 L475 35" fill="none" stroke="#6a9585" stroke-width="5" stroke-linecap="round" />
+                </svg>
+              </div>
+            </article>
+
+            <article class="panel">
+              <h3>Perfil dos pacientes</h3>
+              <div class="donut-wrap">
+                <div class="donut"></div>
+                <div class="legend">
+                  <div class="legend-row"><span><i class="dot"></i>Ansiedade</span><strong>38%</strong></div>
+                  <div class="legend-row"><span><i class="dot" style="background:#6a9585"></i>Depressão</span><strong>26%</strong></div>
+                  <div class="legend-row"><span><i class="dot" style="background:#c9852a"></i>Terapia de casal</span><strong>15%</strong></div>
+                  <div class="legend-row"><span><i class="dot" style="background:#a9bbb4"></i>Adolescente</span><strong>13%</strong></div>
+                  <div class="legend-row"><span><i class="dot" style="background:#64748b"></i>Outros</span><strong>8%</strong></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <h3>Próximos atendimentos</h3>
+              <div class="agenda-list">
+                <div class="appointment"><div><strong>Marina Souza</strong><span>Terapia individual</span></div><span class="badge">Presencial</span></div>
+                <div class="appointment"><div><strong>Carlos Mendes</strong><span>Terapia individual</span></div><span class="badge purple">Online</span></div>
+                <div class="appointment"><div><strong>Juliana Lima</strong><span>Terapia de casal</span></div><span class="badge">Presencial</span></div>
+              </div>
+            </article>
+
+            <article class="panel wide-panel">
+              <h3>Resumo financeiro</h3>
+              <div class="finance-cards">
+                <div class="mini-finance"><span>Recebido</span><strong>R$ 18.450,00</strong><small class="up">↑ 18%</small></div>
+                <div class="mini-finance"><span>A receber</span><strong>R$ 6.230,00</strong><small>Em aberto</small></div>
+                <div class="mini-finance"><span>Ticket médio</span><strong>R$ 210,80</strong><small>Por sessão</small></div>
+                <div class="mini-finance"><span>Cancelados</span><strong>4</strong><small class="danger">Esta semana</small></div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <h3>Bem-estar dos pacientes</h3>
+              <div class="wellbeing">
+                <div class="mood"><div class="emoji">🙂</div><strong>Em evolução</strong><div class="progress" style="--w:62%"><span></span></div></div>
+                <div class="mood"><div class="emoji">😐</div><strong>Estáveis</strong><div class="progress" style="--w:24%"><span></span></div></div>
+                <div class="mood"><div class="emoji">😟</div><strong>Atenção</strong><div class="progress" style="--w:10%"><span></span></div></div>
+                <div class="mood"><div class="emoji">🔴</div><strong>Em risco</strong><div class="progress" style="--w:4%"><span></span></div></div>
+              </div>
+            </article>
+          </section>
+        </section>
+      </div>
+
+      <div class="phones">
+        <article class="phone">
+          <div class="phone-screen">
+            <header class="mobile-header"><span>←</span><h3>Agenda</h3><span>☰</span></header>
+            <div class="mobile-card"><strong>Hoje, 15 de maio</strong><p style="color:var(--text-soft);font-size:12px;margin-top:5px;">Atendimentos programados</p></div>
+            <div class="schedule-item"><strong>09:00</strong><div><strong>Marina Souza</strong><span>Terapia individual</span></div><span class="badge">Presencial</span></div>
+            <div class="schedule-item" style="border-left-color:#c9852a"><strong>10:15</strong><div><strong>Rafael Alves</strong><span>Terapia individual</span></div><span class="badge purple">Online</span></div>
+            <div class="schedule-item"><strong>11:30</strong><div><strong>Beatriz Lima</strong><span>Avaliação psicológica</span></div><span class="badge">Presencial</span></div>
+            <div class="schedule-item" style="border-left-color:#c9852a"><strong>14:00</strong><div><strong>Carlos Mendes</strong><span>Terapia de casal</span></div><span class="badge purple">Online</span></div>
+            <div class="mobile-card"><strong>Mensagens e lembretes</strong><p style="color:var(--text-soft);font-size:12px;margin-top:8px;">Confirmação de consulta enviada para amanhã às 09:00.</p></div>
+            <div class="bottom-nav"><span>Agenda</span><span>Pacientes</span><span>Sessões</span><span>Mais</span></div>
+          </div>
+        </article>
+
+        <article class="phone light">
+          <div class="phone-screen">
+            <header class="mobile-header"><span>←</span><h3>Paciente</h3><span>⋮</span></header>
+            <div class="mobile-card">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="avatar">M</div>
+                <div><strong>Marina Souza</strong><p style="color:#64748b;font-size:12px;">28 anos • Feminino</p><span class="badge">Paciente ativa</span></div>
+              </div>
+            </div>
+            <div class="mobile-card"><strong>Humor e estado emocional</strong><p style="color:#64748b;font-size:12px;margin:8px 0;">Bem • Estável nas últimas semanas</p><div class="progress" style="--w:78%"><span></span></div></div>
+            <div class="mobile-card"><strong>Próximas sessões</strong><p style="color:#64748b;font-size:12px;margin-top:8px;">22/05/2026 • 09:00 • Presencial</p><p style="color:#64748b;font-size:12px;margin-top:5px;">29/05/2026 • 09:00 • Online</p></div>
+            <div class="mobile-card"><strong>Notas resumidas</strong><p style="color:#64748b;font-size:12px;margin-top:8px;line-height:1.5;">Paciente apresenta melhora significativa na gestão da ansiedade e nos padrões de pensamento.</p></div>
+            <div class="bottom-nav"><span>Agenda</span><span>Pacientes</span><span>Sessões</span><span>Mais</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="feature-row">
+      <article class="feature-card">
+        <h3>Gestão de pacientes</h3>
+        <ul>
+          <li>Cadastro completo e organizado</li>
+          <li>Histórico clínico centralizado</li>
+          <li>Evolução contínua do paciente</li>
+        </ul>
+      </article>
+
+      <article class="feature-card">
+        <h3>Assistente Clínico IA</h3>
+        <div class="ai-bubble">Quais padrões você identificou nos atendimentos desta semana?</div>
+        <div class="ai-bubble user">Notei redução de sintomas de ansiedade em 62% dos pacientes.</div>
+        <p>Respostas baseadas em dados clínicos com ética e privacidade.</p>
+      </article>
+
+      <article class="feature-card">
+        <h3>Metas da clínica</h3>
+        <p>Taxa de retorno — 78%</p><div class="progress" style="--w:78%"><span></span></div>
+        <p style="margin-top:12px;">Ocupação da agenda — 72%</p><div class="progress" style="--w:72%"><span></span></div>
+        <p style="margin-top:12px;">Recebimentos do mês — 92%</p><div class="progress" style="--w:92%"><span></span></div>
+      </article>
+
+      <article class="feature-card">
+        <h3>Relatórios</h3>
+        <p>Sessões por semana</p>
+        <div class="bars">
+          <div class="bar" style="--h:70%"></div>
+          <div class="bar" style="--h:84%"></div>
+          <div class="bar" style="--h:62%"></div>
+          <div class="bar" style="--h:90%"></div>
+          <div class="bar" style="--h:76%"></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="benefits">
+      <div class="benefit"><div class="benefit-icon">📅</div><div><strong>Agenda inteligente</strong><span>Organize sua rotina e evite conflitos de horários.</span></div></div>
+      <div class="benefit"><div class="benefit-icon">🔒</div><div><strong>Prontuário seguro</strong><span>Dados protegidos com total confidencialidade.</span></div></div>
+      <div class="benefit"><div class="benefit-icon">💵</div><div><strong>Controle financeiro</strong><span>Recebimentos, pendências e relatórios na palma da mão.</span></div></div>
+      <div class="benefit"><div class="benefit-icon">📊</div><div><strong>Relatórios clínicos</strong><span>Indicadores para decisões mais assertivas.</span></div></div>
+      <div class="benefit"><div class="benefit-icon">✦</div><div><strong>Assistente com IA</strong><span>Insights para apoiar sua prática com responsabilidade.</span></div></div>
+      <div class="benefit"><div class="benefit-icon">♡</div><div><strong>Atendimento humanizado</strong><span>Mais tempo para cuidar dos seus pacientes.</span></div></div>
+    </section>
+  </main>
+</body>
+</html>
