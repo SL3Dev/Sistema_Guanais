@@ -557,6 +557,8 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .login-card {
@@ -573,6 +575,31 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
 @keyframes cardSlideUp {
     from { opacity:0; transform: translateY(12px); }
     to { opacity:1; transform: translateY(0); }
+}
+
+/* Pétalas flutuantes sutis - decoração discreta de fundo (opacidade baixa,
+   paleta índigo) para dar um toque orgânico sem competir com o conteúdo */
+.petal {
+    position: absolute;
+    border-radius: 0 60% 0 60%;
+    opacity: .18;
+    pointer-events: none;
+    animation: floatPetal linear infinite;
+}
+.petal-1 { width: 70px; height: 70px; background: #6366F1; top: 8%; left: 10%; animation-duration: 20s; animation-delay: 0s; }
+.petal-2 { width: 46px; height: 46px; background: #4F46E5; top: 68%; right: 8%; animation-duration: 24s; animation-delay: -6s; }
+.petal-3 { width: 34px; height: 34px; background: #818CF8; bottom: 18%; left: 16%; animation-duration: 17s; animation-delay: -3s; }
+.petal-4 { width: 56px; height: 56px; background: #4338CA; top: 38%; right: 22%; animation-duration: 22s; animation-delay: -10s; }
+
+@keyframes floatPetal {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); }
+    33%  { transform: translateY(-24px) rotate(90deg) scale(1.08); }
+    66%  { transform: translateY(12px) rotate(180deg) scale(.94); }
+    100% { transform: translateY(0) rotate(360deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .petal { animation: none !important; }
 }
 
 /* ====================== HEADER ====================== */
