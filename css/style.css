@@ -9,68 +9,70 @@
 
 /* ====================== CSS VARIABLES ====================== */
 :root {
-    /* Colors - Legacy Palette */
-    --verde:       #89b2a2;
-    --verde-escuro:#6a9585;
-    --verde-pale:  #e8f0ed;
-    --ouro:        #c9852a;
-    --ouro-light:  #f9c593;
-    --ouro-pale:   #fdf6ec;
-    --crema:       #fbf9f6;
-    --cinza-txt:   #2e3b35;
-    --cinza-muted: #7a8c86;
+    /* Colors - Slate & Índigo */
+    --verde:       #4F46E5;
+    --verde-escuro:#4338CA;
+    --verde-pale:  #EEF2FF;
+    --ouro:        #6366F1;
+    --ouro-light:  #818CF8;
+    --ouro-pale:   #EEF2FF;
+    --crema:       #F8FAFC;
+    --cinza-txt:   #0F172A;
+    --cinza-muted: #64748B;
     --branco:      #ffffff;
+    --color-warning: #D97706;
 
     /* Shadows */
-    --sombra-sm: 0 2px 8px rgba(46,59,53,.06);
-    --sombra-md: 0 8px 24px rgba(46,59,53,.08);
-    --sombra-lg: 0 20px 48px rgba(137,178,162,.18);
+    --sombra-sm: 0 1px 2px rgba(15,23,42,.04);
+    --sombra-md: 0 4px 12px rgba(15,23,42,.08);
+    --sombra-lg: 0 8px 30px rgba(15,23,42,.10);
 
     /* Radii */
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
 
     /* Fonts */
-    --font-body: 'DM Sans', sans-serif;
-    --font-display: 'DM Sans', sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-display: 'Inter', system-ui, -apple-system, sans-serif;
 
     /* Transitions */
-    --transition: all .25s cubic-bezier(.4,0,.2,1);
+    --transition: all .2s ease;
 
     /* Mapped Variables */
     --bg-body: var(--crema);
     --bg-surface: var(--branco);
     --text-primary: var(--cinza-txt);
     --text-secondary: var(--cinza-muted);
-    --border-light: #dce5e1;
+    --border-light: #E2E8F0;
 }
 
 /* Dark mode overrides - Paleta Verde Sálvia premium */
 body.dark {
-    --bg-body: #0C1418;
-    --bg-surface: #122027;
-    --text-primary: #F5F7F8;
+    --bg-body: #0B1220;
+    --bg-surface: #131B2C;
+    --text-primary: #F1F5F9;
     --text-secondary: #C7D2D7;
-    --border-light: #31424A;
-    --verde: #5EEAD4;
-    --verde-escuro: #2DD4BF;
-    --verde-pale: rgba(94, 234, 212, 0.12);
-    --ouro: #FBBF24;
-    --ouro-pale: rgba(251, 191, 36, 0.14);
-    --crema: #0C1418;
-    --cinza-txt: #F5F7F8;
+    --border-light: #24304A;
+    --verde: #6366F1;
+    --verde-escuro: #818CF8;
+    --verde-pale: rgba(99, 102, 241, 0.16);
+    --ouro: #A5B4FC;
+    --ouro-pale: rgba(165, 180, 252, 0.14);
+    --crema: #0B1220;
+    --cinza-txt: #F1F5F9;
     --cinza-muted: #A7B3B7;
-    --branco: #1A2B33;
-    --borda: #31424A;
+    --branco: #1A2338;
+    --borda: #24304A;
     --sombra-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
     --sombra-md: 0 12px 30px rgba(0, 0, 0, 0.42);
     --sombra-lg: 0 24px 50px rgba(0, 0, 0, 0.55);
+    --color-warning: #FBBF24;
 
     background:
-      radial-gradient(circle at 8% 10%, rgba(46, 211, 191, 0.16), transparent 35%),
-      radial-gradient(circle at 92% 0%, rgba(125, 211, 252, 0.13), transparent 30%),
-      linear-gradient(160deg, #081015 0%, #0C1418 48%, #0A1116 100%);
+      radial-gradient(circle at 8% 10%, rgba(99, 102, 241, 0.16), transparent 35%),
+      radial-gradient(circle at 92% 0%, rgba(129, 140, 248, 0.13), transparent 30%),
+      linear-gradient(160deg, #070B14 0%, #0B1220 48%, #090D18 100%);
 }
 
 body.dark .app-header {
