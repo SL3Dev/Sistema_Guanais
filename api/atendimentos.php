@@ -25,6 +25,10 @@ function psicologaVinculadaAoPaciente($db, $pacienteId) {
 }
 
 function bloquearProntuarioSemVinculo($db, $pacienteId) {
+    // Admin tem acesso total, como em todo o restante do sistema
+    if (isset($_SESSION['tipo']) && $_SESSION['tipo'] === 'admin') {
+        return;
+    }
     if (!usuarioEhPsicologa() || !psicologaVinculadaAoPaciente($db, $pacienteId)) {
         errorResponse('Acesso ao prontuário negado', 403);
     }
@@ -109,17 +113,18 @@ switch ($method) {
             $atendimentos = $stmt->fetchAll();
             
             // Formatar dados e controlar visibilidade da evolução
+            $ehAdmin = isset($_SESSION['tipo']) && $_SESSION['tipo'] === 'admin';
             $podeVerEvolucaoGeral = usuarioEhPsicologa();
-            
+
             foreach ($atendimentos as &$atendimento) {
                 $atendimento['data_atendimento'] = formatDateToBR($atendimento['data_atendimento']);
                 $atendimento['data_inicio_pacote'] = formatDateToBR($atendimento['data_inicio_pacote']);
-                
-                $podeVerEvolucao = $podeVerEvolucaoGeral
-                    && !empty($atendimento['psicologa_responsavel_id'])
-                    && intval($atendimento['psicologa_responsavel_id']) === intval($_SESSION['user_id'] ?? 0);
 
-                // Somente a psicóloga vinculada pode visualizar evolução/prontuário
+                $podeVerEvolucao = $ehAdmin || ($podeVerEvolucaoGeral
+                    && !empty($atendimento['psicologa_responsavel_id'])
+                    && intval($atendimento['psicologa_responsavel_id']) === intval($_SESSION['user_id'] ?? 0));
+
+                // Somente a psicóloga vinculada (ou o admin) pode visualizar evolução/prontuário
                 if (!$podeVerEvolucao) {
                     unset($atendimento['evolucao']);
                 }

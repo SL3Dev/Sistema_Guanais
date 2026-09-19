@@ -104,6 +104,26 @@ try {
         }
     }
 
+    // 2.1 Criar tabela de anexos de pacientes (se não existir)
+    $stmt = $db->query("SHOW TABLES LIKE 'pacientes_arquivos'");
+    if ($stmt->rowCount() == 0) {
+        $db->exec("
+            CREATE TABLE pacientes_arquivos (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                paciente_id VARCHAR(20) NOT NULL,
+                nome_original VARCHAR(255) NOT NULL,
+                nome_arquivo VARCHAR(255) NOT NULL,
+                caminho VARCHAR(500) NOT NULL,
+                tipo_arquivo VARCHAR(100) NOT NULL,
+                tamanho INT NOT NULL,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                INDEX idx_pacientes_arquivos_paciente (paciente_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+        $updates[] = "Criada tabela 'pacientes_arquivos'.";
+    }
+
     // 3. Adicionar colunas despesa_automatica e receita_disponivel à tabela financeiro (se não existirem)
     $stmt = $db->query("SHOW COLUMNS FROM financeiro LIKE 'despesa_automatica'");
     if ($stmt->rowCount() == 0) {

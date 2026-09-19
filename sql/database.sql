@@ -180,6 +180,22 @@ CREATE TABLE IF NOT EXISTS despesas (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
+-- Tabela de anexos de pacientes (fotos, documentos)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS pacientes_arquivos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    paciente_id VARCHAR(20) NOT NULL,
+    nome_original VARCHAR(255) NOT NULL,
+    nome_arquivo VARCHAR(255) NOT NULL,
+    caminho VARCHAR(500) NOT NULL,
+    tipo_arquivo VARCHAR(100) NOT NULL,
+    tamanho INT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX idx_pacientes_arquivos_paciente (paciente_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------
 -- Views
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW vw_resumo_financeiro AS

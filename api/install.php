@@ -252,7 +252,24 @@ header('Content-Type: text/html; charset=utf-8');
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ");
             echo "<div class='alert alert-success'>✅ Tabela 'despesas' criada.</div>";
-            
+
+            // Tabela de anexos de pacientes
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS pacientes_arquivos (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    paciente_id VARCHAR(20) NOT NULL,
+                    nome_original VARCHAR(255) NOT NULL,
+                    nome_arquivo VARCHAR(255) NOT NULL,
+                    caminho VARCHAR(500) NOT NULL,
+                    tipo_arquivo VARCHAR(100) NOT NULL,
+                    tamanho INT NOT NULL,
+                    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                    INDEX idx_pacientes_arquivos_paciente (paciente_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+            echo "<div class='alert alert-success'>✅ Tabela 'pacientes_arquivos' criada.</div>";
+
             // Criar usuário admin com senha hash correta
             $senhaAdmin = '0301';
             $senhaHash = password_hash($senhaAdmin, PASSWORD_DEFAULT);
