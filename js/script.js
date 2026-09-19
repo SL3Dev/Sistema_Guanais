@@ -28,8 +28,12 @@ function animarContador(el, valorFinal, opcoes = {}) {
     const duracao = opcoes.duracao || 600;
     const formatar = opcoes.formatar || (v => Math.round(v).toLocaleString('pt-BR'));
 
+    // Garante o valor final correto mesmo se requestAnimationFrame nunca disparar
+    // (aba em segundo plano, navegador que pausa rAF, etc.) - a animação, quando
+    // roda, sobrescreve isso rapidamente com a contagem visual.
+    el.textContent = formatar(valorFinal);
+
     if (prefereReduzirMovimento()) {
-        el.textContent = formatar(valorFinal);
         return;
     }
 
@@ -292,7 +296,7 @@ function obterResumoFaturamento6Meses() {
         labels.push(meses[ref.getMonth()]);
 
         const totalMes = (dados.financeiro || [])
-            .filter(f => (f.data || '').startsWith(key))
+            .filter(f => formataDataISO(f.data || '').startsWith(key))
             .reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
         valores.push(Number(totalMes.toFixed(2)));
     }
@@ -1527,7 +1531,86 @@ function irParaAba(tabId) {
     }
 }
 
+// ====================== SPARKLINES DOS CARDS DO DASHBOARD ======================
+// (inspirado nos "stats cards" com mini-gráfico do catálogo 21st.dev, recriado
+// em SVG puro - sem framer-motion/React, só CSS pra animação de "desenhar a linha")
+
+function ultimos7DiasISO() {
+    const dias = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dias.push(d.toISOString().slice(0, 10));
+    }
+    return dias;
+}
+
+function sparklineSessoesUltimos7Dias() {
+    return ultimos7DiasISO().map(dia =>
+        (dados.atendimentos || []).filter(a => formataDataISO(a.data_atendimento) === dia).length
+    );
+}
+
+function sparklineConfirmadosUltimos7Dias() {
+    return ultimos7DiasISO().map(dia =>
+        (dados.atendimentos || []).filter(a => formataDataISO(a.data_atendimento) === dia && a.status === 'Confirmado').length
+    );
+}
+
+function sparklinePacientesNovosUltimos7Dias() {
+    return ultimos7DiasISO().map(dia =>
+        (dados.pacientes || []).filter(p => (p.criado_em || '').slice(0, 10) === dia).length
+    );
+}
+
+function desenharSparkline(svgId, valores, cor) {
+    const svg = document.getElementById(svgId);
+    if (!svg || !valores || valores.length === 0) return;
+
+    const max = Math.max(...valores, 1);
+    const min = Math.min(...valores, 0);
+    const range = (max - min) || 1;
+    const stepX = 100 / Math.max(valores.length - 1, 1);
+
+    const pontos = valores.map((v, i) => {
+        const x = i * stepX;
+        const y = 27 - ((v - min) / range) * 24;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    svg.innerHTML = `<polyline class="sparkline-linha" points="${pontos}" stroke="${cor}"/>`;
+}
+
+function atualizarSparklinesDashboard() {
+    desenharSparkline('sparkSessoesHoje', sparklineSessoesUltimos7Dias(), '#4F46E5');
+    desenharSparkline('sparkPacientesAtivos', sparklinePacientesNovosUltimos7Dias(), '#0EA5E9');
+    desenharSparkline('sparkStatusResumo', sparklineConfirmadosUltimos7Dias(), '#16A34A');
+    desenharSparkline('sparkResumoFinanceiro', obterResumoFaturamento6Meses().valores, '#D97706');
+}
+
 function renderDashboardSummaries() {
+    atualizarSparklinesDashboard();
+
+    // 0. Cards de topo (Sessões Hoje / Pacientes Ativos / Status Sessões / Resumo Financeiro)
+    const hojeStr = new Date().toISOString().slice(0, 10);
+    const atendHoje = (dados.atendimentos || []).filter(a => formataDataISO(a.data_atendimento) === hojeStr);
+    const statusResumo = obterResumoStatusSessao();
+
+    const elSessoes = document.getElementById('dashSessoesHoje');
+    const elPacAtivos = document.getElementById('dashPacientesAtivos');
+    const elStatus = document.getElementById('dashStatusResumo');
+    const elFin = document.getElementById('dashResumoFinanceiro');
+
+    if (elSessoes) animarContador(elSessoes, atendHoje.length);
+    if (elPacAtivos) animarContador(elPacAtivos, (dados.pacientes || []).filter(p => p.ativo != 0).length);
+    if (elStatus) elStatus.textContent = `${statusResumo.confirmado}/${(dados.atendimentos || []).length || 0}`;
+    if (elFin) {
+        const total = (dados.financeiro || []).reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
+        animarContador(elFin, total, {
+            formatar: v => `R$ ${Math.round(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+        });
+    }
+
     // 1. Próximos Atendimentos
     const proximosDiv = document.getElementById('dashboardProximos');
     if (proximosDiv) {
@@ -1557,7 +1640,7 @@ function renderDashboardSummaries() {
     const finResumoDiv = document.getElementById('dashboardFinResumo');
     if (finResumoDiv) {
         const mesAtual = new Date().toISOString().slice(0, 7);
-        const lancamentosMes = (dados.financeiro || []).filter(f => f.data && f.data.startsWith(mesAtual));
+        const lancamentosMes = (dados.financeiro || []).filter(f => f.data && formataDataISO(f.data).startsWith(mesAtual));
         
         const totalBruto = lancamentosMes.reduce((acc, curr) => acc + parseFloat(curr.valor || 0), 0);
         const totalLiquido = lancamentosMes.reduce((acc, curr) => acc + parseFloat(curr.receita_disponivel || 0), 0);
@@ -2621,25 +2704,6 @@ async function preencherPacoteAutomatico(pacienteId) {
         
         htmlInfo += `</div></div>`;
         infoPacienteDiv.innerHTML = htmlInfo;
-    }
-
-    const hojeStr = new Date().toISOString().slice(0, 10);
-    const atendHoje = (dados.atendimentos || []).filter(a => formataDataISO(a.data_atendimento) === hojeStr);
-    const statusResumo = obterResumoStatusSessao();
-
-    const elSessoes = document.getElementById('dashSessoesHoje');
-    const elPacAtivos = document.getElementById('dashPacientesAtivos');
-    const elStatus = document.getElementById('dashStatusResumo');
-    const elFin = document.getElementById('dashResumoFinanceiro');
-
-    if (elSessoes) animarContador(elSessoes, atendHoje.length);
-    if (elPacAtivos) animarContador(elPacAtivos, (dados.pacientes || []).filter(p => p.ativo != 0).length);
-    if (elStatus) elStatus.textContent = `${statusResumo.confirmado}/${(dados.atendimentos || []).length || 0}`;
-    if (elFin) {
-        const total = (dados.financeiro || []).reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
-        animarContador(elFin, total, {
-            formatar: v => `R$ ${Math.round(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
-        });
     }
 }
 
