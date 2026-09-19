@@ -3406,6 +3406,17 @@ function exportarRelatorioCSV() {
     exportarRelatorio('pacientes');
 }
 
+// Exporta o relatório atual em PDF usando a função de impressão do navegador
+// (sem depender de nenhuma biblioteca de PDF) - o cabeçalho/sidebar/filtros
+// somem via CSS de impressão (.d-print-none), deixando só o conteúdo do relatório.
+function exportarRelatorioPDF() {
+    const dataGeracao = document.getElementById('printDataGeracao');
+    if (dataGeracao) {
+        dataGeracao.textContent = new Date().toLocaleString('pt-BR');
+    }
+    window.print();
+}
+
 function exportarRelatorio(tipo) {
     let dadosExport = [];
     let nomeArquivo = '';

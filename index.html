@@ -68,7 +68,7 @@
 <!-- SISTEMA PRINCIPAL -->
 <div id="appScreen" style="display: none;">
     <!-- Header -->
-    <header class="app-header d-flex justify-content-between align-items-center flex-wrap">
+    <header class="app-header d-flex justify-content-between align-items-center flex-wrap d-print-none">
         <div class="d-flex align-items-center gap-3">
             <div id="headerLogoContainer" class="d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: var(--verde-pale); border-radius: 12px; overflow: hidden;">
                 <i id="headerLogoIcon" class="ph ph-leaf" style="font-size: 1.25rem; color: var(--verde);"></i>
@@ -114,7 +114,7 @@
     <!-- Conteúdo Principal -->
     <div class="container-fluid px-3 px-md-4 py-4">
         <!-- Navegação por Abas -->
-        <ul class="nav nav-tabs border-0 gap-2 mb-4 flex-wrap" id="mainTab" role="tablist">
+        <ul class="nav nav-tabs border-0 gap-2 mb-4 flex-wrap d-print-none" id="mainTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" title="Dashboard">
                     <i class="ph ph-house"></i><span class="nav-label"> Dashboard</span>
@@ -792,9 +792,15 @@
 
             <!-- RELATÓRIOS -->
             <div class="tab-pane fade" id="relatorios" role="tabpanel">
+                <!-- Cabeçalho exibido só na impressão/PDF -->
+                <div class="d-none d-print-block mb-4">
+                    <h3 class="mb-1">Espaço Guanais</h3>
+                    <p class="text-muted mb-0">Relatório gerado em <span id="printDataGeracao"></span></p>
+                    <hr>
+                </div>
                 <div class="row g-4">
                     <!-- Filtros de Relatório -->
-                    <div class="col-12">
+                    <div class="col-12 d-print-none">
                         <div class="caixa-guanais">
                             <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-funnel me-2"></i>Filtros de Relatórios</h5>
                             <div class="row g-3">
@@ -834,6 +840,9 @@
                                     </button>
                                     <button class="btn btn-outline-success" onclick="exportarRelatorioExcel()" title="Exportar Excel">
                                         <i class="bi bi-file-earmark-excel"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="exportarRelatorioPDF()" title="Exportar PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i>
                                     </button>
                                 </div>
                             </div>
@@ -1483,7 +1492,7 @@
 </div>
 
 <!-- PALETA DE COMANDO (Ctrl+K / Cmd+K) -->
-<div id="commandPalette" class="command-palette-overlay" style="display:none;" onclick="if(event.target===this) fecharPaleta()">
+<div id="commandPalette" class="command-palette-overlay d-print-none" style="display:none;" onclick="if(event.target===this) fecharPaleta()">
     <div class="command-palette-box">
         <div class="command-palette-input-wrap">
             <i class="ph ph-magnifying-glass"></i>
@@ -1494,7 +1503,7 @@
     </div>
 </div>
 
-<div id="toast-container"></div>
+<div id="toast-container" class="d-print-none"></div>
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>

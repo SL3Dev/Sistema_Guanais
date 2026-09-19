@@ -491,6 +491,28 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
 
 body.dark .command-palette-overlay { background: rgba(0,0,0,.6); }
 
+/* ====================== IMPRESSÃO / EXPORTAR PDF ====================== */
+@media print {
+    body { background: #fff !important; }
+    #appScreen { background: #fff !important; }
+    #appScreen .container-fluid { display: block !important; }
+    #mainTabContent .tab-pane {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+    .card, .card-modern, .dash-card, .table-wrap, .caixa-guanais {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+    .table-custom th {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
 /* ====================== LOGIN SCREEN ====================== */
 .login-container {
     min-height: 100vh;
