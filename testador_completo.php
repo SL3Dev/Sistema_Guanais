@@ -84,7 +84,7 @@ function addResult(string $mod, string $step, bool $success, array $r): void {
         'etapa' => $step,
         'ok' => $success,
         'http' => $r['http'] ?? 0,
-        'mensagem' => $r['json']['message'] ?? ($r['curl_error'] ?: 'sem mensagem')
+        'mensagem' => $r['json']['message'] ?? $r['json']['error'] ?? ($r['curl_error'] ?: 'sem mensagem')
     ];
     $icon = $success ? '✅' : '❌';
     out("$icon [$mod] $step (HTTP " . ($r['http'] ?? '?') . ") - " . ($r['json']['message'] ?? '')); 
@@ -102,6 +102,55 @@ function createTempPng(string $name): string {
 function endpoint(string $file, string $query = ''): string {
     global $baseUrl;
     return $baseUrl . '/' . $file . ($query ? ('?' . $query) : '');
+}
+
+// Requisição SEM cookie de sessão - simula um visitante não autenticado
+function reqAnon(string $method, string $url, array $opt = []): array {
+    $ch = curl_init($url);
+    $headers = $opt['headers'] ?? [];
+    $payload = $opt['json'] ?? null;
+    $form = $opt['form'] ?? null;
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => strtoupper($method),
+        CURLOPT_TIMEOUT => 30,
+    ]);
+
+    if ($payload !== null) {
+        $headers[] = 'Content-Type: application/json';
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+    } elseif ($form !== null) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $form);
+    }
+    if (!empty($headers)) curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    $raw = curl_exec($ch);
+    $err = curl_error($ch);
+    $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $json = json_decode((string)$raw, true);
+    return ['http' => $http, 'json' => $json, 'raw' => $raw, 'curl_error' => $err];
+}
+
+// Confirma que uma requisição foi corretamente BLOQUEADA (o oposto de ok())
+function blocked(array $r, int $expectedHttp): bool {
+    if ($r['http'] !== $expectedHttp) return false;
+    if ($r['json'] !== null) {
+        return isset($r['json']['success']) && $r['json']['success'] === false;
+    }
+    // Respostas não-JSON (ex: install.php em HTML) - só o HTTP code importa
+    return true;
+}
+
+// Cria um arquivo com extensão de imagem mas conteúdo que NÃO é uma imagem de verdade
+function createFakeImage(string $name): string {
+    global $tmpFiles;
+    $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $name . '_' . uniqid() . '.png';
+    file_put_contents($path, 'isto nao e uma imagem de verdade, apenas texto puro fingindo ser .png');
+    $tmpFiles[] = $path;
+    return $path;
 }
 
 function ensurePacienteBase(): ?string {
@@ -123,6 +172,33 @@ function ensurePacienteBase(): ?string {
     addResult('base', 'Criar paciente base', true, $r);
     return $id;
 }
+
+// 0) SEGURANÇA - acesso não autenticado deve ser sempre bloqueado
+$r = req('POST', endpoint('auth.php'), ['json' => ['usuario' => $usuario, 'senha' => 'senha_errada_de_proposito']]);
+addResult('seguranca', 'Login com senha errada deve falhar', blocked($r, 401), $r);
+
+// Cada endpoint bloqueia de um jeito: alguns checam autenticacao primeiro (401),
+// outros vao direto pra checagem de permissao, que sem sessao tambem nega (403).
+// Os dois sao "bloqueado corretamente" - só o motivo/codigo varia.
+$endpointsProtegidos = [
+    'pacotes.php' => 401,
+    'configuracoes.php' => 401,
+    'pacientes.php' => 403,
+    'financeiro.php' => 403,
+    'despesas.php' => 403,
+    'usuarios.php' => 401,
+    'auditoria_backup.php' => 401,
+];
+foreach ($endpointsProtegidos as $ep => $codigoEsperado) {
+    $r = reqAnon('GET', endpoint($ep));
+    addResult('seguranca', "Acesso anonimo a $ep deve ser bloqueado", blocked($r, $codigoEsperado), $r);
+}
+
+$r = reqAnon('GET', endpoint('arquivos.php', 'paciente_id=1'));
+addResult('seguranca', 'Acesso anonimo a arquivos.php deve dar 401', blocked($r, 401), $r);
+
+$r = reqAnon('GET', endpoint('install.php'));
+addResult('seguranca', 'install.php sem sessao de admin deve dar 403 (sistema ja instalado)', blocked($r, 403), $r);
 
 // 1) AUTH
 $r = req('POST', endpoint('auth.php'), ['json' => ['usuario' => $usuario, 'senha' => $senha]]);
@@ -376,6 +452,29 @@ if ($usrId) {
     ]]);
     addResult('usuarios', 'Editar', ok($r), $r);
 }
+
+// 10) SEGURANÇA - upload deve validar o conteúdo real do arquivo, não só a extensão/Content-Type
+$fakeImg1 = createFakeImage('logo_forjado');
+$r = req('POST', endpoint('configuracoes.php'), ['form' => [
+    'type' => 'header',
+    'logo' => new CURLFile($fakeImg1, 'image/png', 'logo_forjado.png')
+]]);
+addResult('seguranca', 'Upload de arquivo forjado em configuracoes.php deve ser rejeitado', blocked($r, 400), $r);
+
+if ($basePaciente) {
+    $fakeImg2 = createFakeImage('arquivo_forjado');
+    $r = req('POST', endpoint('arquivos.php'), ['form' => [
+        'paciente_id' => $basePaciente,
+        'arquivo' => new CURLFile($fakeImg2, 'image/png', 'arquivo_forjado.png')
+    ]]);
+    addResult('seguranca', 'Upload de arquivo forjado em arquivos.php deve ser rejeitado', blocked($r, 400), $r);
+}
+
+$fakeImg3 = createFakeImage('foto_perfil_forjada');
+$r = req('POST', endpoint('usuarios.php', 'upload_foto=1'), ['form' => [
+    'foto_perfil' => new CURLFile($fakeImg3, 'image/png', 'foto_forjada.png')
+]]);
+addResult('seguranca', 'Upload de arquivo forjado em usuarios.php deve ser rejeitado', blocked($r, 400), $r);
 
 // ROLLBACK
 out(PHP_EOL . '--- Iniciando rollback automático ---');
