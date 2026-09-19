@@ -603,23 +603,6 @@ body.dark .psicologa-card {
     opacity: .9;
 }
 
-@media (max-width: 992px) {
-    #appScreen .container-fluid {
-        grid-template-columns: 1fr;
-    }
-
-    #mainTab {
-        flex-direction: row;
-        overflow-x: auto;
-        max-height: none;
-        position: static;
-        white-space: nowrap;
-    }
-
-    #mainTab .nav-item { width: auto; }
-    #mainTab .nav-link { width: auto; }
-}
-
 .nav-tabs .nav-link {
     border: none !important;
     border-radius: var(--radius-sm) !important;
@@ -1310,17 +1293,24 @@ body.dark .financeiro-resumo .p-2.rounded {
 
     #mainTab {
         order: 2;
+        align-self: stretch;
         flex-direction: row;
-        justify-content: space-around;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
         align-items: center;
         position: sticky;
         top: auto;
         bottom: 0;
-        max-height: none;
+        max-height: 64px;
+        overflow-x: auto;
+        overflow-y: hidden;
         width: 100%;
         border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
         padding: 8px !important;
     }
+
+    #mainTab .nav-item { width: auto; flex: 0 0 auto; }
+    #mainTab .nav-link { flex: 0 0 auto; }
 
     #mainTabContent { order: 1; }
 }
