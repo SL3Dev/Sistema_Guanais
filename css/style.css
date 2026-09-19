@@ -387,53 +387,26 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
 /* ====================== LOGIN SCREEN ====================== */
 .login-container {
     min-height: 100vh;
-    background: radial-gradient(ellipse at 30% 30%, #f5ede0 0%, var(--crema) 50%, #eef4f1 100%) !important;
-    position: relative;
-    overflow: hidden;
+    background: var(--crema) !important;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .login-card {
-    max-width: 440px;
+    max-width: 400px;
     width: 100%;
     border-radius: var(--radius-lg) !important;
     box-shadow: var(--sombra-lg) !important;
-    padding: 3rem 2.5rem !important;
-    background: rgba(255,255,255,.97) !important;
-    backdrop-filter: blur(12px);
-    position: relative;
-    z-index: 1;
-    border-top: 3px solid var(--ouro) !important;
-    animation: cardSlideUp .7s cubic-bezier(.16,1,.3,1) forwards;
+    padding: 2.5rem !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-light) !important;
+    animation: cardSlideUp .4s ease forwards;
 }
 
 @keyframes cardSlideUp {
-    from { opacity:0; transform: translateY(30px); }
+    from { opacity:0; transform: translateY(12px); }
     to { opacity:1; transform: translateY(0); }
-}
-
-/* Floating petals */
-.petal {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    border-radius: 0 60% 0 60%;
-    opacity: .06;
-    animation: floatPetal linear infinite;
-    pointer-events: none;
-}
-.petal-1 { background: var(--ouro); top: 5%; left: 8%; width:80px; height:80px; animation-duration:18s; animation-delay:0s; }
-.petal-2 { background: var(--verde); top: 70%; right: 5%; width:50px; height:50px; animation-duration:22s; animation-delay:-6s; }
-.petal-3 { background: var(--ouro); bottom: 20%; left: 15%; width:40px; height:40px; animation-duration:15s; animation-delay:-3s; }
-.petal-4 { background: var(--verde-escuro); top: 40%; right: 20%; width:70px; height:70px; animation-duration:20s; animation-delay:-9s; }
-
-@keyframes floatPetal {
-    0%   { transform: translateY(0) rotate(0deg) scale(1); }
-    33%  { transform: translateY(-30px) rotate(120deg) scale(1.1); }
-    66%  { transform: translateY(15px) rotate(240deg) scale(.9); }
-    100% { transform: translateY(0) rotate(360deg) scale(1); }
 }
 
 /* ====================== HEADER ====================== */
