@@ -550,6 +550,75 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
     color: var(--cinza-txt);
 }
 
+/* ====================== TIMELINE DO PRONTUÁRIO ====================== */
+.prontuario-timeline {
+    position: relative;
+    padding: 12px 12px 12px 34px;
+    max-height: 560px;
+    overflow-y: auto;
+}
+.prontuario-timeline::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    background: var(--border-light);
+}
+.timeline-item {
+    position: relative;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+.timeline-item:hover {
+    background: var(--verde-pale);
+}
+.timeline-item.is-selected {
+    background: var(--verde-pale);
+    border-color: var(--verde);
+}
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 18px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--tl-dot, var(--cinza-muted));
+    border: 2px solid var(--bg-surface);
+    box-shadow: 0 0 0 2px var(--tl-dot, var(--cinza-muted));
+}
+.timeline-item .tl-data {
+    font-size: .7rem;
+    color: var(--cinza-muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 600;
+}
+.timeline-item .tl-nome {
+    font-weight: 600;
+    color: var(--cinza-txt);
+    font-size: .9rem;
+}
+.timeline-item .tl-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+.timeline-empty {
+    padding: 24px 12px;
+    text-align: center;
+    color: var(--cinza-muted);
+    font-size: .875rem;
+}
+
 /* ====================== LOGIN SCREEN ====================== */
 .login-container {
     min-height: 100vh;

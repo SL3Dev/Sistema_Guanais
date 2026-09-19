@@ -589,7 +589,9 @@ function userHasPermission(modulo, acao) {
 }
 
 function podeAcessarProntuarioDoAtendimento(atendimento) {
-    if (!usuarioLogado || usuarioLogado.tipo !== 'psicologa' || !atendimento) return false;
+    if (!usuarioLogado || !atendimento) return false;
+    if (usuarioLogado.tipo === 'admin') return true;
+    if (usuarioLogado.tipo !== 'psicologa') return false;
 
     const paciente = (dados.pacientes || []).find(p => String(p.id).trim() === String(atendimento.paciente_id || '').trim());
     if (!paciente || !paciente.psicologa_responsavel_id) return false;
@@ -3323,12 +3325,12 @@ async function renderProntuarioLista() {
         .trim();
 
     const termo = normalizar(document.getElementById('prontuarioBusca')?.value || '');
-    const tbody = document.getElementById('prontuarioTbody');
-    if (!tbody) return;
+    const timelineEl = document.getElementById('prontuarioTimeline');
+    if (!timelineEl) return;
 
-    const podeVerProntuario = usuarioLogado?.tipo === 'psicologa';
+    const podeVerProntuario = usuarioLogado?.tipo === 'psicologa' || usuarioLogado?.tipo === 'admin';
     if (!podeVerProntuario) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Somente a psicóloga vinculada pode acessar prontuário.</td></tr>';
+        timelineEl.innerHTML = '<div class="timeline-empty">Somente a psicóloga vinculada pode acessar prontuário.</div>';
         return;
     }
 
@@ -3360,14 +3362,20 @@ async function renderProntuarioLista() {
         })
         .sort((a, b) => new Date(formataDataISO(b.data_atendimento)) - new Date(formataDataISO(a.data_atendimento)));
 
-    tbody.innerHTML = itens.map(a => `
-        <tr>
-            <td>${a.paciente_nome || ''}</td>
-            <td>${a.data_atendimento || ''}</td>
-            <td><span class="badge-custom badge-info">${a.status || '-'}</span></td>
-            <td><button class="btn btn-sm btn-outline-primary" onclick="carregarProntuarioNoModulo('${a.id_atendimento}')"><i class="bi bi-pencil-square"></i></button></td>
-        </tr>
-    `).join('') || '<tr><td colspan="4" class="text-center py-3 text-muted">Nenhum atendimento encontrado.</td></tr>';
+    const selecionadoId = document.getElementById('prontuarioAtendimentoId')?.value || '';
+
+    timelineEl.innerHTML = itens.map(a => {
+        const cor = corEventoAgendaPorStatus(a.status);
+        const selecionado = String(a.id_atendimento) === String(selecionadoId) ? ' is-selected' : '';
+        return `
+        <div class="timeline-item${selecionado}" style="--tl-dot:${cor.bg}" onclick="carregarProntuarioNoModulo('${a.id_atendimento}')">
+            <div class="tl-data">${a.data_atendimento || ''}</div>
+            <div class="tl-meta">
+                <span class="tl-nome">${a.paciente_nome || ''}</span>
+                <span class="badge-custom badge-info">${a.status || '-'}</span>
+            </div>
+        </div>`;
+    }).join('') || '<div class="timeline-empty">Nenhum atendimento encontrado.</div>';
 }
 
 async function irParaProntuarioPaciente(pacienteId, pacienteNome = '') {
@@ -3402,6 +3410,7 @@ async function carregarProntuarioNoModulo(id) {
         document.getElementById('prontuarioPaciente').value = aten.paciente_nome || '';
         document.getElementById('prontuarioData').value = aten.data_atendimento || '';
         document.getElementById('prontuarioEvolucao').value = aten.evolucao || '';
+        renderProntuarioLista();
     } catch (error) {
         console.error(error);
     }
