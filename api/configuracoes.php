@@ -7,11 +7,15 @@
 
 require_once 'config.php';
 
+startSession();
+requireAuth();
+
 $method = getRequestMethod();
 $db = Database::getInstance()->getConnection();
 
 switch ($method) {
     case 'GET':
+        requirePermission('configuracoes', 'visualizar');
         // Listar todas configurações ou buscar por chave
         try {
             if (isset($_GET['chave'])) {
@@ -38,19 +42,42 @@ switch ($method) {
     case 'POST':
         // Handle file upload for logos
         if (isset($_FILES['logo'])) {
+            requirePermission('configuracoes', 'editar');
+
+            $file = $_FILES['logo'];
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                errorResponse('Erro no upload da logo', 400);
+            }
+
+            if ($file['size'] > 5 * 1024 * 1024) {
+                errorResponse('Arquivo excede 5MB', 400);
+            }
+
+            // Validar tipo real do arquivo (não confiar na extensão/Content-Type enviados pelo cliente)
+            $allowedMimes = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+                'image/gif' => 'gif',
+            ];
+            $imageInfo = @getimagesize($file['tmp_name']);
+            if ($imageInfo === false || !isset($allowedMimes[$imageInfo['mime']])) {
+                errorResponse('Formato inválido. Use JPG, PNG, WEBP ou GIF', 400);
+            }
+            $fileExtension = $allowedMimes[$imageInfo['mime']];
+
             $type = isset($_POST['type']) ? $_POST['type'] : 'header';
             $chave = ($type === 'login') ? 'logo_login' : 'logo_path';
 
             $uploadDir = '../logo/';
             if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
+                mkdir($uploadDir, 0755, true);
             }
 
-            $fileExtension = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
             $fileName = $chave . '_' . time() . '.' . $fileExtension; // Add timestamp to avoid cache issues
             $targetPath = $uploadDir . $fileName;
 
-            if (move_uploaded_file($_FILES['logo']['tmp_name'], $targetPath)) {
+            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
                 $dbValue = 'logo/' . $fileName;
 
                 // Atualizar no banco
@@ -71,10 +98,11 @@ switch ($method) {
             break;
         }
 
+        requirePermission('configuracoes', 'criar');
         // Criar nova configuração
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
-        
+
         $errors = [];
         if (empty($input['chave'])) $errors[] = 'Chave é obrigatória';
         if (!isset($input['valor'])) $errors[] = 'Valor é obrigatório';
@@ -113,6 +141,7 @@ switch ($method) {
         break;
         
     case 'PUT':
+        requirePermission('configuracoes', 'editar');
         // Atualizar configuração
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -150,6 +179,7 @@ switch ($method) {
         break;
         
     case 'DELETE':
+        requirePermission('configuracoes', 'excluir');
         $chave = isset($_GET['chave']) ? $_GET['chave'] : null;
         if (empty($chave)) {
             errorResponse('Chave da configuração é obrigatória', 400);

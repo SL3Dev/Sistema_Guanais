@@ -49,7 +49,31 @@ header('Content-Type: text/html; charset=utf-8');
             ]);
             
             echo "<div class='alert alert-info'>✅ Conexão com MySQL estabelecida.</div>";
-            
+
+            // Se o banco/tabela de usuários já existir com um admin configurado,
+            // só permite continuar se já houver uma sessão de admin autenticada.
+            // Isso impede que qualquer visitante externo re-execute o instalador e
+            // resete a senha do administrador remotamente.
+            $stmtCheck = $pdo->prepare("SELECT COUNT(*) as total FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'usuarios'");
+            $stmtCheck->execute([DB_NAME]);
+            $tabelaExiste = (int)($stmtCheck->fetch()['total'] ?? 0) > 0;
+
+            if ($tabelaExiste) {
+                $pdo->exec("USE " . DB_NAME);
+                $admins = $pdo->query("SELECT COUNT(*) as total FROM usuarios WHERE tipo = 'admin'")->fetch();
+                if ((int)($admins['total'] ?? 0) > 0) {
+                    if (session_status() === PHP_SESSION_NONE) {
+                        session_start();
+                    }
+                    if (empty($_SESSION['logged_in']) || ($_SESSION['tipo'] ?? '') !== 'admin') {
+                        http_response_code(403);
+                        echo "<div class='alert alert-danger'><h4>❌ Acesso negado</h4><p>Este sistema já foi instalado. Faça login como administrador antes de reexecutar o instalador, ou remova este arquivo do servidor.</p></div>";
+                        echo "</div></body></html>";
+                        exit;
+                    }
+                }
+            }
+
             // Criar banco de dados
             $pdo->exec("CREATE DATABASE IF NOT EXISTS " . DB_NAME . " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             $pdo->exec("USE " . DB_NAME);

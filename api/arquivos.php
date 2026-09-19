@@ -7,10 +7,7 @@
 require_once 'config.php';
 
 startSession();
-
-if (!isAuthenticated()) {
-    errorResponse('Não autorizado', 401);
-}
+requireAuth();
 
 $method = getRequestMethod();
 $db = Database::getInstance()->getConnection();
@@ -18,11 +15,12 @@ $db = Database::getInstance()->getConnection();
 // Diretório de uploads
 $uploadDir = '../uploads/pacientes/';
 if (!file_exists($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
+    mkdir($uploadDir, 0755, true);
 }
 
 switch ($method) {
     case 'GET':
+        requirePermission('pacientes', 'visualizar');
         $paciente_id = $_GET['paciente_id'] ?? null;
         if (!$paciente_id) {
             errorResponse('ID do paciente é obrigatório', 400);
@@ -39,20 +37,39 @@ switch ($method) {
         break;
 
     case 'POST':
+        requirePermission('pacientes', 'criar');
+
         if (!isset($_FILES['arquivo']) || !isset($_POST['paciente_id'])) {
             errorResponse('Arquivo e ID do paciente são obrigatórios', 400);
         }
-        
+
         $paciente_id = $_POST['paciente_id'];
         $file = $_FILES['arquivo'];
-        
-        // Validar tipo de arquivo (PDF, JPG, PNG)
-        $allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-        if (!in_array($file['type'], $allowedTypes)) {
-            errorResponse('Tipo de arquivo não permitido (Apenas PDF, JPG, PNG)', 400);
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            errorResponse('Erro no upload do arquivo', 400);
         }
-        
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+
+        if ($file['size'] > 10 * 1024 * 1024) {
+            errorResponse('Arquivo excede 10MB', 400);
+        }
+
+        // Validar tipo real do arquivo pelo conteúdo (não confiar no Content-Type enviado pelo cliente)
+        $allowedExtensions = [
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $tipoReal = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!isset($allowedExtensions[$tipoReal])) {
+            errorResponse('Tipo de arquivo não permitido (Apenas PDF, JPG, PNG, WEBP)', 400);
+        }
+        $ext = $allowedExtensions[$tipoReal];
+
         $newName = $paciente_id . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
         $targetPath = $uploadDir . $newName;
         
@@ -64,7 +81,7 @@ switch ($method) {
                     $file['name'],
                     $newName,
                     'uploads/pacientes/' . $newName,
-                    $file['type'],
+                    $tipoReal,
                     $file['size']
                 ]);
                 successResponse(['id' => $db->lastInsertId()], 'Arquivo enviado com sucesso');
@@ -78,6 +95,7 @@ switch ($method) {
         break;
 
     case 'DELETE':
+        requirePermission('pacientes', 'excluir');
         $id = $_GET['id'] ?? null;
         if (!$id) {
             errorResponse('ID do arquivo é obrigatório', 400);

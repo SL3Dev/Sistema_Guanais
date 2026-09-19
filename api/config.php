@@ -22,7 +22,17 @@ define('API_VERSION', '1.0.0');
 define('API_NAME', 'Espaço Guanais API');
 
 // Headers CORS
-header('Access-Control-Allow-Origin: *');
+// O frontend é servido same-origin (mesmo host/porta da API), então não é
+// preciso liberar origens externas. Só refletimos a Origin quando ela bate
+// com o próprio host, evitando que qualquer site externo faça requisições
+// autenticadas via cookie de sessão contra a API.
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    $originHost = parse_url($_SERVER['HTTP_ORIGIN'], PHP_URL_HOST);
+    if ($originHost !== null && $originHost === ($_SERVER['HTTP_HOST'] ?? null)) {
+        header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+        header('Access-Control-Allow-Credentials: true');
+    }
+}
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Max-Age: 86400');
@@ -176,14 +186,14 @@ function requireAuth() {
 
 function hasPermission($modulo, $acao) {
     startSession();
-    
-    // Admin tem todas as permissões
-    if (isset($_SESSION['usuario']) && $_SESSION['usuario'] === 'admin') {
-        return true;
-    }
-    
+
     if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] <= 0) {
         return false;
+    }
+
+    // Admin tem todas as permissões (checado pelo tipo do usuário, não pelo nome)
+    if (isset($_SESSION['tipo']) && $_SESSION['tipo'] === 'admin') {
+        return true;
     }
     
     $db = Database::getInstance()->getConnection();

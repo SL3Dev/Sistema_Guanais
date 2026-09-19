@@ -7,11 +7,15 @@
 
 require_once 'config.php';
 
+startSession();
+requireAuth();
+
 $method = getRequestMethod();
 $db = Database::getInstance()->getConnection();
 
 switch ($method) {
     case 'GET':
+        requirePermission('pacientes', 'visualizar');
         // Listar pacotes por paciente ou todos
         try {
             $pacienteId = isset($_GET['paciente_id']) ? $_GET['paciente_id'] : null;
@@ -79,6 +83,7 @@ switch ($method) {
         break;
         
     case 'POST':
+        requirePermission('pacientes', 'criar');
         // Criar novo pacote
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -140,6 +145,7 @@ switch ($method) {
         break;
         
     case 'PUT':
+        requirePermission('pacientes', 'editar');
         // Atualizar pacote
         $input = getJsonInput();
         if (empty($input)) $input = $_POST;
@@ -186,6 +192,7 @@ switch ($method) {
         break;
         
     case 'DELETE':
+        requirePermission('pacientes', 'excluir');
         // Excluir pacote
         $id = isset($_GET['id']) ? $_GET['id'] : null;
         

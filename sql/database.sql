@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- Inserir usuário padrão: admin / 0301 (se não existir)
 -- Senha hash gerada com password_hash('0301', PASSWORD_DEFAULT)
 INSERT IGNORE INTO usuarios (usuario, senha, nome, email, tipo) VALUES 
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador', 'admin@espacoguanais.com.br', 'admin');
+('admin', '$2y$10$gX8Dpr5vPFMPqdVtD6xMUODQmr4rIGt49y7nlmAY78WYIV/NnqKsS', 'Administrador', 'admin@espacoguanais.com.br', 'admin');
 
 -- -----------------------------------------------------
 -- Tabela de permissões
