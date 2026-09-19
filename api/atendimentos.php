@@ -215,7 +215,7 @@ switch ($method) {
                 errorResponse('Erro ao registrar atendimento', 500);
             }
         } catch (PDOException $e) {
-            errorResponse('Erro ao registrar atendimento: ' . $e->getMessage(), 500);
+            errorResponse('Erro ao registrar atendimento', 500);
         }
         break;
         

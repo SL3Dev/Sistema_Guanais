@@ -230,7 +230,7 @@ switch ($method) {
                 // Se já existir, talvez seja um update disfarçado de importação
                 errorResponse('Paciente já cadastrado (ID ou CPF duplicado)', 409);
             } else {
-                errorResponse('Erro ao cadastrar paciente: ' . $e->getMessage(), 500);
+                errorResponse('Erro ao cadastrar paciente', 500);
             }
         }
         break;

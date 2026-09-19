@@ -217,7 +217,7 @@ set_exception_handler(function($e) {
     echo json_encode([
         'success' => false,
         'error' => 'Erro interno do servidor',
-        'message' => $e->getMessage()
+        'message' => defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'Contate o administrador'
     ]);
     exit;
 });

@@ -7,6 +7,12 @@
  *   php testador_completo.php --base-url="http://localhost/Sistema_Guanais/api" --usuario=admin --senha=0301
  */
 
+// Ferramenta de diagnostico de linha de comando - bloqueada quando acessada via navegador/HTTP
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    exit('Esta ferramenta so pode ser executada via linha de comando (php testador_completo.php), nao pelo navegador.');
+}
+
 date_default_timezone_set('America/Sao_Paulo');
 
 $opts = getopt('', ['base-url::', 'usuario::', 'senha::']);

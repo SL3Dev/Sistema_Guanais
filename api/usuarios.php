@@ -59,21 +59,28 @@ if ($method === 'POST' && isset($_GET['upload_foto'])) {
         errorResponse('Erro no upload da foto', 400);
     }
 
-    $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!in_array($file['type'], $allowed)) {
-        errorResponse('Formato inválido. Use JPG, PNG, WEBP ou GIF', 400);
-    }
-
     if ($file['size'] > 5 * 1024 * 1024) {
         errorResponse('Arquivo excede 5MB', 400);
     }
 
+    // Validar tipo real do arquivo pelo conteúdo (não confiar no Content-Type enviado pelo cliente)
+    $allowedExtensions = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+    ];
+    $imageInfo = @getimagesize($file['tmp_name']);
+    if ($imageInfo === false || !isset($allowedExtensions[$imageInfo['mime']])) {
+        errorResponse('Formato inválido. Use JPG, PNG, WEBP ou GIF', 400);
+    }
+    $ext = $allowedExtensions[$imageInfo['mime']];
+
     $uploadDir = '../uploads/perfis/';
     if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
+        mkdir($uploadDir, 0755, true);
     }
 
-    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $fileName = 'perfil_' . time() . '_' . mt_rand(1000, 9999) . '.' . $ext;
     $targetPath = $uploadDir . $fileName;
 
@@ -239,11 +246,11 @@ switch ($method) {
             }
             
             successResponse(['id' => $usuarioId], 'Usuário criado com sucesso');
-            
+
         } catch (PDOException $e) {
-            errorResponse('Erro no banco de dados: ' . $e->getMessage(), 500);
+            errorResponse('Erro no banco de dados', 500);
         } catch (Exception $e) {
-            errorResponse('Erro inesperado: ' . $e->getMessage(), 500);
+            errorResponse('Erro inesperado', 500);
         }
         break;
         
@@ -384,7 +391,7 @@ switch ($method) {
                 errorResponse('Nenhum campo para atualizar', 400);
             }
         } catch (PDOException $e) {
-            errorResponse('Erro no banco de dados: ' . $e->getMessage(), 500);
+            errorResponse('Erro no banco de dados', 500);
         }
         break;
         
@@ -428,7 +435,7 @@ switch ($method) {
             
             successResponse(['usuario_id' => $usuarioId], 'Permissões atualizadas com sucesso');
         } catch (PDOException $e) {
-            errorResponse('Erro no banco de dados: ' . $e->getMessage(), 500);
+            errorResponse('Erro no banco de dados', 500);
         }
         break;
         
@@ -467,7 +474,7 @@ switch ($method) {
                 errorResponse('Erro ao excluir usuário', 500);
             }
         } catch (PDOException $e) {
-            errorResponse('Erro no banco de dados: ' . $e->getMessage(), 500);
+            errorResponse('Erro no banco de dados', 500);
         }
         break;
         

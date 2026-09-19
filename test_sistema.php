@@ -1,7 +1,15 @@
 <?php
 /**
  * Testador interativo (JS) com rollback por teste.
+ * Ferramenta de diagnostico - acesso restrito a administradores logados.
  */
+require_once __DIR__ . '/api/config.php';
+header('Content-Type: text/html; charset=utf-8');
+startSession();
+if (!isAuthenticated() || ($_SESSION['tipo'] ?? '') !== 'admin') {
+    http_response_code(403);
+    exit('Acesso restrito. Faça login como administrador antes de acessar esta ferramenta.');
+}
 ?><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
