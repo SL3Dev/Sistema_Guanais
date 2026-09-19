@@ -9,6 +9,13 @@ let dados = { pacientes: [], atendimentos: [], financeiro: [], despesas: [] };
 let usuarioLogado = null;
 let sistemaInicializado = false;
 
+// ====================== PWA ======================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    });
+}
+
 // ====================== MICROINTERAÇÕES ======================
 
 function prefereReduzirMovimento() {
