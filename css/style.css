@@ -128,20 +128,10 @@ body.dark .form-control::placeholder {
     color: #9BB0B7;
 }
 
-body.dark .card, body.dark .card-modern, body.dark .module-selection-card {
+body.dark .card, body.dark .card-modern {
     background: linear-gradient(170deg, rgba(20,35,42,.84), rgba(12,20,24,.88)) !important;
     border: 1px solid rgba(125, 211, 252, 0.16) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
-}
-
-body.dark .menu-card {
-    background: linear-gradient(165deg, #16262f, #122027);
-    border-color: rgba(125, 211, 252, 0.20);
-}
-
-body.dark .menu-card:hover {
-    border-color: rgba(94, 234, 212, 0.55);
-    background: linear-gradient(165deg, #1b313a, #172a32);
 }
 
 body.dark .list-group-item-custom:hover {
@@ -180,11 +170,10 @@ body.dark hr {
 
 body.dark .login-card {
     background: linear-gradient(160deg, rgba(20,35,42,.96), rgba(12,20,24,.96)) !important;
-    border-top-color: #5EEAD4 !important;
+    border-color: #24304A !important;
 }
 
-body.dark .login-container,
-body.dark .module-selection-container {
+body.dark .login-container {
     background:
       radial-gradient(circle at 10% 12%, rgba(46, 211, 191, 0.12), transparent 32%),
       radial-gradient(circle at 84% 18%, rgba(125, 211, 252, 0.10), transparent 30%),
@@ -204,13 +193,10 @@ body.dark .text-muted,
 body.dark small,
 body.dark label,
 body.dark .form-label,
-body.dark .menu-card p,
-body.dark .module-selection-subtitle,
 body.dark .dash-label {
     color: #C7D2D7 !important;
 }
 
-body.dark .menu-card h5,
 body.dark .dash-value,
 body.dark .table-custom td,
 body.dark .table tbody td,
@@ -646,118 +632,6 @@ body.dark .psicologa-card {
     background: rgba(137,178,162,.06) !important;
 }
 
-/* ====================== DASHBOARD & MENU CARDS ====================== */
-.module-selection-container {
-    min-height: 100vh;
-    background: radial-gradient(circle at top right, #f8faf9, #f0f4f2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.module-bg {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(2px);
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.55;
-    animation: moduleFloat 18s ease-in-out infinite alternate;
-}
-
-.module-bg-1 {
-    width: 420px;
-    height: 420px;
-    left: -120px;
-    top: -90px;
-    background: radial-gradient(circle at 30% 30%, rgba(137,178,162,.35), rgba(137,178,162,.06) 70%);
-}
-
-.module-bg-2 {
-    width: 340px;
-    height: 340px;
-    right: -100px;
-    bottom: -70px;
-    background: radial-gradient(circle at 40% 40%, rgba(201,133,42,.30), rgba(201,133,42,.06) 72%);
-    animation-delay: -4s;
-}
-
-.module-bg-3 {
-    width: 260px;
-    height: 260px;
-    right: 22%;
-    top: 18%;
-    background: radial-gradient(circle at 50% 50%, rgba(14,165,233,.22), rgba(14,165,233,.04) 72%);
-    animation-delay: -9s;
-}
-
-@keyframes moduleFloat {
-    0% { transform: translate3d(0, 0, 0) scale(1); }
-    100% { transform: translate3d(18px, -14px, 0) scale(1.08); }
-}
-
-.module-selection-card {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    border-radius: var(--radius-lg);
-    padding: 3rem;
-    box-shadow: var(--sombra-lg);
-    max-width: 1100px;
-    width: 100%;
-    border: 1px solid rgba(137, 178, 162, 0.2);
-    position: relative;
-    z-index: 2;
-}
-
-.module-selection-title {
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    color: var(--verde-escuro);
-    margin-bottom: 0.5rem;
-    letter-spacing: .5px;
-    position: relative;
-    display: inline-block;
-    background: linear-gradient(100deg, var(--verde-escuro), var(--verde), var(--ouro));
-    background-size: 220% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: titleFlow 6s ease-in-out infinite;
-}
-
-.module-selection-subtitle {
-    color: var(--cinza-muted);
-    font-size: 1.1rem;
-    margin-bottom: 3rem;
-    animation: subtitleBreath 4.8s ease-in-out infinite;
-}
-
-.module-selection-subtitle #moduleSelectionUserName {
-    color: var(--verde-escuro);
-    font-weight: 700;
-    letter-spacing: .2px;
-    display: inline-block;
-    animation: userGlow 3.8s ease-in-out infinite;
-}
-
-@keyframes titleFlow {
-    0%, 100% { background-position: 0% 50%; transform: translateY(0); }
-    50% { background-position: 100% 50%; transform: translateY(-1px); }
-}
-
-@keyframes subtitleBreath {
-    0%, 100% { opacity: .92; transform: translateY(0); }
-    50% { opacity: 1; transform: translateY(-1px); }
-}
-
-@keyframes userGlow {
-    0%, 100% { text-shadow: 0 0 0 rgba(137,178,162,0); }
-    50% { text-shadow: 0 0 14px rgba(137,178,162,.32); }
-}
-
 /* ===== Ajustes visuais de Configurações (preview logos) ===== */
 .logo-preview-container {
     width: 100%;
@@ -811,117 +685,10 @@ body.dark .theme-toggle {
 
 /* subtítulo sempre visível no dark */
 body.dark #headerSystemSubtitle,
-body.dark .module-selection-subtitle,
 body.dark #loginSystemSubtitle {
     color: #cbd5e1 !important;
     opacity: 1 !important;
 }
-
-.menu-card {
-    background: var(--bg-surface);
-    border-radius: var(--radius-md);
-    padding: 2rem 1.5rem;
-    text-align: center;
-    transition: var(--transition);
-    border: 1px solid transparent;
-    cursor: pointer;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-}
-
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 4px;
-    background: var(--verde);
-    transform: scaleX(0);
-    transition: var(--transition);
-    transform-origin: left;
-}
-
-.menu-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 15% 15%, rgba(255,255,255,.40), transparent 42%);
-    opacity: .6;
-    z-index: -1;
-    transition: opacity .35s ease;
-}
-
-.menu-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 35px rgba(137, 178, 162, 0.15);
-    border-color: rgba(137, 178, 162, 0.3);
-}
-
-.menu-card:hover::after {
-    opacity: .9;
-}
-
-.menu-card:hover::before {
-    transform: scaleX(1);
-}
-
-.menu-card-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
-    transition: var(--transition);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
-}
-
-.menu-card:hover .menu-card-icon {
-    transform: scale(1.15) rotate(5deg);
-}
-
-body.dark .module-bg-1 {
-    background: radial-gradient(circle at 30% 30%, rgba(94,234,212,.22), rgba(94,234,212,.04) 74%);
-}
-
-body.dark .module-bg-2 {
-    background: radial-gradient(circle at 35% 35%, rgba(251,191,36,.20), rgba(251,191,36,.04) 74%);
-}
-
-body.dark .module-bg-3 {
-    background: radial-gradient(circle at 50% 50%, rgba(125,211,252,.18), rgba(125,211,252,.03) 74%);
-}
-
-.menu-card h5 {
-    font-weight: 700;
-    color: var(--cinza-txt);
-    margin-bottom: 0.7rem;
-    font-size: 1.15rem;
-}
-
-.menu-card p {
-    font-size: 0.85rem;
-    color: var(--cinza-muted);
-    margin-bottom: 0;
-    line-height: 1.5;
-}
-
-/* Backgrounds coloridos para os ícones do menu */
-.bg-verde-pale { background: #e8f5e9 !important; color: #2e7d32 !important; }
-.bg-info-pale { background: #e3f2fd !important; color: #1565c0 !important; }
-.bg-ouro-pale { background: #fff8e1 !important; color: #f57f17 !important; }
-.bg-danger-pale { background: #ffebee !important; color: #c62828 !important; }
-.bg-primary-pale { background: #f3e5f5 !important; color: #7b1fa2 !important; }
-.bg-secondary-pale { background: #eceff1 !important; color: #455a64 !important; }
-.bg-dark-pale { background: #f5f5f5 !important; color: #212121 !important; }
-.bg-light-pale { background: #fafafa !important; color: #9e9e9e !important; }
 
 /* Dashboard Quick Lists */
 .list-group-item-custom {

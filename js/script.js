@@ -499,9 +499,8 @@ async function logout() {
     usuarioLogado = null;
 }
 
-// Nova função para selecionar módulo e navegar
+// Exibe o sistema principal direto (sem tela intermediária de seleção de módulo)
 function selectModule(moduleId) {
-    document.getElementById('moduleSelectionScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
     if (!sistemaInicializado) {
         inicializarSistema(moduleId);
@@ -511,12 +510,6 @@ function selectModule(moduleId) {
         renderDashboardSummaries();
         initCharts();
     }
-    mostrarToast(`Módulo ${moduleId.charAt(0).toUpperCase() + moduleId.slice(1)} selecionado!`, 'info');
-}
-
-function voltarAosModulos() {
-    document.getElementById('appScreen').style.display = 'none';
-    document.getElementById('moduleSelectionScreen').style.display = 'flex';
 }
 
 // ====================== PACIENTES ======================
@@ -2821,10 +2814,8 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         const success = await login(user, pass);
     if (success) {
         document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('moduleSelectionScreen').style.display = 'flex';
-        document.getElementById('moduleSelectionUserName').textContent = usuarioLogado.nome.split(' ')[0];
         atualizarHeaderUsuario();
-        aplicarPermissoesUI(); // Aplicar permissões aos cards da tela de seleção
+        selectModule('dashboard');
         mostrarToast('Bem-vindo ao sistema!');
     } else {
         mostrarToast('Usuário ou senha inválidos', 'danger');
@@ -2836,10 +2827,8 @@ async function verificarLoginSalvo() {
         const authValid = await verificarAuth();
         if (authValid) {
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('moduleSelectionScreen').style.display = 'flex';
-            document.getElementById('moduleSelectionUserName').textContent = usuarioLogado.nome.split(' ')[0];
             atualizarHeaderUsuario();
-            aplicarPermissoesUI(); // Aplicar permissões aos cards da tela de seleção
+            selectModule('dashboard');
         } else {
             sessionStorage.clear();
         }
@@ -2851,7 +2840,6 @@ verificarLoginSalvo();
 async function sairSistema() {
     await logout();
     document.getElementById('appScreen').style.display = 'none';
-    document.getElementById('moduleSelectionScreen').style.display = 'none'; // Ocultar tela de seleção
     document.getElementById('loginScreen').style.display = 'flex';
     sessionStorage.clear();
 }
