@@ -1588,8 +1588,76 @@ function atualizarSparklinesDashboard() {
     desenharSparkline('sparkResumoFinanceiro', obterResumoFaturamento6Meses().valores, '#D97706');
 }
 
+// Leva o usuário pra Agenda já filtrada por um paciente específico
+function irParaAgendaFiltrada(nomePaciente) {
+    irParaAba('agenda');
+    const filtroNomeEl = document.getElementById('filtroNome');
+    if (filtroNomeEl) filtroNomeEl.value = nomePaciente;
+    renderAgenda();
+}
+
+// Alertas da Agenda: pacientes com faltas recorrentes no mês + sessões em exceção não resolvidas
+function renderizarAlertasAgenda() {
+    const container = document.getElementById('alertasAgenda');
+    if (!container) return;
+
+    const mesAtual = new Date().toISOString().slice(0, 7);
+    const atendimentos = dados.atendimentos || [];
+
+    // Faltas recorrentes (2+ no mês atual, por paciente)
+    const faltasPorPaciente = {};
+    atendimentos
+        .filter(a => a.status === 'Falta' && formataDataISO(a.data_atendimento).startsWith(mesAtual))
+        .forEach(a => {
+            const nome = a.paciente_nome || 'Paciente';
+            faltasPorPaciente[nome] = (faltasPorPaciente[nome] || 0) + 1;
+        });
+    const faltasRecorrentes = Object.entries(faltasPorPaciente)
+        .filter(([, qtd]) => qtd >= 2)
+        .sort((a, b) => b[1] - a[1]);
+
+    // Sessões em exceção justificada (pacote estourou o prazo), mais recentes primeiro
+    const excecoes = atendimentos
+        .filter(a => a.status === 'Exceção Justificada' || a.status === 'Excecao Justificada')
+        .sort((a, b) => new Date(formataDataISO(b.data_atendimento)) - new Date(formataDataISO(a.data_atendimento)))
+        .slice(0, 5);
+
+    const totalAlertas = faltasRecorrentes.length + excecoes.length;
+
+    if (totalAlertas === 0) {
+        container.className = 'agenda-alertas-card';
+        container.innerHTML = `
+            <div class="agenda-alertas-titulo ok"><i class="ph ph-check-circle"></i>Alertas da Agenda</div>
+            <div class="agenda-alertas-ok">Nenhum problema encontrado — faltas e pacotes em dia.</div>
+        `;
+        return;
+    }
+
+    container.className = 'agenda-alertas-card tem-alertas';
+    let html = `<div class="agenda-alertas-titulo alerta"><i class="ph ph-warning"></i>Alertas da Agenda (${totalAlertas})</div>`;
+
+    faltasRecorrentes.forEach(([nome, qtd]) => {
+        html += `
+            <div class="agenda-alerta-item" onclick="irParaAgendaFiltrada('${nome.replace(/'/g, "\\'")}')">
+                <span class="badge-alerta falta">${qtd} faltas</span>
+                <span>${nome} — ${qtd} faltas registradas este mês</span>
+            </div>`;
+    });
+
+    excecoes.forEach(a => {
+        html += `
+            <div class="agenda-alerta-item" onclick="irParaAgendaFiltrada('${(a.paciente_nome || '').replace(/'/g, "\\'")}')">
+                <span class="badge-alerta excecao">Exceção</span>
+                <span>${a.paciente_nome || 'Paciente'} — sessão de ${a.data_atendimento} ultrapassou o prazo do pacote</span>
+            </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
 function renderDashboardSummaries() {
     atualizarSparklinesDashboard();
+    renderizarAlertasAgenda();
 
     // 0. Cards de topo (Sessões Hoje / Pacientes Ativos / Status Sessões / Resumo Financeiro)
     const hojeStr = new Date().toISOString().slice(0, 10);

@@ -646,6 +646,59 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
     }
 }
 
+/* ====================== ALERTAS DA AGENDA (DASHBOARD) ====================== */
+.agenda-alertas-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+}
+.agenda-alertas-card.tem-alertas {
+    border-left: 3px solid var(--color-warning);
+}
+.agenda-alertas-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: .9rem;
+    color: var(--cinza-txt);
+    margin-bottom: 10px;
+}
+.agenda-alertas-titulo i {
+    font-size: 1.1rem;
+}
+.agenda-alertas-titulo.ok i { color: #16A34A; }
+.agenda-alertas-titulo.alerta i { color: var(--color-warning); }
+.agenda-alerta-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: .85rem;
+    color: var(--cinza-txt);
+    transition: var(--transition);
+}
+.agenda-alerta-item:hover {
+    background: var(--verde-pale);
+}
+.agenda-alerta-item .badge-alerta {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #fff;
+    white-space: nowrap;
+}
+.badge-alerta.falta { background: #DC2626; }
+.badge-alerta.excecao { background: var(--color-warning); }
+.agenda-alertas-ok {
+    color: var(--cinza-muted);
+    font-size: .85rem;
+}
+
 /* ====================== LOGIN SCREEN ====================== */
 .login-container {
     min-height: 100vh;
