@@ -48,6 +48,150 @@ function mostrarSkeletonTabela(tbodyId, colunas, linhas = 4) {
     tbody.innerHTML = Array.from({ length: linhas }, () => `<tr>${celulas}</tr>`).join('');
 }
 
+// ====================== PALETA DE COMANDO (Ctrl+K / Cmd+K) ======================
+let paletaIndiceAtivo = 0;
+let paletaItens = [];
+
+function comandosNavegacaoPaleta() {
+    return Array.from(document.querySelectorAll('#mainTab .nav-link')).map(btn => ({
+        tipo: 'navegar',
+        titulo: btn.getAttribute('title') || btn.textContent.trim(),
+        icone: btn.querySelector('i')?.className || 'ph ph-arrow-right',
+        acao: () => irParaAba(btn.getAttribute('data-bs-target').replace('#', ''))
+    }));
+}
+
+function comandosAcoesRapidas() {
+    return [
+        { tipo: 'acao', titulo: 'Novo Paciente', icone: 'ph ph-user-plus', acao: () => irParaAba('pacientes') },
+        { tipo: 'acao', titulo: 'Novo Atendimento', icone: 'ph ph-plus-circle', acao: () => irParaAba('novoAtendimento') },
+        { tipo: 'acao', titulo: 'Alternar tema claro/escuro', icone: 'ph ph-circle-half', acao: () => toggleTheme() },
+        { tipo: 'acao', titulo: 'Sair do sistema', icone: 'ph ph-sign-out', acao: () => sairSistema() },
+    ];
+}
+
+function comandosPacientesPaleta(termo) {
+    if (!termo || termo.length < 2) return [];
+    const t = termo.toLowerCase();
+    return (dados.pacientes || [])
+        .filter(p => p.nome.toLowerCase().includes(t) || (p.cpf && p.cpf.includes(t)))
+        .slice(0, 5)
+        .map(p => ({
+            tipo: 'paciente',
+            titulo: p.nome,
+            subtitulo: p.telefone || 'Sem telefone',
+            icone: 'ph ph-user',
+            acao: () => { irParaAba('pacientes'); navigateBySearch(p.id); }
+        }));
+}
+
+function renderPaleta(termo = '') {
+    const t = termo.trim().toLowerCase();
+    const todos = [...comandosNavegacaoPaleta(), ...comandosAcoesRapidas()];
+    const filtrados = t
+        ? todos.filter(c => c.titulo.toLowerCase().includes(t))
+        : todos;
+    const pacientes = comandosPacientesPaleta(termo);
+
+    paletaItens = [...pacientes, ...filtrados];
+    paletaIndiceAtivo = 0;
+
+    const resultsEl = document.getElementById('commandPaletteResults');
+    if (!resultsEl) return;
+
+    if (paletaItens.length === 0) {
+        resultsEl.innerHTML = '<div class="command-palette-empty">Nada encontrado</div>';
+        return;
+    }
+
+    let html = '';
+    if (pacientes.length > 0) {
+        html += '<div class="command-palette-group-label">Pacientes</div>';
+        pacientes.forEach((item, i) => {
+            html += itemPaletaHTML(item, i);
+        });
+    }
+    html += '<div class="command-palette-group-label">Ações</div>';
+    filtrados.forEach((item, i) => {
+        html += itemPaletaHTML(item, pacientes.length + i);
+    });
+
+    resultsEl.innerHTML = html;
+}
+
+function itemPaletaHTML(item, index) {
+    const ativo = index === paletaIndiceAtivo ? ' is-active' : '';
+    const subtitulo = item.subtitulo ? `<small class="text-muted ms-auto">${item.subtitulo}</small>` : '';
+    return `<div class="command-palette-item${ativo}" data-index="${index}" onclick="executarComandoPaleta(${index})">
+        <i class="${item.icone}"></i><span>${item.titulo}</span>${subtitulo}
+    </div>`;
+}
+
+function atualizarSelecaoPaleta() {
+    document.querySelectorAll('.command-palette-item').forEach(el => {
+        el.classList.toggle('is-active', Number(el.dataset.index) === paletaIndiceAtivo);
+    });
+    const ativo = document.querySelector('.command-palette-item.is-active');
+    if (ativo) ativo.scrollIntoView({ block: 'nearest' });
+}
+
+function executarComandoPaleta(index) {
+    const item = paletaItens[index];
+    if (!item) return;
+    fecharPaleta();
+    item.acao();
+}
+
+function abrirPaleta() {
+    const overlay = document.getElementById('commandPalette');
+    const input = document.getElementById('commandPaletteInput');
+    if (!overlay || !input) return;
+    overlay.style.display = 'flex';
+    input.value = '';
+    renderPaleta('');
+    setTimeout(() => input.focus(), 0);
+}
+
+function fecharPaleta() {
+    const overlay = document.getElementById('commandPalette');
+    if (overlay) overlay.style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+    const paletaAberta = document.getElementById('commandPalette')?.style.display === 'flex';
+    const sistemaAtivo = document.getElementById('appScreen')?.style.display !== 'none';
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && sistemaAtivo) {
+        e.preventDefault();
+        paletaAberta ? fecharPaleta() : abrirPaleta();
+        return;
+    }
+
+    if (!paletaAberta) return;
+
+    if (e.key === 'Escape') {
+        fecharPaleta();
+    } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        paletaIndiceAtivo = Math.min(paletaIndiceAtivo + 1, paletaItens.length - 1);
+        atualizarSelecaoPaleta();
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        paletaIndiceAtivo = Math.max(paletaIndiceAtivo - 1, 0);
+        atualizarSelecaoPaleta();
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        executarComandoPaleta(paletaIndiceAtivo);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const paletaInput = document.getElementById('commandPaletteInput');
+    if (paletaInput) {
+        paletaInput.addEventListener('input', () => renderPaleta(paletaInput.value));
+    }
+});
+
 // ====================== GRÁFICOS E UI ======================
 let chartFaturamento = null;
 let chartStatus = null;
