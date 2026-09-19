@@ -699,6 +699,80 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
     font-size: .85rem;
 }
 
+/* ====================== PREVIEW DOS CARDS DO DASHBOARD ====================== */
+.dash-card-clicavel {
+    cursor: pointer;
+}
+
+.dash-card-popover {
+    position: fixed;
+    z-index: 1500;
+    width: 320px;
+    max-height: 400px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--sombra-lg);
+    overflow: hidden;
+    animation: cardSlideUp .15s ease forwards;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-card-popover-titulo {
+    padding: 12px 14px;
+    font-weight: 700;
+    font-size: .85rem;
+    color: var(--cinza-txt);
+    border-bottom: 1px solid var(--border-light);
+    background: var(--crema);
+}
+
+.dash-card-popover-lista {
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.dash-preview-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.dash-preview-item:hover {
+    background: var(--verde-pale);
+}
+.dash-preview-item .dpi-linha1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--cinza-txt);
+}
+.dash-preview-item .dpi-linha2 {
+    font-size: .74rem;
+    color: var(--cinza-muted);
+}
+.dash-preview-vazio {
+    padding: 20px 14px;
+    text-align: center;
+    color: var(--cinza-muted);
+    font-size: .85rem;
+}
+.dash-preview-status-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    font-size: .85rem;
+    color: var(--cinza-txt);
+}
+.dash-preview-status-linha .badge-custom { font-size: .7rem; }
+
 /* ====================== LOGIN SCREEN ====================== */
 .login-container {
     min-height: 100vh;

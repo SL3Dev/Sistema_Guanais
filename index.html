@@ -183,33 +183,39 @@
 
                 <div class="row g-3 mb-2">
                     <div class="col-md-3">
-                        <div class="dash-card">
+                        <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('sessoesHoje', this)">
                             <div class="dash-label">Sessões Hoje</div>
                             <div class="dash-value" id="dashSessoesHoje">0</div>
                             <svg class="dash-sparkline" id="sparkSessoesHoje" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card">
+                        <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('pacientesAtivos', this)">
                             <div class="dash-label">Pacientes Ativos</div>
                             <div class="dash-value" id="dashPacientesAtivos">0</div>
                             <svg class="dash-sparkline" id="sparkPacientesAtivos" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card">
+                        <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('statusSessoes', this)">
                             <div class="dash-label">Status Sessões</div>
                             <div class="dash-value" id="dashStatusResumo">0</div>
                             <svg class="dash-sparkline" id="sparkStatusResumo" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card">
+                        <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('resumoFinanceiro', this)">
                             <div class="dash-label">Resumo Financeiro</div>
                             <div class="dash-value" id="dashResumoFinanceiro">R$ 0</div>
                             <svg class="dash-sparkline" id="sparkResumoFinanceiro" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
+                </div>
+
+                <!-- Popover de preview dos cards do Dashboard -->
+                <div id="dashCardPopover" class="dash-card-popover" style="display:none;">
+                    <div class="dash-card-popover-titulo" id="dashCardPopoverTitulo"></div>
+                    <div class="dash-card-popover-lista" id="dashCardPopoverLista"></div>
                 </div>
 
                 <!-- Alertas da Agenda -->

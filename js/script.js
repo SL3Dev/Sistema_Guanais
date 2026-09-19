@@ -1655,6 +1655,115 @@ function renderizarAlertasAgenda() {
     container.innerHTML = html;
 }
 
+// ====================== PREVIEW DOS CARDS DO DASHBOARD ======================
+function abrirPreviewCard(tipo, elementoCard) {
+    const popover = document.getElementById('dashCardPopover');
+    const tituloEl = document.getElementById('dashCardPopoverTitulo');
+    const listaEl = document.getElementById('dashCardPopoverLista');
+    if (!popover || !tituloEl || !listaEl) return;
+
+    let titulo = '';
+    let itensHtml = '';
+
+    if (tipo === 'sessoesHoje') {
+        titulo = '<i class="ph ph-calendar-check"></i> Sessões de Hoje';
+        const hojeStr = new Date().toISOString().slice(0, 10);
+        const atendHoje = (dados.atendimentos || [])
+            .filter(a => formataDataISO(a.data_atendimento) === hojeStr)
+            .sort((a, b) => (a.paciente_nome || '').localeCompare(b.paciente_nome || ''));
+
+        if (atendHoje.length === 0) {
+            itensHtml = '<div class="dash-preview-vazio">Nenhuma sessão marcada para hoje.</div>';
+        } else {
+            itensHtml = atendHoje.map(a => `
+                <div class="dash-preview-item" onclick="fecharPreviewCard(); irParaAgendaFiltrada('${(a.paciente_nome || '').replace(/'/g, "\\'")}')">
+                    <div class="dpi-linha1"><span>${a.paciente_nome || 'Paciente'}</span><span>${a.status || ''}</span></div>
+                    <div class="dpi-linha2">${a.unidade || ''} • ${a.tipo_pacote || ''}</div>
+                </div>
+            `).join('');
+        }
+    } else if (tipo === 'pacientesAtivos') {
+        titulo = '<i class="ph ph-users"></i> Pacientes Ativos';
+        const ativos = (dados.pacientes || [])
+            .filter(p => p.ativo != 0)
+            .slice()
+            .sort((a, b) => String(b.id).localeCompare(String(a.id)))
+            .slice(0, 8);
+
+        if (ativos.length === 0) {
+            itensHtml = '<div class="dash-preview-vazio">Nenhum paciente ativo cadastrado.</div>';
+        } else {
+            itensHtml = ativos.map(p => `
+                <div class="dash-preview-item" onclick="fecharPreviewCard(); navigateBySearch('${p.id}')">
+                    <div class="dpi-linha1"><span>${p.nome}</span></div>
+                    <div class="dpi-linha2">${p.telefone || 'Sem telefone'}</div>
+                </div>
+            `).join('');
+        }
+    } else if (tipo === 'statusSessoes') {
+        titulo = '<i class="ph ph-chart-pie-slice"></i> Status das Sessões';
+        const resumo = obterResumoStatusSessao();
+        const total = (dados.atendimentos || []).length || 0;
+        const outros = Math.max(0, total - resumo.confirmado - resumo.falta - resumo.excecao);
+
+        itensHtml = `
+            <div class="dash-preview-status-linha"><span>Confirmado</span><span class="badge-custom bg-success-subtle text-success">${resumo.confirmado}</span></div>
+            <div class="dash-preview-status-linha"><span>Falta</span><span class="badge-custom bg-danger-subtle text-danger">${resumo.falta}</span></div>
+            <div class="dash-preview-status-linha"><span>Exceção Justificada</span><span class="badge-custom bg-warning-subtle text-warning">${resumo.excecao}</span></div>
+            <div class="dash-preview-status-linha"><span>Outros</span><span class="badge-custom bg-secondary-subtle text-secondary">${outros}</span></div>
+        `;
+    } else if (tipo === 'resumoFinanceiro') {
+        titulo = '<i class="ph ph-currency-circle-dollar"></i> Lançamentos do Mês';
+        const mesAtual = new Date().toISOString().slice(0, 7);
+        const lancamentosMes = (dados.financeiro || [])
+            .filter(f => f.data && formataDataISO(f.data).startsWith(mesAtual))
+            .sort((a, b) => formataDataISO(b.data).localeCompare(formataDataISO(a.data)))
+            .slice(0, 8);
+
+        if (lancamentosMes.length === 0) {
+            itensHtml = '<div class="dash-preview-vazio">Nenhum lançamento financeiro este mês.</div>';
+        } else {
+            itensHtml = lancamentosMes.map(f => `
+                <div class="dash-preview-item" onclick="fecharPreviewCard(); navigateBySearch('${f.paciente_id || ''}')">
+                    <div class="dpi-linha1"><span>${f.paciente_nome || 'Paciente'}</span><span>R$ ${(parseFloat(f.valor) || 0).toFixed(2)}</span></div>
+                    <div class="dpi-linha2">${f.data || ''} • ${f.clinica || ''}</div>
+                </div>
+            `).join('');
+        }
+    } else {
+        return;
+    }
+
+    tituloEl.innerHTML = titulo;
+    listaEl.innerHTML = itensHtml;
+
+    const rect = elementoCard.getBoundingClientRect();
+    popover.style.display = 'flex';
+    const larguraPopover = 320;
+    let left = rect.left;
+    if (left + larguraPopover > window.innerWidth - 12) {
+        left = window.innerWidth - larguraPopover - 12;
+    }
+    popover.style.left = `${Math.max(12, left)}px`;
+    popover.style.top = `${rect.bottom + 8}px`;
+
+    setTimeout(() => document.addEventListener('click', fecharPreviewCardAoClicarFora), 0);
+}
+
+function fecharPreviewCard() {
+    const popover = document.getElementById('dashCardPopover');
+    if (popover) popover.style.display = 'none';
+    document.removeEventListener('click', fecharPreviewCardAoClicarFora);
+}
+
+function fecharPreviewCardAoClicarFora(evento) {
+    const popover = document.getElementById('dashCardPopover');
+    if (!popover) return;
+    if (!popover.contains(evento.target) && !evento.target.closest('.dash-card-clicavel')) {
+        fecharPreviewCard();
+    }
+}
+
 function renderDashboardSummaries() {
     atualizarSparklinesDashboard();
     renderizarAlertasAgenda();
