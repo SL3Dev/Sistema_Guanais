@@ -311,24 +311,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
     transform: translateY(-2px);
 }
 
-/* Shimmer Effect */
-.btn-verde::after, .btn-primary::after {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 60%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
-    transform: skewX(-20deg);
-}
-.btn-verde:hover::after, .btn-primary:hover::after {
-    animation: shimmer .6s ease forwards;
-}
-
-@keyframes shimmer {
-    to { left: 150%; }
-}
-
 /* ====================== FORMS ====================== */
 .form-control, .form-select {
     border-radius: var(--radius-sm);
