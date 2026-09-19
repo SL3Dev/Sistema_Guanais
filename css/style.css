@@ -513,6 +513,43 @@ body.dark .command-palette-overlay { background: rgba(0,0,0,.6); }
     }
 }
 
+/* ====================== CALENDÁRIO DA AGENDA (FullCalendar) ====================== */
+#agendaCalendario .fc-button-primary {
+    background: var(--verde) !important;
+    border-color: var(--verde) !important;
+}
+#agendaCalendario .fc-button-primary:hover {
+    background: var(--verde-escuro) !important;
+    border-color: var(--verde-escuro) !important;
+}
+#agendaCalendario .fc-button-primary:not(:disabled).fc-button-active {
+    background: var(--verde-escuro) !important;
+    border-color: var(--verde-escuro) !important;
+}
+#agendaCalendario .fc-toolbar-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--cinza-txt);
+}
+#agendaCalendario .fc-event {
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: .78rem;
+}
+#agendaCalendario .fc-daygrid-day.fc-day-today {
+    background: var(--verde-pale) !important;
+}
+body.dark #agendaCalendario { color: var(--cinza-txt); }
+body.dark #agendaCalendario .fc-theme-standard td,
+body.dark #agendaCalendario .fc-theme-standard th,
+body.dark #agendaCalendario .fc-theme-standard .fc-scrollgrid {
+    border-color: var(--border-light);
+}
+body.dark #agendaCalendario .fc-col-header-cell-cushion,
+body.dark #agendaCalendario .fc-daygrid-day-number {
+    color: var(--cinza-txt);
+}
+
 /* ====================== LOGIN SCREEN ====================== */
 .login-container {
     min-height: 100vh;

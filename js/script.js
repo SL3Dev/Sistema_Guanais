@@ -2037,6 +2037,92 @@ function renderAgenda(dadosCustom = null) {
         </tr>`;
     });
     document.getElementById('agendaTbody').innerHTML = html || '<tr><td colspan="8" class="text-center py-3 text-muted">Nenhum atendimento encontrado</td></tr>';
+
+    atualizarEventosCalendario();
+}
+
+// ====================== CALENDÁRIO VISUAL DA AGENDA ======================
+let calendarioAgendaInstancia = null;
+
+function alternarVisaoAgenda(visao) {
+    const btnLista = document.getElementById('btnVisaoLista');
+    const btnCal = document.getElementById('btnVisaoCalendario');
+    const containerLista = document.getElementById('agendaTabelaContainer');
+    const containerCal = document.getElementById('agendaCalendarioContainer');
+    if (!btnLista || !btnCal || !containerLista || !containerCal) return;
+
+    if (visao === 'calendario') {
+        containerLista.style.display = 'none';
+        containerCal.style.display = 'block';
+        btnCal.classList.replace('btn-outline-secondary', 'btn-verde');
+        btnLista.classList.replace('btn-verde', 'btn-outline-secondary');
+        if (!calendarioAgendaInstancia) {
+            inicializarCalendarioAgenda();
+        } else {
+            atualizarEventosCalendario();
+            calendarioAgendaInstancia.updateSize();
+        }
+    } else {
+        containerCal.style.display = 'none';
+        containerLista.style.display = 'block';
+        btnLista.classList.replace('btn-outline-secondary', 'btn-verde');
+        btnCal.classList.replace('btn-verde', 'btn-outline-secondary');
+    }
+}
+
+function corEventoAgendaPorStatus(status) {
+    switch (status) {
+        case 'Confirmado': return { bg: '#4F46E5', border: '#4338CA' };
+        case 'Falta': return { bg: '#DC2626', border: '#B91C1C' };
+        case 'Exceção Justificada':
+        case 'Excecao Justificada': return { bg: '#D97706', border: '#B45309' };
+        case 'Reagendado': return { bg: '#0EA5E9', border: '#0284C7' };
+        default: return { bg: '#64748B', border: '#475569' };
+    }
+}
+
+function montarEventosCalendarioAgenda() {
+    return (dados.atendimentos || []).map(a => {
+        const cor = corEventoAgendaPorStatus(a.status);
+        const dataISO = formataDataISO(a.data_atendimento);
+        if (!dataISO) return null;
+        return {
+            id: String(a.id_atendimento || ''),
+            title: a.paciente_nome || 'Atendimento',
+            start: dataISO,
+            allDay: true,
+            backgroundColor: cor.bg,
+            borderColor: cor.border
+        };
+    }).filter(Boolean);
+}
+
+function inicializarCalendarioAgenda() {
+    const el = document.getElementById('agendaCalendario');
+    if (!el || typeof FullCalendar === 'undefined') return;
+
+    calendarioAgendaInstancia = new FullCalendar.Calendar(el, {
+        locale: 'pt-br',
+        height: 650,
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridWeek' },
+        buttonText: { today: 'Hoje', month: 'Mês', week: 'Semana' },
+        events: montarEventosCalendarioAgenda(),
+        eventClick: function (info) {
+            const nome = info.event.title;
+            const filtroNomeEl = document.getElementById('filtroNome');
+            if (filtroNomeEl) filtroNomeEl.value = nome;
+            renderAgenda();
+            alternarVisaoAgenda('lista');
+            mostrarToast(`Filtrando agenda por "${nome}"`, 'info');
+        }
+    });
+    calendarioAgendaInstancia.render();
+}
+
+function atualizarEventosCalendario() {
+    if (!calendarioAgendaInstancia) return;
+    calendarioAgendaInstancia.removeAllEvents();
+    calendarioAgendaInstancia.addEventSource(montarEventosCalendarioAgenda());
 }
 
 async function excluirAtendimento(id) {
