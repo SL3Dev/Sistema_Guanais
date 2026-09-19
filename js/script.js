@@ -9,6 +9,45 @@ let dados = { pacientes: [], atendimentos: [], financeiro: [], despesas: [] };
 let usuarioLogado = null;
 let sistemaInicializado = false;
 
+// ====================== MICROINTERAÇÕES ======================
+
+function prefereReduzirMovimento() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Anima um número de 0 até valorFinal dentro do elemento (usado nos cards do Dashboard)
+function animarContador(el, valorFinal, opcoes = {}) {
+    if (!el) return;
+    const duracao = opcoes.duracao || 600;
+    const formatar = opcoes.formatar || (v => Math.round(v).toLocaleString('pt-BR'));
+
+    if (prefereReduzirMovimento()) {
+        el.textContent = formatar(valorFinal);
+        return;
+    }
+
+    const inicioTempo = performance.now();
+    function passo(agora) {
+        const progresso = Math.min((agora - inicioTempo) / duracao, 1);
+        const valorAtual = valorFinal * progresso;
+        el.textContent = formatar(valorAtual);
+        if (progresso < 1) {
+            requestAnimationFrame(passo);
+        } else {
+            el.textContent = formatar(valorFinal);
+        }
+    }
+    requestAnimationFrame(passo);
+}
+
+// Preenche um <tbody> com linhas de skeleton (placeholder pulsante) enquanto os dados carregam
+function mostrarSkeletonTabela(tbodyId, colunas, linhas = 4) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const celulas = Array.from({ length: colunas }, () => '<td><span class="skeleton-bar"></span></td>').join('');
+    tbody.innerHTML = Array.from({ length: linhas }, () => `<tr>${celulas}</tr>`).join('');
+}
+
 // ====================== GRÁFICOS E UI ======================
 let chartFaturamento = null;
 let chartStatus = null;
@@ -1403,9 +1442,15 @@ function formataDataBR(data) {
 
 // ====================== INICIALIZAÇÃO ======================
 async function inicializarSistema(moduloInicial = 'dashboard') {
+    // Skeleton loading nas tabelas principais enquanto os dados chegam
+    mostrarSkeletonTabela('agendaTbody', 8);
+    mostrarSkeletonTabela('pacientesTbody', 5);
+    mostrarSkeletonTabela('finTbody', 9);
+    mostrarSkeletonTabela('despesasTbody', 6);
+
     // Carregar configurações primeiro para as logos
     await carregarConfiguracoes();
-    
+
     // Carregar todos os dados da API
     await Promise.all([
         carregarPacientes(),
@@ -2348,12 +2393,14 @@ async function preencherPacoteAutomatico(pacienteId) {
     const elStatus = document.getElementById('dashStatusResumo');
     const elFin = document.getElementById('dashResumoFinanceiro');
 
-    if (elSessoes) elSessoes.textContent = atendHoje.length;
-    if (elPacAtivos) elPacAtivos.textContent = (dados.pacientes || []).filter(p => p.ativo != 0).length;
+    if (elSessoes) animarContador(elSessoes, atendHoje.length);
+    if (elPacAtivos) animarContador(elPacAtivos, (dados.pacientes || []).filter(p => p.ativo != 0).length);
     if (elStatus) elStatus.textContent = `${statusResumo.confirmado}/${(dados.atendimentos || []).length || 0}`;
     if (elFin) {
         const total = (dados.financeiro || []).reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
-        elFin.textContent = `R$ ${total.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+        animarContador(elFin, total, {
+            formatar: v => `R$ ${Math.round(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+        });
     }
 }
 

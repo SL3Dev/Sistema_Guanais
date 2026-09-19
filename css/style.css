@@ -341,7 +341,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
     animation: fadeUp .4s ease both;
 }
 .card:hover, .card-modern:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: var(--sombra-md) !important;
 }
 .card-accent { border-left: 5px solid var(--verde) !important; }
@@ -350,6 +350,45 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-body); font-weight: 600; }
 @keyframes fadeUp {
     from { opacity:0; transform: translateY(10px); }
     to   { opacity:1; transform: translateY(0); }
+}
+
+/* ====================== MICROINTERAÇÕES ====================== */
+
+/* Transição suave ao trocar de aba/módulo (usa o suporte nativo do Bootstrap .fade) */
+.tab-pane.fade {
+    transition: opacity .25s ease, transform .25s ease;
+    transform: translateY(4px);
+}
+.tab-pane.fade.show {
+    transform: translateY(0);
+}
+
+/* Skeleton loading - placeholder pulsante enquanto os dados carregam */
+.skeleton-bar {
+    display: inline-block;
+    height: .85em;
+    width: 100%;
+    max-width: 140px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--border-light) 25%, rgba(148,163,184,.35) 50%, var(--border-light) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+.skeleton-bar.skeleton-sm { max-width: 60px; }
+.skeleton-bar.skeleton-lg { max-width: 220px; }
+
+@keyframes skeletonPulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tab-pane.fade,
+    .card, .card-modern,
+    .skeleton-bar {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 
 /* ====================== LOGIN SCREEN ====================== */
