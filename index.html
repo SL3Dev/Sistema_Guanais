@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Sistema de Gestão Clínica Espaço Guanais">
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#638677">
     <title>Espaço Guanais — Sistema de Gestão Clínica</title>
 
     <!-- PWA -->
@@ -28,7 +28,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -96,6 +96,10 @@
         </div>
 
         <div class="d-flex gap-2 align-items-center flex-wrap">
+            <button type="button" class="header-bell" id="headerBell" title="Alertas da Agenda" onclick="irParaAba('dashboard')">
+                <i class="ph ph-bell"></i>
+                <span class="header-bell-badge d-none" id="headerBellBadge">0</span>
+            </button>
             <div class="user-pill" id="userPill">
                 <img id="loggedUserAvatar" src="https://placehold.co/44x44" alt="Usuário">
                 <div>
@@ -119,6 +123,11 @@
     <div class="container-fluid px-3 px-md-4 py-4">
         <!-- Navegação por Abas -->
         <ul class="nav nav-tabs border-0 gap-2 mb-4 flex-wrap d-print-none" id="mainTab" role="tablist">
+            <li class="nav-item sidebar-toggle-item">
+                <button class="nav-link sidebar-toggle-btn" type="button" onclick="toggleSidebar()" title="Expandir/recolher menu">
+                    <i class="ph ph-list"></i>
+                </button>
+            </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" title="Dashboard">
                     <i class="ph ph-house"></i><span class="nav-label"> Dashboard</span>
@@ -1535,6 +1544,6 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="js/script.js"></script>
+<script src="js/script.js?v=2"></script>
 </body>
 </html>

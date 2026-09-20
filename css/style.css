@@ -9,18 +9,18 @@
 
 /* ====================== CSS VARIABLES ====================== */
 :root {
-    /* Colors - Slate & Índigo */
-    --verde:       #4F46E5;
-    --verde-escuro:#4338CA;
-    --verde-pale:  #EEF2FF;
-    --ouro:        #6366F1;
-    --ouro-light:  #818CF8;
-    --ouro-pale:   #EEF2FF;
-    --crema:       #F8FAFC;
-    --cinza-txt:   #0F172A;
-    --cinza-muted: #64748B;
+    /* Colors - Sálvia Acolhedora */
+    --verde:       #638677;
+    --verde-escuro:#4F6D60;
+    --verde-pale:  #E7EEE9;
+    --ouro:        #C08A5C;
+    --ouro-light:  #D4A57D;
+    --ouro-pale:   #F3E4D8;
+    --crema:       #F6F5F0;
+    --cinza-txt:   #243C35;
+    --cinza-muted: #6B7A72;
     --branco:      #ffffff;
-    --color-warning: #D97706;
+    --color-warning: #C08A5C;
 
     /* Shadows */
     --sombra-sm: 0 1px 2px rgba(15,23,42,.04);
@@ -44,10 +44,10 @@
     --bg-surface: var(--branco);
     --text-primary: var(--cinza-txt);
     --text-secondary: var(--cinza-muted);
-    --border-light: #E2E8F0;
+    --border-light: #E7E2D6;
 }
 
-/* Dark mode overrides - Paleta Verde Sálvia premium */
+/* Dark mode overrides - Paleta Noturno Suave */
 body.dark {
     --bg-body: #0B1220;
     --bg-surface: #131B2C;
@@ -801,7 +801,7 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
 }
 
 /* Pétalas flutuantes sutis - decoração discreta de fundo (opacidade baixa,
-   paleta índigo) para dar um toque orgânico sem competir com o conteúdo */
+   paleta sálvia/terracota) para dar um toque orgânico sem competir com o conteúdo */
 .petal {
     position: absolute;
     border-radius: 0 60% 0 60%;
@@ -809,10 +809,10 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
     pointer-events: none;
     animation: floatPetal linear infinite;
 }
-.petal-1 { width: 70px; height: 70px; background: #6366F1; top: 8%; left: 10%; animation-duration: 20s; animation-delay: 0s; }
-.petal-2 { width: 46px; height: 46px; background: #4F46E5; top: 68%; right: 8%; animation-duration: 24s; animation-delay: -6s; }
-.petal-3 { width: 34px; height: 34px; background: #818CF8; bottom: 18%; left: 16%; animation-duration: 17s; animation-delay: -3s; }
-.petal-4 { width: 56px; height: 56px; background: #4338CA; top: 38%; right: 22%; animation-duration: 22s; animation-delay: -10s; }
+.petal-1 { width: 70px; height: 70px; background: #638677; top: 8%; left: 10%; animation-duration: 20s; animation-delay: 0s; }
+.petal-2 { width: 46px; height: 46px; background: #C08A5C; top: 68%; right: 8%; animation-duration: 24s; animation-delay: -6s; }
+.petal-3 { width: 34px; height: 34px; background: #9AB0A0; bottom: 18%; left: 16%; animation-duration: 17s; animation-delay: -3s; }
+.petal-4 { width: 56px; height: 56px; background: #4F6D60; top: 38%; right: 22%; animation-duration: 22s; animation-delay: -10s; }
 
 @keyframes floatPetal {
     0%   { transform: translateY(0) rotate(0deg) scale(1); }
@@ -951,8 +951,8 @@ body.dark .psicologa-card {
 }
 
 #appScreen .app-header {
-    background: rgba(255, 255, 255, .88) !important;
-    border-bottom: 1px solid rgba(137,178,162,.25) !important;
+    background: var(--bg-surface) !important;
+    border-bottom: 1px solid var(--border-light) !important;
 }
 
 #appScreen .app-header h5,
@@ -960,7 +960,7 @@ body.dark .psicologa-card {
 #appScreen .app-header h3,
 #appScreen .app-header small,
 #appScreen .app-header .text-muted {
-    color: #2e3b35 !important;
+    color: var(--cinza-txt) !important;
 }
 
 .user-pill {
@@ -1390,6 +1390,105 @@ body.dark .financeiro-resumo .p-2.rounded {
 #mainTab .nav-link.active {
     background: var(--verde) !important;
     color: #ffffff !important;
+}
+
+.sidebar-toggle-item {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.sidebar-toggle-btn {
+    width: 48px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.55) !important;
+    border-radius: var(--radius-sm) !important;
+    background: transparent !important;
+    border: none !important;
+    transition: var(--transition) !important;
+    font-size: 1.2rem;
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+/* Sidebar expandida: ícone + rótulo lado a lado */
+#appScreen.sidebar-expanded .container-fluid {
+    grid-template-columns: 220px minmax(0, 1fr);
+}
+
+#appScreen.sidebar-expanded #mainTab .nav-item,
+#appScreen.sidebar-expanded .sidebar-toggle-item {
+    justify-content: flex-start;
+}
+
+#appScreen.sidebar-expanded #mainTab .nav-link {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0 14px;
+    gap: 10px;
+}
+
+#appScreen.sidebar-expanded #mainTab .nav-link .nav-label {
+    display: inline;
+    font-size: .85rem;
+    white-space: nowrap;
+}
+
+#appScreen.sidebar-expanded .sidebar-toggle-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0 14px;
+}
+
+@media (max-width: 992px) {
+    .sidebar-toggle-item { display: none; }
+}
+
+.header-bell {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--crema) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius-sm);
+    color: var(--cinza-muted);
+    font-size: 1.1rem;
+    transition: var(--transition);
+}
+
+.header-bell:hover {
+    color: var(--verde);
+    border-color: var(--verde);
+}
+
+.header-bell-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ouro);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 700;
+    border-radius: 999px;
+    line-height: 1;
 }
 
 #mainTabContent {

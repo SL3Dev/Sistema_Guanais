@@ -1355,9 +1355,9 @@ function atualizarHeaderUsuario() {
     if (roleEl) roleEl.textContent = (tipo.charAt(0).toUpperCase() + tipo.slice(1));
     if (welcomeEl) welcomeEl.textContent = nome.split(' ')[0];
     if (avatarEl) {
-        avatarEl.src = foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0f172a&color=fff`;
+        avatarEl.src = foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=638677&color=fff`;
         avatarEl.onerror = () => {
-            avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0f172a&color=fff`;
+            avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=638677&color=fff`;
         };
     }
 }
@@ -1588,6 +1588,24 @@ function atualizarSparklinesDashboard() {
     desenharSparkline('sparkResumoFinanceiro', obterResumoFaturamento6Meses().valores, '#D97706');
 }
 
+// Sidebar colapsável: alterna entre rail de ícones e ícone+rótulo, persistindo a escolha
+function toggleSidebar() {
+    const appScreen = document.getElementById('appScreen');
+    if (!appScreen) return;
+    appScreen.classList.toggle('sidebar-expanded');
+    try {
+        localStorage.setItem('sidebarExpanded', appScreen.classList.contains('sidebar-expanded') ? '1' : '0');
+    } catch (e) { /* localStorage indisponível */ }
+}
+
+function aplicarEstadoSidebar() {
+    try {
+        if (localStorage.getItem('sidebarExpanded') === '1') {
+            document.getElementById('appScreen')?.classList.add('sidebar-expanded');
+        }
+    } catch (e) { /* localStorage indisponível */ }
+}
+
 // Leva o usuário pra Agenda já filtrada por um paciente específico
 function irParaAgendaFiltrada(nomePaciente) {
     irParaAba('agenda');
@@ -1623,6 +1641,12 @@ function renderizarAlertasAgenda() {
         .slice(0, 5);
 
     const totalAlertas = faltasRecorrentes.length + excecoes.length;
+
+    const bellBadge = document.getElementById('headerBellBadge');
+    if (bellBadge) {
+        bellBadge.textContent = totalAlertas > 99 ? '99+' : totalAlertas;
+        bellBadge.classList.toggle('d-none', totalAlertas === 0);
+    }
 
     if (totalAlertas === 0) {
         container.className = 'agenda-alertas-card';
@@ -1855,6 +1879,8 @@ function formataDataBR(data) {
 
 // ====================== INICIALIZAÇÃO ======================
 async function inicializarSistema(moduloInicial = 'dashboard') {
+    aplicarEstadoSidebar();
+
     // Skeleton loading nas tabelas principais enquanto os dados chegam
     mostrarSkeletonTabela('agendaTbody', 8);
     mostrarSkeletonTabela('pacientesTbody', 5);
