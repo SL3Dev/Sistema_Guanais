@@ -2533,7 +2533,7 @@ async function renderFinanceiro() {
         
         html += `<tr>
             <td>${dataFormatada}</td>
-            <td>${f.paciente_nome || ''}</td>
+            <td><div class="tabela-paciente-cell">${avatarChip(f.paciente_nome)}<span>${f.paciente_nome || ''}</span></div></td>
             <td>${f.clinica || ''}</td>
             <td>R$ ${valor.toFixed(2)}</td>
             <td>R$ ${despesa.toFixed(2)}</td>
