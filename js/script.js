@@ -224,8 +224,8 @@ function initCharts() {
                 datasets: [{
                     label: 'Faturamento',
                     data: ultimosMeses.valores,
-                    backgroundColor: 'rgba(56, 118, 59, 0.7)',
-                    borderColor: 'rgb(56, 118, 59)',
+                    backgroundColor: 'rgba(99, 134, 119, 0.75)',
+                    borderColor: '#638677',
                     borderWidth: 1,
                     borderRadius: 5
                 }]
@@ -244,7 +244,7 @@ function initCharts() {
                 labels: ['Confirmado', 'Falta', 'Exceção'],
                 datasets: [{
                     data: [statusResumo.confirmado, statusResumo.falta, statusResumo.excecao],
-                    backgroundColor: ['#38763b', '#dc3545', '#b6922e']
+                    backgroundColor: ['#4F6D60', '#C1554A', '#C08A5C']
                 }]
             },
             options: { responsive: true }
@@ -261,7 +261,7 @@ function initCharts() {
                 labels: ['ANIMO', 'ESPAÇO GUANAIS'],
                 datasets: [{
                     data: [unidadeResumo.animo, unidadeResumo.guanais],
-                    backgroundColor: ['#0dcaf0', '#38763b']
+                    backgroundColor: ['#5B8A9A', '#638677']
                 }]
             },
             options: { responsive: true }
@@ -1582,10 +1582,10 @@ function desenharSparkline(svgId, valores, cor) {
 }
 
 function atualizarSparklinesDashboard() {
-    desenharSparkline('sparkSessoesHoje', sparklineSessoesUltimos7Dias(), '#4F46E5');
-    desenharSparkline('sparkPacientesAtivos', sparklinePacientesNovosUltimos7Dias(), '#0EA5E9');
-    desenharSparkline('sparkStatusResumo', sparklineConfirmadosUltimos7Dias(), '#16A34A');
-    desenharSparkline('sparkResumoFinanceiro', obterResumoFaturamento6Meses().valores, '#D97706');
+    desenharSparkline('sparkSessoesHoje', sparklineSessoesUltimos7Dias(), '#638677');
+    desenharSparkline('sparkPacientesAtivos', sparklinePacientesNovosUltimos7Dias(), '#5B8A9A');
+    desenharSparkline('sparkStatusResumo', sparklineConfirmadosUltimos7Dias(), '#4F6D60');
+    desenharSparkline('sparkResumoFinanceiro', obterResumoFaturamento6Meses().valores, '#C08A5C');
 }
 
 // Sidebar colapsável: alterna entre rail de ícones e ícone+rótulo, persistindo a escolha

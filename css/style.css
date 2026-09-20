@@ -1521,13 +1521,45 @@ body.dark .financeiro-resumo .p-2.rounded {
 }
 
 .dash-card {
-    border-left: 3px solid var(--verde) !important;
-    padding: 20px 15px;
+    padding: 20px;
 }
 
 .dash-icon {
     background: var(--verde-pale) !important;
     color: var(--verde) !important;
+}
+
+.dash-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.dash-card-head .dash-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.dash-card-head .dash-label {
+    margin-bottom: 0 !important;
+    flex: 1;
+}
+
+.dash-card-chevron {
+    color: var(--cinza-muted);
+    font-size: 1rem;
+    opacity: .6;
+    transition: var(--transition);
+}
+
+.dash-card-clicavel:hover .dash-card-chevron {
+    opacity: 1;
+    transform: translateX(2px);
+    color: var(--verde);
 }
 
 .btn-verde,

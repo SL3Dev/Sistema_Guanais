@@ -4,12 +4,12 @@
 // sempre vão direto pra rede, para nunca servir dados de paciente/financeiro
 // desatualizados ou de outra sessão.
 
-const CACHE_NAME = 'espaco-guanais-v2';
+const CACHE_NAME = 'espaco-guanais-v3';
 const APP_SHELL = [
     './',
     'index.html',
-    'css/style.css?v=2',
-    'js/script.js?v=2',
+    'css/style.css?v=4',
+    'js/script.js?v=3',
     'icons/icon-192.png',
     'icons/icon-512.png'
 ];

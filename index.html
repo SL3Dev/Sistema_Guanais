@@ -28,7 +28,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=3">
+    <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -193,28 +193,44 @@
                 <div class="row g-3 mb-2">
                     <div class="col-md-3">
                         <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('sessoesHoje', this)">
-                            <div class="dash-label">Sessões Hoje</div>
+                            <div class="dash-card-head">
+                                <div class="dash-icon"><i class="ph ph-calendar-check"></i></div>
+                                <div class="dash-label">Sessões Hoje</div>
+                                <i class="ph ph-caret-right dash-card-chevron"></i>
+                            </div>
                             <div class="dash-value" id="dashSessoesHoje">0</div>
                             <svg class="dash-sparkline" id="sparkSessoesHoje" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('pacientesAtivos', this)">
-                            <div class="dash-label">Pacientes Ativos</div>
+                            <div class="dash-card-head">
+                                <div class="dash-icon"><i class="ph ph-users"></i></div>
+                                <div class="dash-label">Pacientes Ativos</div>
+                                <i class="ph ph-caret-right dash-card-chevron"></i>
+                            </div>
                             <div class="dash-value" id="dashPacientesAtivos">0</div>
                             <svg class="dash-sparkline" id="sparkPacientesAtivos" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('statusSessoes', this)">
-                            <div class="dash-label">Status Sessões</div>
+                            <div class="dash-card-head">
+                                <div class="dash-icon"><i class="ph ph-chart-pie-slice"></i></div>
+                                <div class="dash-label">Status Sessões</div>
+                                <i class="ph ph-caret-right dash-card-chevron"></i>
+                            </div>
                             <div class="dash-value" id="dashStatusResumo">0</div>
                             <svg class="dash-sparkline" id="sparkStatusResumo" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="dash-card dash-card-clicavel" onclick="abrirPreviewCard('resumoFinanceiro', this)">
-                            <div class="dash-label">Resumo Financeiro</div>
+                            <div class="dash-card-head">
+                                <div class="dash-icon"><i class="ph ph-currency-circle-dollar"></i></div>
+                                <div class="dash-label">Resumo Financeiro</div>
+                                <i class="ph ph-caret-right dash-card-chevron"></i>
+                            </div>
                             <div class="dash-value" id="dashResumoFinanceiro">R$ 0</div>
                             <svg class="dash-sparkline" id="sparkResumoFinanceiro" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
                         </div>
@@ -1544,6 +1560,6 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="js/script.js?v=2"></script>
+<script src="js/script.js?v=3"></script>
 </body>
 </html>
