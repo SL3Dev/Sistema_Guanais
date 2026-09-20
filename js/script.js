@@ -1588,6 +1588,31 @@ function atualizarSparklinesDashboard() {
     desenharSparkline('sparkResumoFinanceiro', obterResumoFaturamento6Meses().valores, '#C08A5C');
 }
 
+// Avatar circular com iniciais coloridas, cor determinística por nome
+const AVATAR_PALETTE = [
+    { bg: '#E7EEE9', fg: '#4F6D60' },
+    { bg: '#EAF1F3', fg: '#5B8A9A' },
+    { bg: '#F3E4D8', fg: '#C08A5C' },
+    { bg: '#F0E6EC', fg: '#9C5D7A' },
+    { bg: '#EFEAE0', fg: '#8A7B5C' },
+    { bg: '#E3EAF0', fg: '#5C7A9C' }
+];
+
+function iniciaisNome(nome) {
+    const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
+    if (partes.length === 0) return '?';
+    if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
+
+function avatarChip(nome) {
+    const n = nome || '';
+    let hash = 0;
+    for (let i = 0; i < n.length; i++) hash = (hash + n.charCodeAt(i)) % AVATAR_PALETTE.length;
+    const cor = AVATAR_PALETTE[hash];
+    return `<span class="avatar-chip" style="background:${cor.bg};color:${cor.fg};">${iniciaisNome(n)}</span>`;
+}
+
 // Sidebar colapsável: alterna entre rail de ícones e ícone+rótulo, persistindo a escolha
 function toggleSidebar() {
     const appScreen = document.getElementById('appScreen');
@@ -2300,13 +2325,13 @@ function renderAgenda(dadosCustom = null) {
         
         let badgeClass = statusAtend === 'Confirmado' ? 'badge-success' :
             statusAtend === 'Falta' ? 'badge-danger' :
-                statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada' ? 'badge-warning' : 'badge-info';
+                (statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada' || statusAtend === 'Reagendado') ? 'badge-warning' : 'badge-info';
         
         const podeVerProntuario = podeAcessarProntuarioDoAtendimento(a);
         
         html += `<tr>
             <td>${idAtend}</td>
-            <td>${nomePaciente}</td>
+            <td><div class="tabela-paciente-cell">${avatarChip(nomePaciente)}<span>${nomePaciente}</span></div></td>
             <td>${unidadeAtend}</td>
             <td>${dataAtend}</td>
             <td>${tipoPacote}</td>

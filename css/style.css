@@ -1529,6 +1529,10 @@ body.dark .financeiro-resumo .p-2.rounded {
     color: var(--verde) !important;
 }
 
+.dash-icon-danger  { background: rgba(193, 85, 74, .12) !important; color: #C1554A !important; }
+.dash-icon-warning { background: var(--ouro-pale) !important; color: var(--ouro) !important; }
+.dash-icon-info    { background: rgba(91, 138, 154, .12) !important; color: #5B8A9A !important; }
+
 .dash-card-head {
     display: flex;
     align-items: center;
@@ -1560,6 +1564,74 @@ body.dark .financeiro-resumo .p-2.rounded {
     opacity: 1;
     transform: translateX(2px);
     color: var(--verde);
+}
+
+/* ====================== PADRÃO DE CABEÇALHO DE PÁGINA (todas as abas) ====================== */
+.page-header-mini {
+    margin-bottom: 24px;
+}
+
+.page-header-eyebrow {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--verde);
+    margin-bottom: 6px;
+}
+
+.page-header-title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--cinza-txt);
+    margin-bottom: 4px;
+}
+
+.page-header-sub {
+    color: var(--cinza-muted);
+    font-size: .9rem;
+    margin: 0;
+}
+
+/* ====================== BADGES DE STATUS ====================== */
+.badge-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.badge-success { background: rgba(79, 109, 96, .14); color: #4F6D60; }
+.badge-danger  { background: rgba(193, 85, 74, .14); color: #C1554A; }
+.badge-warning { background: rgba(192, 138, 92, .16); color: #C08A5C; }
+.badge-info    { background: rgba(91, 138, 154, .14); color: #5B8A9A; }
+
+body.dark .badge-success { background: rgba(79, 109, 96, .28); color: #9FD4B4; }
+body.dark .badge-danger  { background: rgba(193, 85, 74, .28); color: #F0A79C; }
+body.dark .badge-warning { background: rgba(192, 138, 92, .28); color: #F0C79C; }
+body.dark .badge-info    { background: rgba(91, 138, 154, .28); color: #A9D3DE; }
+
+/* ====================== AVATAR COM INICIAIS ====================== */
+.avatar-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: .72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.tabela-paciente-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-verde,

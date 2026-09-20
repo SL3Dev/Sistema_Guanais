@@ -28,7 +28,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=4">
+    <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
 
@@ -295,6 +295,12 @@
             
             <!-- AGENDA -->
             <div class="tab-pane fade" id="agenda" role="tabpanel">
+                <div class="page-header-mini">
+                    <div class="page-header-eyebrow">Agenda</div>
+                    <h2 class="page-header-title">Agenda</h2>
+                    <p class="page-header-sub">Acompanhe seus atendimentos e organize sua rotina.</p>
+                </div>
+
                 <!-- Dashboard Cards -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
@@ -305,22 +311,22 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card clickable" id="cardFaltas" style="border-left-color: #dc3545 !important;">
-                            <div class="dash-icon" style="background: #ffeaea; color: #dc3545;"><i class="ph ph-calendar-x"></i></div>
+                        <div class="dash-card clickable" id="cardFaltas">
+                            <div class="dash-icon dash-icon-danger"><i class="ph ph-calendar-x"></i></div>
                             <div class="dash-label">Faltas no Mês</div>
-                            <div class="dash-value" id="dashFaltas" style="color: #dc3545;">0</div>
+                            <div class="dash-value" id="dashFaltas" style="color: #C1554A;">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card clickable" id="cardExcecoes" style="border-left-color: var(--ouro) !important;">
-                            <div class="dash-icon" style="background: var(--ouro-pale); color: var(--ouro);"><i class="ph ph-warning-circle"></i></div>
+                        <div class="dash-card clickable" id="cardExcecoes">
+                            <div class="dash-icon dash-icon-warning"><i class="ph ph-warning-circle"></i></div>
                             <div class="dash-label">Exceções</div>
                             <div class="dash-value" id="dashExcecoes" style="color: var(--ouro);">0</div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="dash-card clickable" id="cardProximo" style="border-left-color: #0dcaf0 !important;">
-                            <div class="dash-icon" style="background: rgba(13, 202, 240, 0.1); color: #0dcaf0;"><i class="ph ph-clock-afternoon"></i></div>
+                        <div class="dash-card clickable" id="cardProximo">
+                            <div class="dash-icon dash-icon-info"><i class="ph ph-clock-afternoon"></i></div>
                             <div class="dash-label">Próximo Atend.</div>
                             <div class="dash-value" id="dashProximo" style="font-size: 1.1rem; font-family: var(--font-body) !important;">—</div>
                         </div>
@@ -1560,6 +1566,6 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="js/script.js?v=3"></script>
+<script src="js/script.js?v=4"></script>
 </body>
 </html>
