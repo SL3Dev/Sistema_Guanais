@@ -80,21 +80,25 @@ body.dark .app-header {
     border-bottom-color: rgba(125, 211, 252, 0.20) !important;
 }
 
-body.dark .nav-tabs {
+body.dark .nav-tabs,
+body.dark .nav-pills-custom {
     background: linear-gradient(145deg, #132129, #0f1b21) !important;
     border: 1px solid rgba(125, 211, 252, 0.15) !important;
 }
 
-body.dark .nav-tabs .nav-link.active {
+body.dark .nav-tabs .nav-link.active,
+body.dark .nav-pills-custom .nav-link.active {
     background: linear-gradient(145deg, #1A2B33, #16252d) !important;
     color: #E7FDFC !important;
 }
 
-body.dark .nav-tabs .nav-link {
+body.dark .nav-tabs .nav-link,
+body.dark .nav-pills-custom .nav-link {
     color: #D1DBDF !important;
 }
 
-body.dark .nav-tabs .nav-link:hover {
+body.dark .nav-tabs .nav-link:hover,
+body.dark .nav-pills-custom .nav-link:hover {
     background: rgba(94, 234, 212, 0.12) !important;
     color: #F5FFFE !important;
 }
@@ -845,12 +849,12 @@ body.dark #agendaCalendario .fc-daygrid-day-number {
 
 #status-salvo {
     font-size: .8rem;
-    color: #198754;
+    color: #4F6D60;
     font-weight: 600;
     display: none;
     align-items: center;
-    background: #eafaf1;
-    border: 1px solid #b7e4cc;
+    background: #E7EEE9;
+    border: 1px solid #C7D9CE;
     padding: 4px 12px;
     border-radius: 20px;
     gap: 4px;
@@ -992,7 +996,8 @@ body.dark .psicologa-card {
     opacity: .9;
 }
 
-.nav-tabs .nav-link {
+.nav-tabs .nav-link,
+.nav-pills-custom .nav-link {
     border: none !important;
     border-radius: var(--radius-sm) !important;
     color: var(--cinza-muted) !important;
@@ -1003,9 +1008,11 @@ body.dark .psicologa-card {
     font-size: .875rem !important;
 }
 
-.nav-tabs .nav-link:hover { background: rgba(137,178,162,.15) !important; color: var(--verde) !important; }
+.nav-tabs .nav-link:hover,
+.nav-pills-custom .nav-link:hover { background: rgba(137,178,162,.15) !important; color: var(--verde) !important; }
 
-.nav-tabs .nav-link.active {
+.nav-tabs .nav-link.active,
+.nav-pills-custom .nav-link.active {
     background: var(--branco) !important;
     color: var(--verde-escuro) !important;
     box-shadow: var(--sombra-sm) !important;

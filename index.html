@@ -28,7 +28,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=8">
+    <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 
@@ -876,6 +876,11 @@
 
             <!-- RELATÓRIOS -->
             <div class="tab-pane fade" id="relatorios" role="tabpanel">
+                <div class="page-header-mini d-print-none">
+                    <div class="page-header-eyebrow">Relatórios</div>
+                    <h2 class="page-header-title">Relatórios</h2>
+                    <p class="page-header-sub">Gere e exporte relatórios de atendimentos, financeiro e pacientes.</p>
+                </div>
                 <!-- Cabeçalho exibido só na impressão/PDF -->
                 <div class="d-none d-print-block mb-4">
                     <h3 class="mb-1">Espaço Guanais</h3>
@@ -941,15 +946,15 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="dash-card" style="border-left-color: #dc3545 !important;">
+                        <div class="dash-card">
                             <div class="dash-label">Despesas (25%)</div>
-                            <div class="dash-value" id="relatorioTotalDespesas" style="color: #dc3545;">R$ 0,00</div>
+                            <div class="dash-value" id="relatorioTotalDespesas" style="color: #C1554A;">R$ 0,00</div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="dash-card" style="border-left-color: #198754 !important;">
+                        <div class="dash-card">
                             <div class="dash-label">Receita Disponível (75%)</div>
-                            <div class="dash-value" id="relatorioTotalDisponivel" style="color: #198754;">R$ 0,00</div>
+                            <div class="dash-value" id="relatorioTotalDisponivel" style="color: #4F6D60;">R$ 0,00</div>
                         </div>
                     </div>
 
@@ -959,8 +964,8 @@
                             <div class="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-calendar-check me-2"></i>Relatório de Atendimentos</h5>
                                 <div>
-                                    <span class="badge-custom bg-secondary text-white me-2">Total: <span id="totalAtendimentos">0</span></span>
-                                    <span class="badge-custom bg-danger text-white">Faltas: <span id="totalFaltas">0</span></span>
+                                    <span class="badge-custom badge-info me-2">Total: <span id="totalAtendimentos">0</span></span>
+                                    <span class="badge-custom badge-danger">Faltas: <span id="totalFaltas">0</span></span>
                                 </div>
                             </div>
                             <div class="table-responsive">
@@ -1021,7 +1026,7 @@
                     <div class="col-12" id="blocoRelPacientes">
                         <div class="table-wrap">
                             <div class="p-4 bg-white border-bottom">
-                                <h5 class="mb-0" style="color: #0dcaf0; font-weight: 700;"><i class="bi bi-people me-2"></i>Relatório de Pacientes</h5>
+                                <h5 class="mb-0" style="color: #5B8A9A; font-weight: 700;"><i class="bi bi-people me-2"></i>Relatório de Pacientes</h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table-custom mb-0" id="relatorioPacientesTable">
@@ -1093,6 +1098,11 @@
 
             <!-- CONFIGURAÇÕES -->
             <div class="tab-pane fade" id="configuracoes" role="tabpanel">
+                <div class="page-header-mini">
+                    <div class="page-header-eyebrow">Configurações</div>
+                    <h2 class="page-header-title">Configurações</h2>
+                    <p class="page-header-sub">Gerencie usuários, identidade visual e dados do sistema.</p>
+                </div>
                 <div class="caixa-guanais mb-4">
                     <ul class="nav nav-pills nav-pills-custom" id="configSubTab" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -1466,6 +1476,11 @@
 
             <!-- AJUDA -->
             <div class="tab-pane fade" id="ajuda" role="tabpanel">
+                <div class="page-header-mini">
+                    <div class="page-header-eyebrow">Ajuda</div>
+                    <h2 class="page-header-title">Ajuda</h2>
+                    <p class="page-header-sub">Informações sobre importação, exportação, aparência e segurança.</p>
+                </div>
                 <div class="caixa-guanais p-5">
                     <div class="row">
                         <div class="col-lg-6">
@@ -1482,7 +1497,7 @@
                                 </li>
                             </ul>
                             <hr class="my-4">
-                            <h5 class="mb-3" style="color: #0dcaf0;"><i class="bi bi-database me-2"></i>API Backend</h5>
+                            <h5 class="mb-3" style="color: #5B8A9A;"><i class="bi bi-database me-2"></i>API Backend</h5>
                             <p class="text-muted" style="font-size: 0.85rem;">
                                 Este sistema utiliza uma API PHP para persistência de dados em banco MySQL.
                                 Os endpoints disponíveis são:
@@ -1511,7 +1526,7 @@
                                 </div>
                             </div>
                             <hr class="my-4">
-                            <h5 class="mb-3" style="color: #198754;"><i class="bi bi-shield-check me-2"></i>Segurança</h5>
+                            <h5 class="mb-3" style="color: #4F6D60;"><i class="bi bi-shield-check me-2"></i>Segurança</h5>
                             <p class="text-muted" style="font-size: 0.85rem;">
                                 • Session management com validação no servidor<br>
                                 • API com CORS configurado<br>
