@@ -1634,6 +1634,14 @@ body.dark .badge-info    { background: rgba(91, 138, 154, .28); color: #A9D3DE; 
     gap: 8px;
 }
 
+/* Cabeçalhos de lista (.table-wrap) usavam bg-white/bg-light do Bootstrap,
+   fixos independente do tema — ficavam claros mesmo no modo escuro */
+.table-wrap .bg-white,
+.table-wrap .bg-light {
+    background: var(--bg-surface) !important;
+    border-color: var(--border-light) !important;
+}
+
 .btn-verde,
 .btn-primary {
     background: var(--verde) !important;

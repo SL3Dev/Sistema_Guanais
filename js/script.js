@@ -2112,7 +2112,7 @@ function renderPacientes() {
     filtered.forEach(p => {
         html += `<tr onclick="selecionarPacienteLista('${p.id}')" style="cursor:pointer;">
             <td>${p.id}</td>
-            <td>${p.nome}</td>
+            <td><div class="tabela-paciente-cell">${avatarChip(p.nome)}<span>${p.nome}</span></div></td>
             <td>${p.telefone}</td>
             <td>${calcularIdade(p.data_nascimento)}</td>
             <td>
@@ -2323,9 +2323,7 @@ function renderAgenda(dadosCustom = null) {
         let dataInicioPacote = a.data_inicio_pacote || '';
         let statusAtend = a.status || '';
         
-        let badgeClass = statusAtend === 'Confirmado' ? 'badge-success' :
-            statusAtend === 'Falta' ? 'badge-danger' :
-                (statusAtend === 'Exceção Justificada' || statusAtend === 'Excecao Justificada' || statusAtend === 'Reagendado') ? 'badge-warning' : 'badge-info';
+        let badgeClass = badgeClassePorStatus(statusAtend);
         
         const podeVerProntuario = podeAcessarProntuarioDoAtendimento(a);
         
@@ -2385,13 +2383,21 @@ function alternarVisaoAgenda(visao) {
 
 function corEventoAgendaPorStatus(status) {
     switch (status) {
-        case 'Confirmado': return { bg: '#4F46E5', border: '#4338CA' };
-        case 'Falta': return { bg: '#DC2626', border: '#B91C1C' };
+        case 'Confirmado': return { bg: '#4F6D60', border: '#3D5449' };
+        case 'Falta': return { bg: '#C1554A', border: '#A3443A' };
         case 'Exceção Justificada':
-        case 'Excecao Justificada': return { bg: '#D97706', border: '#B45309' };
-        case 'Reagendado': return { bg: '#0EA5E9', border: '#0284C7' };
-        default: return { bg: '#64748B', border: '#475569' };
+        case 'Excecao Justificada': return { bg: '#C08A5C', border: '#A06F45' };
+        case 'Reagendado': return { bg: '#5B8A9A', border: '#496F7C' };
+        default: return { bg: '#6B7A72', border: '#4F6D60' };
     }
+}
+
+// Classe de badge (badge-custom) consistente por status de atendimento
+function badgeClassePorStatus(status) {
+    if (status === 'Confirmado') return 'badge-success';
+    if (status === 'Falta') return 'badge-danger';
+    if (status === 'Exceção Justificada' || status === 'Excecao Justificada' || status === 'Reagendado') return 'badge-warning';
+    return 'badge-info';
 }
 
 function montarEventosCalendarioAgenda() {
@@ -3664,7 +3670,7 @@ async function renderProntuarioLista() {
             <div class="tl-data">${a.data_atendimento || ''}</div>
             <div class="tl-meta">
                 <span class="tl-nome">${a.paciente_nome || ''}</span>
-                <span class="badge-custom badge-info">${a.status || '-'}</span>
+                <span class="badge-custom ${badgeClassePorStatus(a.status)}">${a.status || '-'}</span>
             </div>
         </div>`;
     }).join('') || '<div class="timeline-empty">Nenhum atendimento encontrado.</div>';
