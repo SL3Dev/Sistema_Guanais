@@ -1625,10 +1625,13 @@ function toggleSidebar() {
 
 function aplicarEstadoSidebar() {
     try {
-        if (localStorage.getItem('sidebarExpanded') === '1') {
+        // Padrão: expandida (ícone + rótulo). Só recolhe se o usuário já escolheu recolher antes.
+        if (localStorage.getItem('sidebarExpanded') !== '0') {
             document.getElementById('appScreen')?.classList.add('sidebar-expanded');
         }
-    } catch (e) { /* localStorage indisponível */ }
+    } catch (e) {
+        document.getElementById('appScreen')?.classList.add('sidebar-expanded');
+    }
 }
 
 // Leva o usuário pra Agenda já filtrada por um paciente específico
