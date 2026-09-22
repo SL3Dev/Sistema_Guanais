@@ -84,7 +84,9 @@ switch ($method) {
                     $tipoReal,
                     $file['size']
                 ]);
-                successResponse(['id' => $db->lastInsertId()], 'Arquivo enviado com sucesso');
+                $arquivoId = $db->lastInsertId();
+                registrarLogAuditoria('pacientes', 'criar', $paciente_id, 'Arquivo anexado: ' . $file['name']);
+                successResponse(['id' => $arquivoId], 'Arquivo enviado com sucesso');
             } catch (PDOException $e) {
                 unlink($targetPath); // Remove arquivo se falhar no banco
                 errorResponse('Erro ao registrar arquivo no banco', 500);
@@ -102,18 +104,19 @@ switch ($method) {
         }
         
         try {
-            $stmt = $db->prepare("SELECT caminho FROM pacientes_arquivos WHERE id = ?");
+            $stmt = $db->prepare("SELECT caminho, paciente_id, nome_original FROM pacientes_arquivos WHERE id = ?");
             $stmt->execute([$id]);
             $arquivo = $stmt->fetch();
-            
+
             if ($arquivo) {
                 $filePath = '../' . $arquivo['caminho'];
                 if (file_exists($filePath)) {
                     unlink($filePath);
                 }
-                
+
                 $stmt = $db->prepare("DELETE FROM pacientes_arquivos WHERE id = ?");
                 $stmt->execute([$id]);
+                registrarLogAuditoria('pacientes', 'excluir', $arquivo['paciente_id'], 'Arquivo removido: ' . $arquivo['nome_original']);
                 successResponse([], 'Arquivo removido com sucesso');
             } else {
                 errorResponse('Arquivo não encontrado', 404);

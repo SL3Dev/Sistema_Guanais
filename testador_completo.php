@@ -188,6 +188,7 @@ $endpointsProtegidos = [
     'despesas.php' => 403,
     'usuarios.php' => 401,
     'auditoria_backup.php' => 401,
+    'log_auditoria.php' => 401,
 ];
 foreach ($endpointsProtegidos as $ep => $codigoEsperado) {
     $r = reqAnon('GET', endpoint($ep));
@@ -235,6 +236,15 @@ if ($pacienteId) {
         'telefone' => '11988887777'
     ]]);
     addResult('pacientes', 'Editar', ok($r), $r);
+
+    // Log de auditoria: confirma que criar/editar deste paciente geraram evento
+    $r = req('GET', endpoint('log_auditoria.php', 'modulo=pacientes&acao=criar'));
+    $temLogCriar = ok($r) && !empty(array_filter($r['json']['data']['logs'] ?? [], fn($l) => $l['registro_id'] == $pacienteId));
+    addResult('auditoria', 'Log registra criação de paciente', $temLogCriar, $r);
+
+    $r = req('GET', endpoint('log_auditoria.php', 'modulo=pacientes&acao=editar'));
+    $temLogEditar = ok($r) && !empty(array_filter($r['json']['data']['logs'] ?? [], fn($l) => $l['registro_id'] == $pacienteId));
+    addResult('auditoria', 'Log registra edição de paciente', $temLogEditar, $r);
 }
 
 // 3) PACOTES

@@ -91,6 +91,7 @@ switch ($method) {
                     $stmt->execute([generateId('CFG'), $chave, $dbValue]);
                 }
 
+                registrarLogAuditoria('configuracoes', 'editar', $chave, 'Logo atualizada');
                 successResponse(['path' => $dbValue], 'Logo atualizada com sucesso');
             } else {
                 errorResponse('Erro ao fazer upload do arquivo', 500);
@@ -128,6 +129,7 @@ switch ($method) {
                 $stmt = $db->prepare("SELECT * FROM configuracoes WHERE id = ?");
                 $stmt->execute([$id]);
                 $config = $stmt->fetch();
+                registrarLogAuditoria('configuracoes', 'criar', $id, $config['chave'] ?? null);
                 successResponse($config, 'Configuração criada com sucesso', 201);
             } else {
                 errorResponse('Erro ao criar configuração', 500);
@@ -169,6 +171,7 @@ switch ($method) {
                 $stmt = $db->prepare("SELECT * FROM configuracoes WHERE chave = ?");
                 $stmt->execute([$input['chave']]);
                 $config = $stmt->fetch();
+                registrarLogAuditoria('configuracoes', 'editar', $input['chave'], $input['chave']);
                 successResponse($config, 'Configuração atualizada com sucesso');
             } else {
                 errorResponse('Erro ao atualizar configuração', 500);
@@ -195,6 +198,7 @@ switch ($method) {
             $stmt = $db->prepare("DELETE FROM configuracoes WHERE chave = ?");
             $result = $stmt->execute([$chave]);
             if ($result) {
+                registrarLogAuditoria('configuracoes', 'excluir', $chave, $chave);
                 successResponse([], 'Configuração removida com sucesso');
             } else {
                 errorResponse('Erro ao remover configuração', 500);

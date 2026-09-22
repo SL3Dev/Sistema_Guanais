@@ -136,7 +136,8 @@ switch ($method) {
                 if (!empty($despesa['data_inicio'])) {
                     $despesa['data_inicio'] = formatDateToBR($despesa['data_inicio']);
                 }
-                
+
+                registrarLogAuditoria('despesas', 'criar', $id, $despesa['descricao'] ?? null);
                 successResponse($despesa, 'Despesa cadastrada com sucesso', 201);
             } else {
                 errorResponse('Erro ao cadastrar despesa', 500);
@@ -199,7 +200,8 @@ switch ($method) {
                 if (!empty($despesa['data_inicio'])) {
                     $despesa['data_inicio'] = formatDateToBR($despesa['data_inicio']);
                 }
-                
+
+                registrarLogAuditoria('despesas', 'editar', $input['id'], $despesa['descricao'] ?? null);
                 successResponse($despesa, 'Despesa atualizada com sucesso');
             } else {
                 errorResponse('Erro ao atualizar despesa', 500);
@@ -220,16 +222,18 @@ switch ($method) {
         
         try {
             // Verificar se despesa existe
-            $stmt = $db->prepare("SELECT id FROM despesas WHERE id = ?");
+            $stmt = $db->prepare("SELECT id, descricao FROM despesas WHERE id = ?");
             $stmt->execute([$id]);
-            if (!$stmt->fetch()) {
+            $despesaExistente = $stmt->fetch();
+            if (!$despesaExistente) {
                 errorResponse('Despesa não encontrada', 404);
             }
-            
+
             $stmt = $db->prepare("DELETE FROM despesas WHERE id = ?");
             $result = $stmt->execute([$id]);
-            
+
             if ($result) {
+                registrarLogAuditoria('despesas', 'excluir', $id, $despesaExistente['descricao'] ?? null);
                 successResponse([], 'Despesa removida com sucesso');
             } else {
                 errorResponse('Erro ao remover despesa', 500);
@@ -279,7 +283,8 @@ switch ($method) {
                 $despesa['status'] = $despesa['parcelas_pagas'] >= $despesa['num_parcelas'] 
                     ? 'Paga' 
                     : $despesa['parcelas_pagas'] . '/' . $despesa['num_parcelas'];
-                
+
+                registrarLogAuditoria('despesas', 'editar', $input['id'], ($despesa['descricao'] ?? '') . ' — parcela paga');
                 successResponse($despesa, 'Parcela paga com sucesso');
             } else {
                 errorResponse('Erro ao registrar pagamento', 500);

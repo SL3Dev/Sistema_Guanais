@@ -606,6 +606,11 @@ function podeAcessarProntuarioDoAtendimento(atendimento) {
 function aplicarPermissoesUI() {
     if (!usuarioLogado) return;
 
+    const configAuditoriaTabItem = document.getElementById('configAuditoriaTabItem');
+    if (configAuditoriaTabItem) {
+        configAuditoriaTabItem.classList.toggle('d-none', usuarioLogado.tipo !== 'admin');
+    }
+
     const modulosConfig = {
         'agenda': 'atendimentos',
         'prontuario': 'atendimentos',
@@ -3334,6 +3339,70 @@ async function carregarAuditoriaBackup() {
         }).join('');
     } catch (error) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Não foi possível carregar auditoria</td></tr>';
+    }
+}
+
+// ====================== LOG DE AUDITORIA (admin) ======================
+let auditLogPaginaAtual = 1;
+
+function badgeClasseAcaoAuditoria(acao) {
+    if (acao === 'criar') return 'badge-success';
+    if (acao === 'excluir') return 'badge-danger';
+    return 'badge-warning'; // editar
+}
+
+async function carregarLogAuditoria(pagina = 1, append = false) {
+    const tbody = document.getElementById('auditLogTbody');
+    const totalEl = document.getElementById('auditLogTotal');
+    const btnMais = document.getElementById('auditLogCarregarMais');
+    if (!tbody) return;
+
+    const params = new URLSearchParams();
+    const modulo = document.getElementById('auditModulo')?.value || '';
+    const acao = document.getElementById('auditAcao')?.value || '';
+    const busca = document.getElementById('auditBusca')?.value || '';
+    const dataInicio = document.getElementById('auditDataInicio')?.value || '';
+    const dataFim = document.getElementById('auditDataFim')?.value || '';
+
+    if (modulo) params.set('modulo', modulo);
+    if (acao) params.set('acao', acao);
+    if (busca) params.set('busca', busca);
+    if (dataInicio) params.set('data_inicio', dataInicio);
+    if (dataFim) params.set('data_fim', dataFim);
+    params.set('pagina', pagina);
+
+    try {
+        const result = await apiRequest(`log_auditoria.php?${params.toString()}`, 'GET', null, true);
+        const data = result.data || {};
+        const logs = Array.isArray(data.logs) ? data.logs : [];
+        auditLogPaginaAtual = pagina;
+
+        const linhas = logs.map(l => `
+            <tr>
+                <td>${(l.criado_em || '').replace('T', ' ')}</td>
+                <td><div class="tabela-paciente-cell">${avatarChip(l.usuario_nome)}<span>${l.usuario_nome || ''}</span></div></td>
+                <td>${l.modulo || ''}</td>
+                <td><span class="badge-custom ${badgeClasseAcaoAuditoria(l.acao)}">${l.acao || ''}</span></td>
+                <td>${l.registro_descricao || l.registro_id || '-'}</td>
+            </tr>`).join('');
+
+        if (append) {
+            tbody.insertAdjacentHTML('beforeend', linhas || '');
+        } else {
+            tbody.innerHTML = linhas || '<tr><td colspan="5" class="text-center py-3 text-muted">Nenhum evento encontrado</td></tr>';
+        }
+
+        const totalCarregado = append ? tbody.querySelectorAll('tr').length : logs.length;
+        if (totalEl) totalEl.textContent = `${totalCarregado} de ${data.total ?? 0} eventos`;
+
+        if (btnMais) {
+            const temMais = (data.total ?? 0) > (pagina * (data.por_pagina || 50));
+            btnMais.classList.toggle('d-none', !temMais);
+        }
+    } catch (error) {
+        if (!append) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">Não foi possível carregar o log de auditoria</td></tr>';
+        }
     }
 }
 

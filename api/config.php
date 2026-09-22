@@ -210,6 +210,43 @@ function requirePermission($modulo, $acao) {
     }
 }
 
+function ensureLogAuditoriaTable($db) {
+    $db->exec("CREATE TABLE IF NOT EXISTS log_auditoria (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        usuario_id INT NOT NULL,
+        usuario_nome VARCHAR(120) NOT NULL,
+        modulo VARCHAR(30) NOT NULL,
+        acao ENUM('criar','editar','excluir') NOT NULL,
+        registro_id VARCHAR(50) NULL,
+        registro_descricao VARCHAR(255) NULL,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_log_data (criado_em),
+        INDEX idx_log_modulo (modulo),
+        INDEX idx_log_usuario (usuario_id),
+        INDEX idx_log_acao (acao)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+// Registra um evento de auditoria. Nunca lança exceção nem interrompe a
+// operação principal — auditoria é observabilidade, não deve derrubar a API.
+function registrarLogAuditoria($modulo, $acao, $registroId = null, $descricao = null) {
+    try {
+        startSession();
+        $usuarioId = $_SESSION['user_id'] ?? null;
+        if (!$usuarioId) return;
+
+        $db = Database::getInstance()->getConnection();
+        ensureLogAuditoriaTable($db);
+
+        $usuarioNome = $_SESSION['nome'] ?? ($_SESSION['usuario'] ?? 'Usuário');
+
+        $stmt = $db->prepare("INSERT INTO log_auditoria (usuario_id, usuario_nome, modulo, acao, registro_id, registro_descricao) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$usuarioId, $usuarioNome, $modulo, $acao, $registroId, $descricao]);
+    } catch (Exception $e) {
+        // silencioso de propósito
+    }
+}
+
 // Handler global de exceções para garantir JSON sempre
 set_exception_handler(function($e) {
     header('Content-Type: application/json');

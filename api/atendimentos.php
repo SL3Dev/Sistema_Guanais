@@ -214,7 +214,8 @@ switch ($method) {
                 $atendimento = $stmt->fetch();
                 $atendimento['data_atendimento'] = formatDateToBR($atendimento['data_atendimento']);
                 $atendimento['data_inicio_pacote'] = formatDateToBR($atendimento['data_inicio_pacote']);
-                
+
+                registrarLogAuditoria('atendimentos', 'criar', $id, $atendimento['paciente_nome'] . ' — ' . $atendimento['data_atendimento']);
                 successResponse($atendimento, 'Atendimento registrado com sucesso', 201);
             } else {
                 errorResponse('Erro ao registrar atendimento', 500);
@@ -274,7 +275,8 @@ switch ($method) {
                 $atendimento = $stmt->fetch();
                 $atendimento['data_atendimento'] = formatDateToBR($atendimento['data_atendimento']);
                 $atendimento['data_inicio_pacote'] = formatDateToBR($atendimento['data_inicio_pacote']);
-                
+
+                registrarLogAuditoria('atendimentos', 'editar', $input['id_atendimento'], $atendimento['paciente_nome'] . ' — ' . $atendimento['data_atendimento']);
                 successResponse($atendimento, 'Atendimento atualizado com sucesso');
             } else {
                 errorResponse('Erro ao atualizar atendimento', 500);
@@ -295,15 +297,15 @@ switch ($method) {
         }
         
         try {
+            $stmtAt = $db->prepare("SELECT paciente_id, paciente_nome FROM atendimentos WHERE id_atendimento = ?");
+            $stmtAt->execute([$input['id_atendimento']]);
+            $at = $stmtAt->fetch();
+
+            if (!$at) {
+                errorResponse('Atendimento não encontrado', 404);
+            }
+
             if (isset($input['evolucao'])) {
-                $stmtAt = $db->prepare("SELECT paciente_id FROM atendimentos WHERE id_atendimento = ?");
-                $stmtAt->execute([$input['id_atendimento']]);
-                $at = $stmtAt->fetch();
-
-                if (!$at) {
-                    errorResponse('Atendimento não encontrado', 404);
-                }
-
                 bloquearProntuarioSemVinculo($db, $at['paciente_id']);
             }
 
@@ -330,6 +332,7 @@ switch ($method) {
             $result = $stmt->execute($params);
             
             if ($result) {
+                registrarLogAuditoria('atendimentos', 'editar', $input['id_atendimento'], $at['paciente_nome']);
                 successResponse(['id' => $input['id_atendimento']], 'Atendimento atualizado com sucesso');
             } else {
                 errorResponse('Erro ao atualizar atendimento', 500);
@@ -338,7 +341,7 @@ switch ($method) {
             errorResponse('Erro ao atualizar atendimento', 500);
         }
         break;
-        
+
     case 'DELETE':
         requirePermission('atendimentos', 'excluir');
         // Excluir atendimento
@@ -350,16 +353,18 @@ switch ($method) {
         
         try {
             // Verificar se atendimento existe
-            $stmt = $db->prepare("SELECT id_atendimento FROM atendimentos WHERE id_atendimento = ?");
+            $stmt = $db->prepare("SELECT id_atendimento, paciente_nome FROM atendimentos WHERE id_atendimento = ?");
             $stmt->execute([$id]);
-            if (!$stmt->fetch()) {
+            $atendimentoExistente = $stmt->fetch();
+            if (!$atendimentoExistente) {
                 errorResponse('Atendimento não encontrado', 404);
             }
-            
+
             $stmt = $db->prepare("DELETE FROM atendimentos WHERE id_atendimento = ?");
             $result = $stmt->execute([$id]);
-            
+
             if ($result) {
+                registrarLogAuditoria('atendimentos', 'excluir', $id, $atendimentoExistente['paciente_nome']);
                 successResponse([], 'Atendimento removido com sucesso');
             } else {
                 errorResponse('Erro ao remover atendimento', 500);

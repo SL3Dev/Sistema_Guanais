@@ -134,7 +134,8 @@ switch ($method) {
                 $stmt->execute([$id]);
                 $pacote = $stmt->fetch();
                 $pacote['valor_total'] = floatval($pacote['valor_total']);
-                
+
+                registrarLogAuditoria('pacotes', 'criar', $id, 'Paciente ' . $pacote['paciente_id'] . ' — ' . $pacote['tipo_pacote']);
                 successResponse($pacote, 'Pacote cadastrado com sucesso', 201);
             } else {
                 errorResponse('Erro ao cadastrar pacote', 500);
@@ -181,7 +182,8 @@ switch ($method) {
                 $stmt->execute([$input['id']]);
                 $pacote = $stmt->fetch();
                 $pacote['valor_total'] = floatval($pacote['valor_total']);
-                
+
+                registrarLogAuditoria('pacotes', 'editar', $input['id'], 'Paciente ' . $pacote['paciente_id'] . ' — ' . $pacote['tipo_pacote']);
                 successResponse($pacote, 'Pacote atualizado com sucesso');
             } else {
                 errorResponse('Erro ao atualizar pacote', 500);
@@ -202,16 +204,18 @@ switch ($method) {
         
         try {
             // Verificar se pacote existe
-            $stmt = $db->prepare("SELECT id FROM pacotes WHERE id = ?");
+            $stmt = $db->prepare("SELECT id, paciente_id, tipo_pacote FROM pacotes WHERE id = ?");
             $stmt->execute([$id]);
-            if (!$stmt->fetch()) {
+            $pacoteExistente = $stmt->fetch();
+            if (!$pacoteExistente) {
                 errorResponse('Pacote não encontrado', 404);
             }
-            
+
             $stmt = $db->prepare("DELETE FROM pacotes WHERE id = ?");
             $result = $stmt->execute([$id]);
-            
+
             if ($result) {
+                registrarLogAuditoria('pacotes', 'excluir', $id, 'Paciente ' . $pacoteExistente['paciente_id'] . ' — ' . $pacoteExistente['tipo_pacote']);
                 successResponse([], 'Pacote removido com sucesso');
             } else {
                 errorResponse('Erro ao remover pacote', 500);

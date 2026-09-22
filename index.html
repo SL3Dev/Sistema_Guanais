@@ -1120,6 +1120,11 @@
                                 <i class="bi bi-database me-2"></i>Dados e Backup
                             </button>
                         </li>
+                        <li class="nav-item d-none" id="configAuditoriaTabItem" role="presentation">
+                            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#configAuditoria" type="button" role="tab" onclick="carregarLogAuditoria()">
+                                <i class="bi bi-clipboard-check me-2"></i>Auditoria
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
@@ -1369,6 +1374,70 @@
                     </div>
                 </div>
                 </div>
+
+                <div class="tab-pane fade" id="configAuditoria" role="tabpanel">
+                    <div class="caixa-guanais">
+                        <h5 class="mb-4" style="color: var(--verde-escuro); font-weight: 700;"><i class="bi bi-clipboard-check me-2"></i>Log de Auditoria</h5>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Módulo</label>
+                                <select id="auditModulo" class="form-select" onchange="carregarLogAuditoria(1)">
+                                    <option value="">Todos</option>
+                                    <option value="pacientes">Pacientes</option>
+                                    <option value="atendimentos">Atendimentos</option>
+                                    <option value="financeiro">Financeiro</option>
+                                    <option value="despesas">Despesas</option>
+                                    <option value="usuarios">Usuários</option>
+                                    <option value="configuracoes">Configurações</option>
+                                    <option value="pacotes">Pacotes</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Ação</label>
+                                <select id="auditAcao" class="form-select" onchange="carregarLogAuditoria(1)">
+                                    <option value="">Todas</option>
+                                    <option value="criar">Criar</option>
+                                    <option value="editar">Editar</option>
+                                    <option value="excluir">Excluir</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Buscar</label>
+                                <input type="text" id="auditBusca" class="form-control" placeholder="Nome do registro ou usuário..." oninput="carregarLogAuditoria(1)">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">De</label>
+                                <input type="date" id="auditDataInicio" class="form-control" onchange="carregarLogAuditoria(1)">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Até</label>
+                                <input type="date" id="auditDataFim" class="form-control" onchange="carregarLogAuditoria(1)">
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table-custom mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Data/Hora</th>
+                                        <th>Usuário</th>
+                                        <th>Módulo</th>
+                                        <th>Ação</th>
+                                        <th>Registro</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditLogTbody">
+                                    <tr><td colspan="5" class="text-center py-3 text-muted">Nenhum evento carregado</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted" id="auditLogTotal"></small>
+                            <button class="btn btn-outline-secondary btn-sm d-none" id="auditLogCarregarMais" onclick="carregarLogAuditoria(auditLogPaginaAtual + 1, true)">
+                                Carregar mais
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 </div>
 
                 <!-- Modal de Permissões -->
@@ -1601,6 +1670,6 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="js/script.js?v=8"></script>
+<script src="js/script.js?v=9"></script>
 </body>
 </html>

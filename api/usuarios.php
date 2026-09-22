@@ -245,6 +245,7 @@ switch ($method) {
                 }
             }
             
+            registrarLogAuditoria('usuarios', 'criar', $usuarioId, $nome);
             successResponse(['id' => $usuarioId], 'Usuário criado com sucesso');
 
         } catch (PDOException $e) {
@@ -383,6 +384,7 @@ switch ($method) {
                 $result = $stmt->execute($params);
                 
                 if ($result) {
+                    registrarLogAuditoria('usuarios', 'editar', $id, isset($input['nome']) ? sanitize($input['nome']) : null);
                     successResponse(['id' => $id], 'Usuário atualizado com sucesso');
                 } else {
                     errorResponse('Erro ao atualizar usuário', 500);
@@ -433,6 +435,7 @@ switch ($method) {
                 }
             }
             
+            registrarLogAuditoria('usuarios', 'editar', $usuarioId, 'Permissões alteradas');
             successResponse(['usuario_id' => $usuarioId], 'Permissões atualizadas com sucesso');
         } catch (PDOException $e) {
             errorResponse('Erro no banco de dados', 500);
@@ -458,17 +461,19 @@ switch ($method) {
         
         try {
             // Verificar se usuário existe
-            $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
+            $stmt = $db->prepare("SELECT id, nome FROM usuarios WHERE id = ?");
             $stmt->execute([$id]);
-            if (!$stmt->fetch()) {
+            $usuarioExistente = $stmt->fetch();
+            if (!$usuarioExistente) {
                 errorResponse('Usuário não encontrado', 404);
             }
-            
+
             // Excluir usuário (as permissões serão excluídas em cascata)
             $stmt = $db->prepare("DELETE FROM usuarios WHERE id = ?");
             $result = $stmt->execute([$id]);
-            
+
             if ($result) {
+                registrarLogAuditoria('usuarios', 'excluir', $id, $usuarioExistente['nome'] ?? null);
                 successResponse([], 'Usuário excluído com sucesso');
             } else {
                 errorResponse('Erro ao excluir usuário', 500);

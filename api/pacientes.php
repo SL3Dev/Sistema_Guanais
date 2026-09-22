@@ -220,7 +220,8 @@ switch ($method) {
                 // Buscar paciente criado
                 $paciente = selectPacienteComPsicologa($db, "WHERE p.id = ?", [$id], true);
                 $paciente['data_nascimento'] = formatDateToBR($paciente['data_nascimento']);
-                
+
+                registrarLogAuditoria('pacientes', 'criar', $id, $paciente['nome']);
                 successResponse($paciente, 'Paciente cadastrado com sucesso', 201);
             } else {
                 errorResponse('Erro ao cadastrar paciente', 500);
@@ -289,7 +290,8 @@ switch ($method) {
             if ($result) {
                 $paciente = selectPacienteComPsicologa($db, "WHERE p.id = ?", [$input['id']], true);
                 $paciente['data_nascimento'] = formatDateToBR($paciente['data_nascimento']);
-                
+
+                registrarLogAuditoria('pacientes', 'editar', $input['id'], $paciente['nome']);
                 successResponse($paciente, 'Paciente atualizado com sucesso');
             } else {
                 errorResponse('Erro ao atualizar paciente', 500);
@@ -310,17 +312,19 @@ switch ($method) {
         
         try {
             // Verificar se paciente existe
-            $stmt = $db->prepare("SELECT id FROM pacientes WHERE id = ?");
+            $stmt = $db->prepare("SELECT id, nome FROM pacientes WHERE id = ?");
             $stmt->execute([$id]);
-            if (!$stmt->fetch()) {
+            $pacienteExistente = $stmt->fetch();
+            if (!$pacienteExistente) {
                 errorResponse('Paciente não encontrado', 404);
             }
-            
+
             // Soft delete
             $stmt = $db->prepare("UPDATE pacientes SET ativo = 0 WHERE id = ?");
             $result = $stmt->execute([$id]);
-            
+
             if ($result) {
+                registrarLogAuditoria('pacientes', 'excluir', $id, $pacienteExistente['nome']);
                 successResponse([], 'Paciente removido com sucesso');
             } else {
                 errorResponse('Erro ao remover paciente', 500);

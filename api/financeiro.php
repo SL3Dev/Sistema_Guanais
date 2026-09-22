@@ -154,7 +154,8 @@ switch ($method) {
                 $lancamento['data'] = formatDateToBR($lancamento['data']);
                 $lancamento['valor'] = floatval($lancamento['valor']);
                 $lancamento['liquido'] = round($lancamento['valor'] * 0.75, 2);
-                
+
+                registrarLogAuditoria('financeiro', 'criar', $id, ($lancamento['paciente_nome'] ?? '') . ' — R$ ' . $lancamento['valor']);
                 successResponse($lancamento, 'Recebimento registrado com sucesso', 201);
             } else {
                 errorResponse('Erro ao registrar recebimento no banco de dados', 500);
@@ -208,7 +209,8 @@ switch ($method) {
                 $lancamento['data'] = formatDateToBR($lancamento['data']);
                 $lancamento['valor'] = floatval($lancamento['valor']);
                 $lancamento['liquido'] = round($lancamento['valor'] * 0.75, 2);
-                
+
+                registrarLogAuditoria('financeiro', 'editar', $input['id'], ($lancamento['paciente_nome'] ?? '') . ' — R$ ' . $lancamento['valor']);
                 successResponse($lancamento, 'Lançamento atualizado com sucesso');
             } else {
                 errorResponse('Erro ao atualizar lançamento', 500);
@@ -229,16 +231,18 @@ switch ($method) {
         
         try {
             // Verificar se lançamento existe
-            $stmt = $db->prepare("SELECT id FROM financeiro WHERE id = ?");
+            $stmt = $db->prepare("SELECT id, paciente_nome, valor FROM financeiro WHERE id = ?");
             $stmt->execute([$id]);
-            if (!$stmt->fetch()) {
+            $lancamentoExistente = $stmt->fetch();
+            if (!$lancamentoExistente) {
                 errorResponse('Lançamento não encontrado', 404);
             }
-            
+
             $stmt = $db->prepare("DELETE FROM financeiro WHERE id = ?");
             $result = $stmt->execute([$id]);
-            
+
             if ($result) {
+                registrarLogAuditoria('financeiro', 'excluir', $id, ($lancamentoExistente['paciente_nome'] ?? '') . ' — R$ ' . $lancamentoExistente['valor']);
                 successResponse([], 'Lançamento removido com sucesso');
             } else {
                 errorResponse('Erro ao remover lançamento', 500);
