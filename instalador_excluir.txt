@@ -1,0 +1,10 @@
+\.git\
+\docs\superpowers\
+\Guanais-todas-as-imagens\
+\Guanais-todas-as-imagens.zip
+\output\
+\uploads\pacientes\
+\logo\logo_login_
+\logo\logo_path_
+instalador_excluir.txt
+instalar.bat
